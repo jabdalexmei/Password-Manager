@@ -1,4 +1,5 @@
-import React, { Suspense, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { CustomField, DataCard, Folder } from '../../types/ui';
 import { useTranslation } from '../../../../shared/lib/i18n';
 import { useDetails } from './useDetails';
@@ -107,6 +108,7 @@ export function Details({
   const [renameAttachmentValue, setRenameAttachmentValue] = useState('');
   const [isRenamingAttachment, setIsRenamingAttachment] = useState(false);
   const [isAttachmentDragOver, setIsAttachmentDragOver] = useState(false);
+  const attachmentsDropRef = useRef<HTMLDivElement | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [seedPhraseViewOpen, setSeedPhraseViewOpen] = useState(false);
   const [revealedCustomFields, setRevealedCustomFields] = useState<Record<string, boolean>>({});
@@ -187,6 +189,89 @@ export function Details({
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [previewMenu, coreMenu]);
+
+  useEffect(() => {
+    const prevent = (e: DragEvent) => {
+      e.preventDefault();
+    };
+
+    window.addEventListener('dragover', prevent);
+    window.addEventListener('drop', prevent);
+    return () => {
+      window.removeEventListener('dragover', prevent);
+      window.removeEventListener('drop', prevent);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!card || isTrashMode) return;
+
+    let isActive = true;
+    let unlisten: (() => void) | null = null;
+
+    (async () => {
+      try {
+        const win = getCurrentWebviewWindow();
+        unlisten = await win.onDragDropEvent((e) => {
+          if (!isActive) return;
+
+          const payload: any = (e as any).payload ?? e;
+          const eventType = payload?.type;
+          const position = payload?.position;
+          const paths = Array.isArray(payload?.paths) ? payload.paths : [];
+
+          const el = attachmentsDropRef.current;
+          if (!el || !position || typeof position.x !== 'number' || typeof position.y !== 'number') {
+            if (eventType === 'leave') setIsAttachmentDragOver(false);
+            return;
+          }
+
+          const rect = el.getBoundingClientRect();
+          const inside =
+            position.x >= rect.left &&
+            position.x <= rect.right &&
+            position.y >= rect.top &&
+            position.y <= rect.bottom;
+
+          if (eventType === 'leave') {
+            setIsAttachmentDragOver(false);
+            return;
+          }
+
+          if (!inside) {
+            setIsAttachmentDragOver(false);
+            return;
+          }
+
+          if (eventType === 'over' || eventType === 'enter') {
+            setIsAttachmentDragOver(true);
+            return;
+          }
+
+          if (eventType === 'drop') {
+            setIsAttachmentDragOver(false);
+            if (paths.length) {
+              detailActions.onAddAttachmentsFromPaths(paths).catch(() => {
+                // errors are handled in the action
+              });
+            }
+          }
+        });
+      } catch {
+        // ignore
+      }
+    })();
+
+    return () => {
+      isActive = false;
+      setIsAttachmentDragOver(false);
+      try {
+        unlisten?.();
+      } catch {
+        // ignore
+      }
+    };
+  }, [card, isTrashMode, detailActions]);
 
   const toggleCustomFieldVisibility = (fieldId: string) => {
     setRevealedCustomFields((prev) => ({
@@ -274,6 +359,75 @@ export function Details({
     if (!paths.length) return;
     await detailActions.onAddAttachmentsFromPaths(paths);
   };
+
+  // Ensure drag-and-drop works reliably in Tauri by using the native drag-drop event,
+  // which provides real file paths.
+  useEffect(() => {
+    const preventDefault = (e: DragEvent) => {
+      e.preventDefault();
+    };
+
+    window.addEventListener('dragover', preventDefault);
+    window.addEventListener('drop', preventDefault);
+
+    const win = getCurrentWebviewWindow();
+    let unlisten: null | (() => void) = null;
+    let isMounted = true;
+
+    (async () => {
+      try {
+        unlisten = await win.onDragDropEvent(async (event: any) => {
+          const rect = attachmentsDropRef.current?.getBoundingClientRect();
+          if (!rect) {
+            if (event?.payload?.type === 'leave') setIsAttachmentDragOver(false);
+            return;
+          }
+
+          const pos = event?.payload?.position;
+          const x = typeof pos?.x === 'number' ? pos.x : null;
+          const y = typeof pos?.y === 'number' ? pos.y : null;
+          const inZone = x !== null && y !== null && x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+
+          const type = event?.payload?.type;
+          if (type === 'leave') {
+            if (isMounted) setIsAttachmentDragOver(false);
+            return;
+          }
+
+          if (type === 'enter' || type === 'over') {
+            if (isMounted) setIsAttachmentDragOver(inZone && !isTrashMode);
+            return;
+          }
+
+          if (type === 'drop') {
+            if (!inZone || isTrashMode) {
+              if (isMounted) setIsAttachmentDragOver(false);
+              return;
+            }
+
+            const paths = Array.isArray(event?.payload?.paths) ? (event.payload.paths as unknown[]) : [];
+            const safePaths = paths.filter((p): p is string => typeof p === 'string' && p.length > 0);
+            if (!safePaths.length) {
+              if (isMounted) setIsAttachmentDragOver(false);
+              return;
+            }
+
+            if (isMounted) setIsAttachmentDragOver(false);
+            await detailActions.onAddAttachmentsFromPaths(safePaths);
+          }
+        });
+      } catch {
+        // ignore; DOM handlers will still work where file paths are available
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener('dragover', preventDefault);
+      window.removeEventListener('drop', preventDefault);
+      if (unlisten) unlisten();
+    };
+  }, [detailActions, isTrashMode]);
 
   const isAllowedGlobalPreviewField = (value: string): value is DataCardPreviewField =>
     value === 'username' ||
@@ -848,6 +1002,7 @@ export function Details({
         </div>
         <div
           className={`attachments-body${isAttachmentDragOver && !isTrashMode ? ' attachments-body--dragover' : ''}`}
+          ref={attachmentsDropRef}
           onDragEnter={handleAttachmentsDragOver}
           onDragOver={handleAttachmentsDragOver}
           onDragLeave={handleAttachmentsDragLeave}
