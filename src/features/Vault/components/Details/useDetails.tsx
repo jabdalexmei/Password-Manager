@@ -7,6 +7,7 @@ import {
   addAttachmentsViaDialog,
   getAttachmentBytesBase64,
   listAttachments,
+  renameAttachment,
   removeAttachment,
   saveAttachmentViaDialog,
 } from '../../api/vaultApi';
@@ -41,6 +42,7 @@ type UseDetailsResult = {
   onDeleteAttachment: (attachmentId: string) => Promise<void>;
   onPreviewAttachment: (attachmentId: string) => Promise<void>;
   onDownloadAttachment: (attachmentId: string, defaultName: string) => Promise<void>;
+  onRenameAttachment: (attachmentId: string, nextName: string) => Promise<boolean>;
   previewOpen: boolean;
   closePreview: () => void;
   previewPayload: AttachmentPreviewState;
@@ -277,6 +279,23 @@ export function useDetails({
     [card, showToast, t]
   );
 
+  const onRenameAttachment = useCallback(
+    async (attachmentId: string, nextName: string) => {
+      if (!card || isTrashMode) return false;
+      try {
+        await renameAttachment(attachmentId, nextName);
+        await refreshAttachments();
+        showToast(t('toast.attachmentRenameSuccess'), 'success');
+        return true;
+      } catch (err) {
+        console.error(err);
+        showToast(t('toast.attachmentRenameError'), 'error');
+        return false;
+      }
+    },
+    [card, isTrashMode, refreshAttachments, showToast, t]
+  );
+
   const closePreview = useCallback(() => {
     setPreviewOpen(false);
     setPreviewPayload(null);
@@ -297,6 +316,7 @@ export function useDetails({
     onDeleteAttachment,
     onPreviewAttachment,
     onDownloadAttachment,
+    onRenameAttachment,
     previewOpen,
     closePreview,
     previewPayload,

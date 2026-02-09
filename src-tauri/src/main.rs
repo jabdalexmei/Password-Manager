@@ -137,6 +137,7 @@ fn main() {
             is_logged_in,
             health_check,
             list_attachments,
+            rename_attachment,
             attachments_pick_files,
             attachments_discard_pick,
             add_attachments_from_pick,
