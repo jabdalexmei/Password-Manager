@@ -235,13 +235,14 @@ pub async fn workspace_create(path: String, state: State<'_, Arc<AppState>>) -> 
 pub async fn workspace_create_via_dialog(
     app: AppHandle,
     state: State<'_, Arc<AppState>>,
+    dialog_title: Option<String>,
 ) -> Result<bool> {
     let app_state = state.inner().clone();
     tauri::async_runtime::spawn_blocking(move || {
         let selection = app
             .dialog()
             .file()
-            .set_title("Step 1 of 2: Select destination folder for restored profile")
+            .set_title(dialog_title.unwrap_or_else(|| "Select data folder".to_string()))
             .blocking_pick_folder();
         let Some(fp) = selection else {
             return Ok(false);
