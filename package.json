@@ -1,0 +1,43 @@
+{
+  "name": "Password-Manager",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "ci:install": "npm ci",
+    "ci:build": "npm ci && npm run build",
+    "ci:verify": "npm ci && npm run build && npm run security:all",
+    "zxing:guard": "node scripts/check-no-zxing-imports.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "npm run zxing:guard && npm run typecheck && vite build",
+    "analyze": "npm run zxing:guard && npm run typecheck && vite build --mode analyze",
+    "tauri:dev": "tauri dev --config src-tauri/tauri.dev.conf.json",
+    "tauri:build": "tauri build",
+    "security:all": "node scripts/security-audit.mjs all",
+    "security:js": "node scripts/security-audit.mjs js",
+    "security:rust": "node scripts/security-audit.mjs rust",
+    "theme:check": "node scripts/check-theme-colors.mjs",
+    "icons:check": "node scripts/check-no-inline-svg.mjs"
+  },
+  "dependencies": {
+    "@zxing/browser": "0.1.5",
+    "@tauri-apps/api": "2.4.0",
+    "lucide-react": "0.562.0",
+    "otpauth": "9.4.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.4.0",
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "@vitejs/plugin-react": "4.3.3",
+    "rollup-plugin-visualizer": "6.0.5",
+    "typescript": "5.6.2",
+    "vite": "5.4.21"
+  },
+  "overrides": {
+    "esbuild": "0.25.0"
+  }
+}
