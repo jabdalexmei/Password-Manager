@@ -76,5 +76,11 @@
   "previewMenu.maxThis": "Max {{count}} fields (this card)",
   "previewMenu.showAll": "Show in preview all",
   "previewMenu.hideAll": "Hide in preview all",
-  "previewMenu.maxAll": "Max {{count}} fields (all cards)"
+  "previewMenu.maxAll": "Max {{count}} fields (all cards)",
+  "attachments.rename": "Rename",
+  "attachments.renameTitle": "Rename attachment",
+  "attachments.renameLabel": "File name",
+  "attachments.renameConfirm": "Save",
+  "toast.attachmentRenameSuccess": "Attachment renamed",
+  "toast.attachmentRenameError": "Unable to rename attachment"
 }
