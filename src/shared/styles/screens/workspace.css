@@ -1,0 +1,260 @@
+/* Workspace card specifics only (base card comes from .screen-card/.screen-card--xl) */
+.workspace-card-mock {
+  /* IMPORTANT: remove glass effect that makes theme look “different” */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.workspace-header {
+  margin-bottom: 18px;
+}
+
+.workspace-title {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.workspace-subtitle {
+  margin: 8px 0 0 0;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+/* 2-row grid:
+   row 1: left title only
+   row 2: list + right actions aligned to list top */
+.workspace-mock-layout {
+  display: grid;
+  grid-template-columns: minmax(420px, 560px) minmax(340px, 1fr);
+  grid-template-rows: auto 1fr;
+  column-gap: 28px;
+  row-gap: 12px;
+}
+
+.workspace-left-title {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.workspace-right-title-spacer {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+/* FIX: title should not “sink” */
+.workspace-section-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.workspace-left {
+  grid-column: 1;
+  grid-row: 2;
+  min-width: 0;
+}
+
+.workspace-right {
+  grid-column: 2;
+  grid-row: 2;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.workspace-cta,
+.workspace-cta-secondary {
+  width: 100%;
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+
+.workspace-selection-hint {
+  display: none;
+}
+
+/* Empty state visuals are unified in ui.css (.empty / .empty-state).
+   Keep workspace.css focused on layout-only rules. */
+
+/* List */
+.workspace-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 420px;
+  overflow: auto;
+  padding-right: 6px;
+}
+
+.workspace-tile {
+  padding: 16px 16px 14px;
+}
+
+.workspace-tile-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.workspace-tile-info {
+  min-width: 0;
+}
+
+.workspace-tile-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.workspace-tile-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.workspace-tile-path {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  word-break: break-all;
+}
+
+/* Optional status chip */
+.workspace-status {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  color: var(--color-text, rgba(255, 255, 255, 0.9));
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12));
+}
+
+/* Action bar: keep it subtle and theme-ish */
+.workspace-actionbar {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 6px !important;
+  height: 24px;
+  border-radius: 10px;
+}
+
+.workspace-actionbar:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+.workspace-actionbar-dots {
+  font-size: 20px;
+  line-height: 1;
+  color: var(--color-text, rgba(255, 255, 255, 0.88));
+  transform: translateY(-1px);
+}
+
+.workspace-actionmenu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: transparent;
+}
+
+.workspace-actionmenu-panel {
+  position: fixed;
+  z-index: 61;
+  min-width: 240px;
+  padding: 6px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--greycolorsecondaryborder);
+  /* base bg for this panel; hover border derives from it */
+  --panel-bg: var(--greycolorsecondary);
+  background: var(--panel-bg);
+  box-shadow: var(--shadow-popover);
+
+  /* Obsidian-like subtle hover colors derived from the panel background */
+  --menu-hover-bg-fallback: transparent;
+  --menu-hover-border-fallback: var(--greycolorsecondaryborder);
+  --menu-hover-bg: var(--menu-hover-bg-fallback);
+  --menu-hover-border: var(--menu-hover-border-fallback);
+}
+
+.workspace-actionmenu-item {
+  width: 100%;
+  text-align: left;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-text);
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 13px;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.workspace-actionmenu-item:hover {
+  background: var(--menu-hover-bg);
+  border-color: var(--menu-hover-border);
+}
+
+@supports (color: color-mix(in srgb, black 50%, white 50%)) {
+  .workspace-actionmenu-panel {
+    /* Slight tint of text color into the panel bg (subtle highlight) */
+    --menu-hover-bg: color-mix(in srgb, var(--panel-bg) 92%, var(--color-text) 8%);
+    /* Even subtler border shift (still close to panel bg) */
+    --menu-hover-border: color-mix(in srgb, var(--panel-bg) 78%, var(--color-text) 22%);
+  }
+
+  .workspace-actionmenu-item:hover {
+    background: var(--menu-hover-bg);
+    border-color: var(--menu-hover-border);
+  }
+}
+
+.workspace-actionmenu-item:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.workspace-actionmenu-item:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* Bottom buttons */
+.workspace-tile-bottom {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.workspace-btn-sm {
+  border-radius: 12px;
+  padding: 10px 18px;
+  min-width: 92px;
+}
+
+@media (max-width: 960px) {
+  .workspace-mock-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+  }
+
+  .workspace-right-title-spacer {
+    display: none;
+  }
+
+  .workspace-left {
+    grid-row: 2;
+  }
+
+  .workspace-right {
+    grid-column: 1;
+    grid-row: 3;
+  }
+}

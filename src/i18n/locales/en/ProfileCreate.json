@@ -1,0 +1,24 @@
+{
+  "title": "Create profile",
+  "subtitle": "Add a profile and optional password",
+
+  "name": "Profile name",
+  "namePlaceholder": "Enter profile name",
+
+  "password": "Master password",
+  "passwordLabel": "Master password (optional)",
+  "passwordPlaceholder": "Leave empty to create a passwordless profile",
+
+  "confirmPassword": "Confirm password",
+  "confirmPasswordPlaceholder": "Confirm password",
+
+  "optional": "(optional)",
+
+  "submit": "Create",
+  "back": "Back",
+
+  "validationName": "Enter profile name",
+  "validationMatch": "Passwords do not match",
+
+  "footnote": "Password Manager keeps your vault secure."
+}
