@@ -312,6 +312,13 @@ export async function saveAttachmentViaDialog(attachmentId: string): Promise<boo
   return invoke('save_attachment_via_dialog', { attachmentId });
 }
 
+export async function renameAttachment(
+  attachmentId: string,
+  fileName: string
+): Promise<BackendAttachmentMeta> {
+  return invoke('rename_attachment', { attachmentId, fileName });
+}
+
 export type AttachmentPreviewDto = {
   attachmentId: string;
   fileName: string;

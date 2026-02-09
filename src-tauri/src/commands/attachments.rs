@@ -29,6 +29,19 @@ fn now_ms() -> Result<u128> {
 }
 
 #[tauri::command]
+pub async fn rename_attachment(
+    app: AppHandle,
+    attachment_id: String,
+    file_name: String,
+) -> Result<AttachmentMeta> {
+    tauri::async_runtime::spawn_blocking(move || {
+        attachments_service::rename_attachment(&app, attachment_id, file_name)
+    })
+    .await
+    .map_err(|_| ErrorCodeString::new("TASK_JOIN_FAILED"))?
+}
+
+#[tauri::command]
 pub async fn remove_attachment(app: AppHandle, attachment_id: String) -> Result<()> {
     tauri::async_runtime::spawn_blocking(move || {
         attachments_service::remove_attachment(&app, attachment_id)

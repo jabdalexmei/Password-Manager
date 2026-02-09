@@ -12,8 +12,10 @@ import {
   IconImport,
   IconPreview,
   IconPreviewOff,
+  IconRename,
 } from '@/shared/icons/lucide/icons';
 import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../../../../shared/ui/dialog';
 import {
   loadPreviewFields,
   onPreviewFieldsChanged,
@@ -100,6 +102,10 @@ export function Details({
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [purgeConfirmOpen, setPurgeConfirmOpen] = useState(false);
   const [attachmentToDelete, setAttachmentToDelete] = useState<string | null>(null);
+  const [renameAttachmentOpen, setRenameAttachmentOpen] = useState(false);
+  const [renameAttachmentId, setRenameAttachmentId] = useState<string | null>(null);
+  const [renameAttachmentValue, setRenameAttachmentValue] = useState('');
+  const [isRenamingAttachment, setIsRenamingAttachment] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [seedPhraseViewOpen, setSeedPhraseViewOpen] = useState(false);
   const [revealedCustomFields, setRevealedCustomFields] = useState<Record<string, boolean>>({});
@@ -404,6 +410,83 @@ export function Details({
           }}
           onCancel={() => setAttachmentToDelete(null)}
         />
+
+        <Dialog
+          open={renameAttachmentOpen}
+          onOpenChange={(nextOpen) => {
+            if (isRenamingAttachment) return;
+            if (!nextOpen) {
+              setRenameAttachmentOpen(false);
+              setRenameAttachmentId(null);
+            }
+          }}
+        >
+          <DialogContent aria-labelledby="rename-attachment-title">
+            <DialogHeader>
+              <DialogTitle id="rename-attachment-title">{t('attachments.renameTitle')}</DialogTitle>
+            </DialogHeader>
+
+            <div className="dialog-body" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div className="form-field">
+                <label className="form-label" htmlFor="rename-attachment-input">
+                  {t('attachments.renameLabel')}
+                </label>
+                <input
+                  id="rename-attachment-input"
+                  type="text"
+                  value={renameAttachmentValue}
+                  disabled={isRenamingAttachment}
+                  onChange={(e) => setRenameAttachmentValue(e.target.value)}
+                  autoComplete="off"
+                  className="input"
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="dialog-footer--split">
+              <div className="dialog-footer-left">
+                <button
+                  className="btn btn-secondary"
+                  type="button"
+                  onClick={() => {
+                    setRenameAttachmentOpen(false);
+                    setRenameAttachmentId(null);
+                  }}
+                  disabled={isRenamingAttachment}
+                >
+                  {tCommon('action.cancel')}
+                </button>
+              </div>
+
+              <div className="dialog-footer-right">
+                <button
+                  className="btn btn-primary"
+                  type="button"
+                  onClick={async () => {
+                    if (!renameAttachmentId) return;
+                    setIsRenamingAttachment(true);
+                    const ok = await detailActions.onRenameAttachment(
+                      renameAttachmentId,
+                      renameAttachmentValue
+                    );
+                    setIsRenamingAttachment(false);
+                    if (ok) {
+                      setRenameAttachmentOpen(false);
+                      setRenameAttachmentId(null);
+                    }
+                  }}
+                  disabled={
+                    isRenamingAttachment ||
+                    !renameAttachmentId ||
+                    !renameAttachmentValue.trim()
+                  }
+                >
+                  {t('attachments.renameConfirm')}
+                </button>
+              </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
       {hasTitle && (
         <div className="detail-field">
@@ -727,6 +810,19 @@ export function Details({
                     aria-label={t('attachments.download')}
                   >
                     <IconImport />
+                  </button>
+                  <button
+                    className="icon-button"
+                    type="button"
+                    onClick={() => {
+                      setRenameAttachmentId(attachment.id);
+                      setRenameAttachmentValue(attachment.fileName);
+                      setRenameAttachmentOpen(true);
+                    }}
+                    aria-label={t('attachments.rename')}
+                    title={t('attachments.rename')}
+                  >
+                    <IconRename />
                   </button>
                   <button
                     className="icon-button icon-button-danger"

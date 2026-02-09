@@ -1725,6 +1725,29 @@ pub fn soft_delete_attachment(
     })
 }
 
+pub fn rename_attachment(
+    state: &Arc<AppState>,
+    profile_id: &str,
+    attachment_id: &str,
+    file_name: &str,
+    updated_at: &str,
+) -> Result<()> {
+    with_connection_in_active_vault(state, profile_id, |conn, active_vault_id| {
+        let rows = conn
+            .execute(
+                "UPDATE attachments SET file_name = ?1, updated_at = ?2 WHERE id = ?3 AND deleted_at IS NULL AND EXISTS (SELECT 1 FROM datacards d WHERE d.id = attachments.datacard_id AND d.vault_id = ?4)",
+                params![file_name, updated_at, attachment_id, active_vault_id],
+            )
+            .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
+
+        if rows == 0 {
+            return Err(ErrorCodeString::new("ATTACHMENT_NOT_FOUND"));
+        }
+
+        Ok(())
+    })
+}
+
 pub fn set_datacard_preview_fields_for_card(
     state: &Arc<AppState>,
     profile_id: &str,
