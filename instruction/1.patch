@@ -1,222 +1,107 @@
---- a/src/features/Vault/api/vaultApi.ts
-+++ b/src/features/Vault/api/vaultApi.ts
-@@ -300,6 +300,13 @@
-   return invoke('add_attachments_via_dialog', { datacardId });
- }
- 
-+export async function addAttachmentsFromPaths(
-+  datacardId: string,
-+  paths: string[]
-+): Promise<BackendAttachmentMeta[]> {
-+  return invoke('add_attachments_from_paths', { datacardId, paths });
-+}
-+
- export async function removeAttachment(attachmentId: string): Promise<void> {
-   return invoke('remove_attachment', { attachmentId });
- }
-
---- a/src/features/Vault/components/Details/useDetails.tsx
-+++ b/src/features/Vault/components/Details/useDetails.tsx
-@@ -5,6 +5,7 @@
- import { clipboardClearAll } from '../../../../shared/lib/tauri';
- import {
-   addAttachmentsViaDialog,
-+  addAttachmentsFromPaths,
-   getAttachmentBytesBase64,
-   listAttachments,
-   renameAttachment,
-@@ -39,6 +40,7 @@
-   purgeCard: () => void;
-   attachments: Attachment[];
-   onAddAttachment: () => Promise<void>;
-+  onAddAttachmentsFromPaths: (paths: string[]) => Promise<void>;
-   onDeleteAttachment: (attachmentId: string) => Promise<void>;
-   onPreviewAttachment: (attachmentId: string) => Promise<void>;
-   onDownloadAttachment: (attachmentId: string, defaultName: string) => Promise<void>;
-@@ -218,6 +220,23 @@
-     }
-   }, [card, isTrashMode, refreshAttachments, showToast, t]);
- 
-+  const onAddAttachmentsFromPaths = useCallback(
-+    async (paths: string[]) => {
-+      if (!card || isTrashMode) return;
-+      if (!paths.length) return;
-+      try {
-+        const added = await addAttachmentsFromPaths(card.id, paths);
-+        if (!added.length) return;
-+        await refreshAttachments();
-+        showToast(t('toast.attachmentAddSuccess'), 'success');
-+      } catch (err) {
-+        console.error(err);
-+        showToast(t('toast.attachmentAddError'), 'error');
-+      }
-+    },
-+    [card, isTrashMode, refreshAttachments, showToast, t]
-+  );
-+
-   const onDeleteAttachment = useCallback(
-     async (attachmentId: string) => {
-       if (!card) return;
-@@ -313,6 +332,7 @@
-     purgeCard,
-     attachments,
-     onAddAttachment,
-+    onAddAttachmentsFromPaths,
-     onDeleteAttachment,
-     onPreviewAttachment,
-     onDownloadAttachment,
-
+diff --git a/src/features/Vault/components/Details/Details.tsx b/src/features/Vault/components/Details/Details.tsx
+index 18cc745..60860f2 100644
 --- a/src/features/Vault/components/Details/Details.tsx
 +++ b/src/features/Vault/components/Details/Details.tsx
-@@ -1,4 +1,4 @@
--import React, { Suspense, useEffect, useMemo, useState } from 'react';
-+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
- import { CustomField, DataCard, Folder } from '../../types/ui';
- import { useTranslation } from '../../../../shared/lib/i18n';
- import { useDetails } from './useDetails';
-@@ -29,6 +29,7 @@
-   type DataCardCoreField,
- } from '../../lib/datacardCoreHiddenFields';
- import { setDataCardPreviewFieldsForCard } from '../../api/vaultApi';
-+import { getCurrentWebview } from '@tauri-apps/api/webview';
+@@ -97,13 +97,31 @@ export function Details({
  
- const LazyAttachmentPreviewModal = React.lazy(() =>
-   import('../modals/AttachmentPreviewModal').then((m) => ({ default: m.default })),
-@@ -94,6 +95,54 @@
-     clipboardClearTimeoutSeconds,
-   });
- 
-+  const attachmentsDropRef = useRef<HTMLDivElement | null>(null);
-+  const [isAttachmentsDragOver, setIsAttachmentsDragOver] = useState(false);
-+  const addAttachmentsFromDrop = detailActions.onAddAttachmentsFromPaths;
+   const attachmentsDropRef = useRef<HTMLDivElement | null>(null);
+   const [isAttachmentsDragOver, setIsAttachmentsDragOver] = useState(false);
 +
+   const addAttachmentsFromDrop = detailActions.onAddAttachmentsFromPaths;
++  const addAttachmentsFromDropRef = useRef(addAttachmentsFromDrop);
 +  useEffect(() => {
-+    setIsAttachmentsDragOver(false);
-+    if (!card?.id || isTrashMode) return;
++    addAttachmentsFromDropRef.current = addAttachmentsFromDrop;
++  }, [addAttachmentsFromDrop]);
 +
-+    let unlisten: null | (() => void) = null;
++  const pendingDropPathsRef = useRef<Set<string>>(new Set());
++  const dropFlushTimerRef = useRef<number | null>(null);
+ 
+   useEffect(() => {
+     setIsAttachmentsDragOver(false);
+     if (!card?.id || isTrashMode) return;
+ 
+-    let unlisten: null | (() => void) = null;
++    let disposed = false;
 +
-+    const isInsideDropZone = (position: { x: number; y: number } | null | undefined) => {
-+      const el = attachmentsDropRef.current;
-+      if (!el || !position) return false;
-+      const rect = el.getBoundingClientRect();
-+      const dpr = window.devicePixelRatio || 1;
-+      const x = position.x / dpr;
-+      const y = position.y / dpr;
-+      return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
-+    };
-+
-+    void (async () => {
-+      try {
-+        unlisten = await getCurrentWebview().onDragDropEvent((event) => {
-+          const payload: any = event.payload as any;
-+          if (payload?.type === 'over') {
-+            setIsAttachmentsDragOver(isInsideDropZone(payload.position));
-+            return;
-+          }
-+          if (payload?.type === 'drop') {
-+            const inside = isInsideDropZone(payload.position);
-+            setIsAttachmentsDragOver(false);
-+            if (inside) {
-+              void addAttachmentsFromDrop((payload.paths ?? []) as string[]);
-+            }
-+            return;
-+          }
-+          setIsAttachmentsDragOver(false);
-+        });
-+      } catch (err) {
-+        console.error(err);
++    const clearDropFlushTimer = () => {
++      if (dropFlushTimerRef.current !== null) {
++        window.clearTimeout(dropFlushTimerRef.current);
++        dropFlushTimerRef.current = null;
 +      }
-+    })();
-+
-+    return () => {
-+      if (unlisten) unlisten();
++      pendingDropPathsRef.current.clear();
 +    };
-+  }, [card?.id, isTrashMode, addAttachmentsFromDrop]);
 +
++    clearDropFlushTimer();
+ 
+     const isInsideDropZone = (position: { x: number; y: number } | null | undefined) => {
+       const el = attachmentsDropRef.current;
+@@ -115,33 +133,46 @@ export function Details({
+       return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+     };
+ 
+-    void (async () => {
+-      try {
+-        unlisten = await getCurrentWebview().onDragDropEvent((event) => {
+-          const payload: any = event.payload as any;
+-          if (payload?.type === 'over') {
+-            setIsAttachmentsDragOver(isInsideDropZone(payload.position));
+-            return;
+-          }
+-          if (payload?.type === 'drop') {
+-            const inside = isInsideDropZone(payload.position);
+-            setIsAttachmentsDragOver(false);
+-            if (inside) {
+-              void addAttachmentsFromDrop((payload.paths ?? []) as string[]);
+-            }
+-            return;
+-          }
+-          setIsAttachmentsDragOver(false);
+-        });
+-      } catch (err) {
+-        console.error(err);
++    const scheduleAddFromDrop = (paths: string[]) => {
++      for (const p of paths) pendingDropPathsRef.current.add(p);
++      if (dropFlushTimerRef.current !== null) return;
++
++      dropFlushTimerRef.current = window.setTimeout(() => {
++        dropFlushTimerRef.current = null;
++        const uniquePaths = Array.from(pendingDropPathsRef.current);
++        pendingDropPathsRef.current.clear();
++        if (disposed || uniquePaths.length === 0) return;
++        void addAttachmentsFromDropRef.current(uniquePaths);
++      }, 25);
++    };
++
++    const unlistenPromise = getCurrentWebview().onDragDropEvent((event) => {
++      if (disposed) return;
++
++      const payload: any = event.payload as any;
++      if (payload?.type === 'over') {
++        setIsAttachmentsDragOver(isInsideDropZone(payload.position));
++        return;
+       }
+-    })();
++      if (payload?.type === 'drop') {
++        const inside = isInsideDropZone(payload.position);
++        setIsAttachmentsDragOver(false);
++        if (inside) {
++          scheduleAddFromDrop((payload.paths ?? []) as string[]);
++        }
++        return;
++      }
++      setIsAttachmentsDragOver(false);
++    });
++
++    unlistenPromise.catch((err) => console.error(err));
+ 
+     return () => {
+-      if (unlisten) unlisten();
++      disposed = true;
++      clearDropFlushTimer();
++      void unlistenPromise.then((unlisten) => unlisten()).catch(() => undefined);
+     };
+-  }, [card?.id, isTrashMode, addAttachmentsFromDrop]);
++  }, [card?.id, isTrashMode]);
+ 
    const folderName = useMemo(() => {
      if (!card) return '';
-     return card.folderId ? folders.find((f) => f.id === card.folderId)?.name ?? '' : '';
-@@ -779,7 +828,10 @@
-             </button>
-           )}
-         </div>
--        <div className="attachments-body">
-+        <div
-+          ref={attachmentsDropRef}
-+          className={`attachments-body${isAttachmentsDragOver ? ' drag-over' : ''}`}
-+        >
-           {detailActions.attachments.length === 0 && (
-             <div className="muted">{t('attachments.hint')}</div>
-           )}
-
---- a/src/shared/styles/screens/vault.css
-+++ b/src/shared/styles/screens/vault.css
-@@ -1034,6 +1034,12 @@
-   gap: 8px;
- }
- 
-+.attachments-body.drag-over {
-+  outline: 2px dashed var(--focus-border-strong);
-+  outline-offset: 4px;
-+  border-radius: var(--radius-sm);
-+}
-+
- .attachment-row {
-   display: flex;
-   justify-content: space-between;
-
---- a/src-tauri/src/commands/attachments.rs
-+++ b/src-tauri/src/commands/attachments.rs
-@@ -232,6 +232,28 @@
-     .map_err(|_| ErrorCodeString::new("TASK_JOIN_FAILED"))?
- }
- 
-+
-+
-+#[tauri::command]
-+pub async fn add_attachments_from_paths(
-+    app: AppHandle,
-+    datacard_id: String,
-+    paths: Vec<String>,
-+) -> Result<Vec<AttachmentMeta>> {
-+    tauri::async_runtime::spawn_blocking(move || {
-+        let mut out: Vec<AttachmentMeta> = Vec::new();
-+        for p in paths {
-+            let path = std::path::PathBuf::from(p);
-+            let meta =
-+                attachments_service::add_attachment_from_fs_path(&app, datacard_id.clone(), &path)?;
-+            out.push(meta);
-+        }
-+        Ok(out)
-+    })
-+    .await
-+    .map_err(|_| ErrorCodeString::new("TASK_JOIN_FAILED"))?
-+}
-+
- #[tauri::command]
- pub async fn save_attachment_via_dialog(app: AppHandle, attachment_id: String) -> Result<bool> {
-     tauri::async_runtime::spawn_blocking(move || {
-
---- a/src-tauri/src/main.rs
-+++ b/src-tauri/src/main.rs
-@@ -142,6 +142,7 @@
-             attachments_discard_pick,
-             add_attachments_from_pick,
-             add_attachments_via_dialog,
-+            add_attachments_from_paths,
-             remove_attachment,
-             purge_attachment,
-             get_attachment_bytes_base64,
-
---- a/src-tauri/permissions/app-default.toml
-+++ b/src-tauri/permissions/app-default.toml
-@@ -26,6 +26,7 @@
-   "attachments_discard_pick",
-   "add_attachments_from_pick",
-   "add_attachments_via_dialog",
-+  "add_attachments_from_paths",
-   "remove_attachment",
-   "purge_attachment",
-   "get_attachment_bytes_base64",
-
