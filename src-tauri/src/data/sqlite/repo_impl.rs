@@ -83,12 +83,165 @@ fn matches_all_tokens(haystack: &str, query: &str) -> bool {
     tokens.into_iter().all(|t| h.contains(t))
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum DataCardSearchField {
+    Title,
+    Url,
+    Email,
+    RecoveryEmail,
+    Username,
+    MobilePhone,
+    Password,
+    Note,
+    Tag,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum DataCardSearchTerm {
+    FreeText(String),
+    Field {
+        field: DataCardSearchField,
+        value: String,
+    },
+}
+
+fn tokenize_search_query(input: &str) -> Vec<String> {
+    let mut tokens: Vec<String> = Vec::new();
+    let mut cur = String::new();
+    let mut in_quotes = false;
+    let mut escaped = false;
+
+    for ch in input.chars() {
+        if escaped {
+            cur.push(ch);
+            escaped = false;
+            continue;
+        }
+
+        if in_quotes && ch == '\\' {
+            escaped = true;
+            continue;
+        }
+
+        if ch == '"' {
+            in_quotes = !in_quotes;
+            cur.push(ch);
+            continue;
+        }
+
+        if !in_quotes && ch.is_whitespace() {
+            if !cur.trim().is_empty() {
+                tokens.push(cur.trim().to_string());
+            }
+            cur.clear();
+            continue;
+        }
+
+        cur.push(ch);
+    }
+
+    if !cur.trim().is_empty() {
+        tokens.push(cur.trim().to_string());
+    }
+
+    tokens
+}
+
+fn strip_wrapping_quotes(input: &str) -> String {
+    let s = input.trim();
+    if s.len() >= 2 && s.starts_with('"') && s.ends_with('"') {
+        return s[1..s.len() - 1].to_string();
+    }
+    s.to_string()
+}
+
+fn canonicalize_datacard_field_key(raw: &str) -> String {
+    let key = raw.trim().to_lowercase();
+    match key.as_str() {
+        "mail" => "email".to_string(),
+        "tags" => "tag".to_string(),
+        "notes" => "note".to_string(),
+        "site" => "url".to_string(),
+        _ => key,
+    }
+}
+
+fn parse_datacard_search_term(token: &str) -> Option<DataCardSearchTerm> {
+    let token = token.trim();
+    if token.is_empty() {
+        return None;
+    }
+
+    let Some(pos) = token.find(':') else {
+        return Some(DataCardSearchTerm::FreeText(strip_wrapping_quotes(token)));
+    };
+
+    let (field_raw, value_raw_with_colon) = token.split_at(pos);
+    let value_raw = &value_raw_with_colon[1..]; // skip ':'
+
+    if field_raw.trim().is_empty() || value_raw.trim().is_empty() {
+        // Treat as plain text (e.g. "http://", "email:" with empty value, etc.)
+        return Some(DataCardSearchTerm::FreeText(strip_wrapping_quotes(token)));
+    }
+
+    let key = canonicalize_datacard_field_key(field_raw);
+    let field = match key.as_str() {
+        "title" => DataCardSearchField::Title,
+        "url" => DataCardSearchField::Url,
+        "email" => DataCardSearchField::Email,
+        "recovery_email" => DataCardSearchField::RecoveryEmail,
+        "username" => DataCardSearchField::Username,
+        "mobile_phone" => DataCardSearchField::MobilePhone,
+        "password" => DataCardSearchField::Password,
+        "note" => DataCardSearchField::Note,
+        "tag" => DataCardSearchField::Tag,
+        _ => {
+            return Some(DataCardSearchTerm::FreeText(strip_wrapping_quotes(token)));
+        }
+    };
+
+    let value = strip_wrapping_quotes(value_raw);
+    if value.trim().is_empty() {
+        return Some(DataCardSearchTerm::FreeText(strip_wrapping_quotes(token)));
+    }
+
+    Some(DataCardSearchTerm::Field { field, value })
+}
+
+fn parse_datacard_search_terms(query: &str) -> Vec<DataCardSearchTerm> {
+    tokenize_search_query(query)
+        .into_iter()
+        .filter_map(|t| parse_datacard_search_term(&t))
+        .filter(|t| match t {
+            DataCardSearchTerm::FreeText(v) => !v.trim().is_empty(),
+            DataCardSearchTerm::Field { value, .. } => !value.trim().is_empty(),
+        })
+        .collect()
+}
+
 pub fn search_datacard_ids(
     state: &Arc<AppState>,
     profile_id: &str,
     query: &str,
 ) -> Result<Vec<String>> {
+    let terms = parse_datacard_search_terms(query);
+
     with_connection_in_active_vault(state, profile_id, |conn, active_vault_id| {
+        #[derive(Debug)]
+        struct DataCardSearchRow {
+            id: String,
+            blob: String,
+            title: String,
+            url: String,
+            email: String,
+            recovery_email: String,
+            username: String,
+            mobile_phone: String,
+            note: String,
+            password: String,
+            tags_blob: String,
+        }
+
         let mut stmt = conn
             .prepare(
                 r#"
@@ -138,6 +291,15 @@ WHERE d.vault_id = ?1
                 let custom_fields: Vec<CustomField> =
                     deserialize_json(custom_fields_json).unwrap_or_default();
 
+                let url_s = url.clone().unwrap_or_default();
+                let email_s = email.clone().unwrap_or_default();
+                let recovery_email_s = recovery_email.clone().unwrap_or_default();
+                let username_s = username.clone().unwrap_or_default();
+                let mobile_phone_s = mobile_phone.clone().unwrap_or_default();
+                let note_s = note.clone().unwrap_or_default();
+                let password_s = password.clone().unwrap_or_default();
+                let tags_blob = tags.join("\n");
+
                 let mut blob = String::new();
                 blob.push_str(&title);
                 blob.push('\n');
@@ -178,8 +340,8 @@ WHERE d.vault_id = ?1
                     blob.push('\n');
                 }
 
-                for t in tags {
-                    blob.push_str(&t);
+                for t in &tags {
+                    blob.push_str(t);
                     blob.push('\n');
                 }
 
@@ -193,17 +355,65 @@ WHERE d.vault_id = ?1
                 // ВАЖНО: намеренно НЕ включаем в поиск:
                 // - seed_phrase_value
                 // - totp_uri
-                Ok((id, blob))
+                Ok(DataCardSearchRow {
+                    id,
+                    blob,
+                    title,
+                    url: url_s,
+                    email: email_s,
+                    recovery_email: recovery_email_s,
+                    username: username_s,
+                    mobile_phone: mobile_phone_s,
+                    note: note_s,
+                    password: password_s,
+                    tags_blob,
+                })
             })
             .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
 
         let mut out: Vec<String> = Vec::new();
         for row in rows {
-            let (id, blob) = row.map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
-            if matches_all_tokens(&blob, query) {
-                out.push(id);
+            let row = row.map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
+
+            if terms.is_empty() {
+                out.push(row.id);
+                continue;
+            }
+
+            let mut matched = true;
+            for term in &terms {
+                match term {
+                    DataCardSearchTerm::FreeText(q) => {
+                        if !matches_all_tokens(&row.blob, q) {
+                            matched = false;
+                            break;
+                        }
+                    }
+                    DataCardSearchTerm::Field { field, value } => {
+                        let haystack: &str = match field {
+                            DataCardSearchField::Title => &row.title,
+                            DataCardSearchField::Url => &row.url,
+                            DataCardSearchField::Email => &row.email,
+                            DataCardSearchField::RecoveryEmail => &row.recovery_email,
+                            DataCardSearchField::Username => &row.username,
+                            DataCardSearchField::MobilePhone => &row.mobile_phone,
+                            DataCardSearchField::Password => &row.password,
+                            DataCardSearchField::Note => &row.note,
+                            DataCardSearchField::Tag => &row.tags_blob,
+                        };
+                        if !matches_all_tokens(haystack, value) {
+                            matched = false;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if matched {
+                out.push(row.id);
             }
         }
+
         Ok(out)
     })
 }
