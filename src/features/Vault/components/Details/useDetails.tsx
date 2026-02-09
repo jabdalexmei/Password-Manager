@@ -4,6 +4,7 @@ import { useTranslation } from '../../../../shared/lib/i18n';
 import { useToaster } from '../../../../shared/components/Toaster';
 import { clipboardClearAll } from '../../../../shared/lib/tauri';
 import {
+  addAttachmentsFromPaths,
   addAttachmentsViaDialog,
   getAttachmentBytesBase64,
   listAttachments,
@@ -39,6 +40,7 @@ type UseDetailsResult = {
   purgeCard: () => void;
   attachments: Attachment[];
   onAddAttachment: () => Promise<void>;
+  onAddAttachmentsFromPaths: (paths: string[]) => Promise<void>;
   onDeleteAttachment: (attachmentId: string) => Promise<void>;
   onPreviewAttachment: (attachmentId: string) => Promise<void>;
   onDownloadAttachment: (attachmentId: string, defaultName: string) => Promise<void>;
@@ -218,6 +220,23 @@ export function useDetails({
     }
   }, [card, isTrashMode, refreshAttachments, showToast, t]);
 
+  const onAddAttachmentsFromPaths = useCallback(
+    async (paths: string[]) => {
+      if (!card || isTrashMode) return;
+      if (!paths.length) return;
+      try {
+        const added = await addAttachmentsFromPaths(card.id, paths);
+        if (!added.length) return;
+        await refreshAttachments();
+        showToast(t('toast.attachmentAddSuccess'), 'success');
+      } catch (err) {
+        console.error(err);
+        showToast(t('toast.attachmentAddError'), 'error');
+      }
+    },
+    [card, isTrashMode, refreshAttachments, showToast, t]
+  );
+
   const onDeleteAttachment = useCallback(
     async (attachmentId: string) => {
       if (!card) return;
@@ -313,6 +332,7 @@ export function useDetails({
     purgeCard,
     attachments,
     onAddAttachment,
+    onAddAttachmentsFromPaths,
     onDeleteAttachment,
     onPreviewAttachment,
     onDownloadAttachment,
