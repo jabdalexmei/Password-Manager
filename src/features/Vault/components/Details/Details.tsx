@@ -97,13 +97,31 @@ export function Details({
 
   const attachmentsDropRef = useRef<HTMLDivElement | null>(null);
   const [isAttachmentsDragOver, setIsAttachmentsDragOver] = useState(false);
+
   const addAttachmentsFromDrop = detailActions.onAddAttachmentsFromPaths;
+  const addAttachmentsFromDropRef = useRef(addAttachmentsFromDrop);
+  useEffect(() => {
+    addAttachmentsFromDropRef.current = addAttachmentsFromDrop;
+  }, [addAttachmentsFromDrop]);
+
+  const pendingDropPathsRef = useRef<Set<string>>(new Set());
+  const dropFlushTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     setIsAttachmentsDragOver(false);
     if (!card?.id || isTrashMode) return;
 
-    let unlisten: null | (() => void) = null;
+    let disposed = false;
+
+    const clearDropFlushTimer = () => {
+      if (dropFlushTimerRef.current !== null) {
+        window.clearTimeout(dropFlushTimerRef.current);
+        dropFlushTimerRef.current = null;
+      }
+      pendingDropPathsRef.current.clear();
+    };
+
+    clearDropFlushTimer();
 
     const isInsideDropZone = (position: { x: number; y: number } | null | undefined) => {
       const el = attachmentsDropRef.current;
@@ -115,33 +133,46 @@ export function Details({
       return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
     };
 
-    void (async () => {
-      try {
-        unlisten = await getCurrentWebview().onDragDropEvent((event) => {
-          const payload: any = event.payload as any;
-          if (payload?.type === 'over') {
-            setIsAttachmentsDragOver(isInsideDropZone(payload.position));
-            return;
-          }
-          if (payload?.type === 'drop') {
-            const inside = isInsideDropZone(payload.position);
-            setIsAttachmentsDragOver(false);
-            if (inside) {
-              void addAttachmentsFromDrop((payload.paths ?? []) as string[]);
-            }
-            return;
-          }
-          setIsAttachmentsDragOver(false);
-        });
-      } catch (err) {
-        console.error(err);
+    const scheduleAddFromDrop = (paths: string[]) => {
+      for (const p of paths) pendingDropPathsRef.current.add(p);
+      if (dropFlushTimerRef.current !== null) return;
+
+      dropFlushTimerRef.current = window.setTimeout(() => {
+        dropFlushTimerRef.current = null;
+        const uniquePaths = Array.from(pendingDropPathsRef.current);
+        pendingDropPathsRef.current.clear();
+        if (disposed || uniquePaths.length === 0) return;
+        void addAttachmentsFromDropRef.current(uniquePaths);
+      }, 25);
+    };
+
+    const unlistenPromise = getCurrentWebview().onDragDropEvent((event) => {
+      if (disposed) return;
+
+      const payload: any = event.payload as any;
+      if (payload?.type === 'over') {
+        setIsAttachmentsDragOver(isInsideDropZone(payload.position));
+        return;
       }
-    })();
+      if (payload?.type === 'drop') {
+        const inside = isInsideDropZone(payload.position);
+        setIsAttachmentsDragOver(false);
+        if (inside) {
+          scheduleAddFromDrop((payload.paths ?? []) as string[]);
+        }
+        return;
+      }
+      setIsAttachmentsDragOver(false);
+    });
+
+    unlistenPromise.catch((err) => console.error(err));
 
     return () => {
-      if (unlisten) unlisten();
+      disposed = true;
+      clearDropFlushTimer();
+      void unlistenPromise.then((unlisten) => unlisten()).catch(() => undefined);
     };
-  }, [card?.id, isTrashMode, addAttachmentsFromDrop]);
+  }, [card?.id, isTrashMode]);
 
   const folderName = useMemo(() => {
     if (!card) return '';
