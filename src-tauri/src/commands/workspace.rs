@@ -177,7 +177,14 @@ pub async fn workspace_list(state: State<'_, Arc<AppState>>) -> Result<Vec<Works
 }
 
 #[tauri::command]
+<<<<<<< HEAD
 pub async fn workspace_select(id: String, state: State<'_, Arc<AppState>>) -> Result<bool> {
+=======
+pub async fn workspace_select(
+    id: String,
+    state: State<'_, Arc<AppState>>,
+) -> Result<bool> {
+>>>>>>> origin/main
     let app_state = state.inner().clone();
     tauri::async_runtime::spawn_blocking(move || {
         let app_dir = app_dir_from_state(&app_state)?;
@@ -198,10 +205,17 @@ pub async fn workspace_select(id: String, state: State<'_, Arc<AppState>>) -> Re
         if registry.active_workspace_id.as_deref() == Some(&id) {
             if let Ok(sp) = app_state.get_storage_paths() {
                 if let Ok(current) = sp.workspace_root() {
+<<<<<<< HEAD
                     let current_can =
                         std::fs::canonicalize(current).unwrap_or_else(|_| current.clone());
                     let resolved_can =
                         std::fs::canonicalize(&resolved).unwrap_or_else(|_| resolved.clone());
+=======
+                    let current_can = std::fs::canonicalize(current)
+                        .unwrap_or_else(|_| current.clone());
+                    let resolved_can = std::fs::canonicalize(&resolved)
+                        .unwrap_or_else(|_| resolved.clone());
+>>>>>>> origin/main
                     if current_can == resolved_can {
                         return Ok(true);
                     }
@@ -232,6 +246,7 @@ pub async fn workspace_create(path: String, state: State<'_, Arc<AppState>>) -> 
 pub async fn workspace_create_via_dialog(
     app: AppHandle,
     state: State<'_, Arc<AppState>>,
+<<<<<<< HEAD
     dialog_title: Option<String>,
 ) -> Result<bool> {
     let app_state = state.inner().clone();
@@ -241,6 +256,12 @@ pub async fn workspace_create_via_dialog(
             .file()
             .set_title(dialog_title.unwrap_or_else(|| "Select data folder".to_string()))
             .blocking_pick_folder();
+=======
+) -> Result<bool> {
+    let app_state = state.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let selection = app.dialog().file().blocking_pick_folder();
+>>>>>>> origin/main
         let Some(fp) = selection else {
             return Ok(false);
         };

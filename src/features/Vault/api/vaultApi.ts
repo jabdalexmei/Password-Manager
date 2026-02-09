@@ -40,10 +40,13 @@ export async function deleteVault(id: string): Promise<boolean> {
   return invoke('delete_vault', { id });
 }
 
+<<<<<<< HEAD
 export async function setDefaultVault(id: string): Promise<boolean> {
   return invoke('set_default_vault', { id });
 }
 
+=======
+>>>>>>> origin/main
 export async function setActiveVault(id: string): Promise<boolean> {
   return invoke('set_active_vault', { id });
 }
@@ -304,6 +307,7 @@ export async function addAttachmentsViaDialog(datacardId: string): Promise<Backe
   return invoke('add_attachments_via_dialog', { datacardId });
 }
 
+<<<<<<< HEAD
 export async function addAttachmentsFromPaths(
   datacardId: string,
   paths: string[]
@@ -311,6 +315,8 @@ export async function addAttachmentsFromPaths(
   return invoke('add_attachments_from_paths', { datacardId, paths });
 }
 
+=======
+>>>>>>> origin/main
 export async function removeAttachment(attachmentId: string): Promise<void> {
   return invoke('remove_attachment', { attachmentId });
 }
@@ -323,6 +329,7 @@ export async function saveAttachmentViaDialog(attachmentId: string): Promise<boo
   return invoke('save_attachment_via_dialog', { attachmentId });
 }
 
+<<<<<<< HEAD
 export async function renameAttachment(
   attachmentId: string,
   fileName: string
@@ -330,6 +337,8 @@ export async function renameAttachment(
   return invoke('rename_attachment', { attachmentId, fileName });
 }
 
+=======
+>>>>>>> origin/main
 export type AttachmentPreviewDto = {
   attachmentId: string;
   fileName: string;

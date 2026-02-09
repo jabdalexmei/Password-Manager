@@ -1,8 +1,13 @@
 use chrono::Utc;
 use rusqlite::params;
 use rusqlite::types::Type;
+<<<<<<< HEAD
 use rusqlite::Connection;
 use rusqlite::OptionalExtension;
+=======
+use rusqlite::OptionalExtension;
+use rusqlite::Connection;
+>>>>>>> origin/main
 use uuid::Uuid;
 
 use super::diagnostics::log_sqlite_err;
@@ -12,7 +17,12 @@ use crate::types::{
     AttachmentMeta, BankCardItem, BankCardSummary, CreateBankCardInput, CreateDataCardInput,
     CustomField, DataCard, DataCardSummary, Folder, PasswordHistoryRow, SetBankCardArchivedInput,
     SetBankCardFavoriteInput, SetDataCardArchivedInput, SetDataCardFavoriteInput,
+<<<<<<< HEAD
     UpdateBankCardInput, UpdateDataCardInput, Vault,
+=======
+    UpdateBankCardInput, UpdateDataCardInput,
+    Vault,
+>>>>>>> origin/main
 };
 
 use std::sync::Arc;
@@ -50,6 +60,7 @@ fn current_active_vault_id(state: &Arc<AppState>) -> String {
         .unwrap_or_else(|| DEFAULT_VAULT_ID.to_string())
 }
 
+<<<<<<< HEAD
 fn vault_exists_conn(conn: &Connection, id: &str) -> Result<bool> {
     let exists = conn
         .query_row(
@@ -70,15 +81,22 @@ fn resolve_runtime_vault_id_conn(conn: &Connection, state: &Arc<AppState>) -> Re
     get_default_vault_id_conn(conn)
 }
 
+=======
+>>>>>>> origin/main
 fn with_connection_in_active_vault<T>(
     state: &Arc<AppState>,
     profile_id: &str,
     f: impl FnOnce(&Connection, &str) -> Result<T>,
 ) -> Result<T> {
+<<<<<<< HEAD
     with_connection(state, profile_id, |conn| {
         let active_vault_id = resolve_runtime_vault_id_conn(conn, state)?;
         f(conn, &active_vault_id)
     })
+=======
+    let active_vault_id = current_active_vault_id(state);
+    with_connection(state, profile_id, |conn| f(conn, &active_vault_id))
+>>>>>>> origin/main
 }
 
 fn deserialize_json<T: serde::de::DeserializeOwned>(value: String) -> rusqlite::Result<T> {
@@ -104,6 +122,7 @@ fn matches_all_tokens(haystack: &str, query: &str) -> bool {
     tokens.into_iter().all(|t| h.contains(t))
 }
 
+<<<<<<< HEAD
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum DataCardSearchField {
     Title,
@@ -242,11 +261,14 @@ fn parse_datacard_search_terms(query: &str) -> Vec<DataCardSearchTerm> {
         .collect()
 }
 
+=======
+>>>>>>> origin/main
 pub fn search_datacard_ids(
     state: &Arc<AppState>,
     profile_id: &str,
     query: &str,
 ) -> Result<Vec<String>> {
+<<<<<<< HEAD
     let terms = parse_datacard_search_terms(query);
 
     with_connection_in_active_vault(state, profile_id, |conn, active_vault_id| {
@@ -265,6 +287,9 @@ pub fn search_datacard_ids(
             tags_blob: String,
         }
 
+=======
+    with_connection_in_active_vault(state, profile_id, |conn, active_vault_id| {
+>>>>>>> origin/main
         let mut stmt = conn
             .prepare(
                 r#"
@@ -314,6 +339,7 @@ WHERE d.vault_id = ?1
                 let custom_fields: Vec<CustomField> =
                     deserialize_json(custom_fields_json).unwrap_or_default();
 
+<<<<<<< HEAD
                 let url_s = url.clone().unwrap_or_default();
                 let email_s = email.clone().unwrap_or_default();
                 let recovery_email_s = recovery_email.clone().unwrap_or_default();
@@ -323,6 +349,8 @@ WHERE d.vault_id = ?1
                 let password_s = password.clone().unwrap_or_default();
                 let tags_blob = tags.join("\n");
 
+=======
+>>>>>>> origin/main
                 let mut blob = String::new();
                 blob.push_str(&title);
                 blob.push('\n');
@@ -363,8 +391,13 @@ WHERE d.vault_id = ?1
                     blob.push('\n');
                 }
 
+<<<<<<< HEAD
                 for t in &tags {
                     blob.push_str(t);
+=======
+                for t in tags {
+                    blob.push_str(&t);
+>>>>>>> origin/main
                     blob.push('\n');
                 }
 
@@ -378,6 +411,7 @@ WHERE d.vault_id = ?1
                 // ВАЖНО: намеренно НЕ включаем в поиск:
                 // - seed_phrase_value
                 // - totp_uri
+<<<<<<< HEAD
                 Ok(DataCardSearchRow {
                     id,
                     blob,
@@ -391,11 +425,15 @@ WHERE d.vault_id = ?1
                     password: password_s,
                     tags_blob,
                 })
+=======
+                Ok((id, blob))
+>>>>>>> origin/main
             })
             .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
 
         let mut out: Vec<String> = Vec::new();
         for row in rows {
+<<<<<<< HEAD
             let row = row.map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
 
             if terms.is_empty() {
@@ -437,6 +475,13 @@ WHERE d.vault_id = ?1
             }
         }
 
+=======
+            let (id, blob) = row.map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
+            if matches_all_tokens(&blob, query) {
+                out.push(id);
+            }
+        }
+>>>>>>> origin/main
         Ok(out)
     })
 }
@@ -624,6 +669,7 @@ fn map_bank_card(row: &rusqlite::Row) -> rusqlite::Result<BankCardItem> {
         expiry_mm_yy: row.get("expiry_mm_yy")?,
         cvc: row.get("cvc")?,
         note: row.get("note")?,
+<<<<<<< HEAD
         tags: deserialize_json(
             row.get::<_, Option<String>>("tags_json")?
                 .unwrap_or_else(|| "[]".to_string()),
@@ -632,6 +678,10 @@ fn map_bank_card(row: &rusqlite::Row) -> rusqlite::Result<BankCardItem> {
             row.get::<_, Option<String>>("preview_fields_json")?
                 .unwrap_or_else(|| "{}".to_string()),
         )?,
+=======
+        tags: deserialize_json(row.get::<_, Option<String>>("tags_json")?.unwrap_or_else(|| "[]".to_string()))?,
+        preview_fields: deserialize_json(row.get::<_, Option<String>>("preview_fields_json")?.unwrap_or_else(|| "{}".to_string()))?,
+>>>>>>> origin/main
         is_favorite: row.get::<_, i64>("is_favorite")? != 0,
         created_at: row.get("created_at")?,
         updated_at: row.get("updated_at")?,
@@ -641,10 +691,15 @@ fn map_bank_card(row: &rusqlite::Row) -> rusqlite::Result<BankCardItem> {
 }
 
 fn map_bank_card_summary(row: &rusqlite::Row) -> rusqlite::Result<BankCardSummary> {
+<<<<<<< HEAD
     let tags: Vec<String> = deserialize_json(
         row.get::<_, Option<String>>("tags_json")?
             .unwrap_or_else(|| "[]".to_string()),
     )?;
+=======
+    let tags: Vec<String> =
+        deserialize_json(row.get::<_, Option<String>>("tags_json")?.unwrap_or_else(|| "[]".to_string()))?;
+>>>>>>> origin/main
     let is_favorite = row.get::<_, i64>("is_favorite")? != 0;
 
     Ok(BankCardSummary {
@@ -726,6 +781,7 @@ fn get_vault_by_id_conn(conn: &Connection, id: &str) -> Result<Vault> {
         .map_err(|_| ErrorCodeString::new("VAULT_NOT_FOUND"))
 }
 
+<<<<<<< HEAD
 fn get_default_vault_by_conn(conn: &Connection) -> Result<Vault> {
     let default_sql = "SELECT id, name, is_default, created_at, updated_at FROM vaults WHERE is_default = 1 LIMIT 1";
     match conn.query_row(default_sql, [], map_vault) {
@@ -744,6 +800,8 @@ fn get_default_vault_id_conn(conn: &Connection) -> Result<String> {
     Ok(get_default_vault_by_conn(conn)?.id)
 }
 
+=======
+>>>>>>> origin/main
 pub fn list_vaults(state: &Arc<AppState>, profile_id: &str) -> Result<Vec<Vault>> {
     with_connection(state, profile_id, |conn| {
         let sql = "SELECT id, name, is_default, created_at, updated_at FROM vaults ORDER BY is_default DESC, name COLLATE NOCASE ASC, id ASC";
@@ -772,10 +830,13 @@ pub fn get_vault(state: &Arc<AppState>, profile_id: &str, id: &str) -> Result<Va
     with_connection(state, profile_id, |conn| get_vault_by_id_conn(conn, id))
 }
 
+<<<<<<< HEAD
 pub fn get_default_vault(state: &Arc<AppState>, profile_id: &str) -> Result<Vault> {
     with_connection(state, profile_id, get_default_vault_by_conn)
 }
 
+=======
+>>>>>>> origin/main
 pub fn create_vault(state: &Arc<AppState>, profile_id: &str, name: &str) -> Result<Vault> {
     with_connection(state, profile_id, |conn| {
         let now = Utc::now().to_rfc3339();
@@ -792,7 +853,14 @@ pub fn create_vault(state: &Arc<AppState>, profile_id: &str, name: &str) -> Resu
 
 pub fn rename_vault(state: &Arc<AppState>, profile_id: &str, id: &str, name: &str) -> Result<bool> {
     with_connection(state, profile_id, |conn| {
+<<<<<<< HEAD
         let _ = get_vault_by_id_conn(conn, id)?;
+=======
+        let vault = get_vault_by_id_conn(conn, id)?;
+        if vault.is_default {
+            return Err(ErrorCodeString::new("VAULT_DEFAULT_IMMUTABLE"));
+        }
+>>>>>>> origin/main
 
         let trimmed = name.trim();
         if trimmed.is_empty() {
@@ -812,6 +880,7 @@ pub fn rename_vault(state: &Arc<AppState>, profile_id: &str, id: &str, name: &st
     })
 }
 
+<<<<<<< HEAD
 pub fn set_default_vault(state: &Arc<AppState>, profile_id: &str, vault_id: &str) -> Result<bool> {
     with_connection(state, profile_id, |conn| {
         conn.execute("BEGIN IMMEDIATE", [])
@@ -848,6 +917,8 @@ pub fn set_default_vault(state: &Arc<AppState>, profile_id: &str, vault_id: &str
     })
 }
 
+=======
+>>>>>>> origin/main
 pub fn delete_vault(state: &Arc<AppState>, profile_id: &str, id: &str) -> Result<bool> {
     with_connection(state, profile_id, |conn| {
         let vault = get_vault_by_id_conn(conn, id)?;
@@ -1256,7 +1327,14 @@ pub fn list_deleted_datacards_summary(
     })
 }
 
+<<<<<<< HEAD
 pub fn list_deleted_datacard_ids(state: &Arc<AppState>, profile_id: &str) -> Result<Vec<String>> {
+=======
+pub fn list_deleted_datacard_ids(
+    state: &Arc<AppState>,
+    profile_id: &str,
+) -> Result<Vec<String>> {
+>>>>>>> origin/main
     with_connection_in_active_vault(state, profile_id, |conn, active_vault_id| {
         let mut stmt = conn
             .prepare(
@@ -1630,7 +1708,14 @@ pub fn list_deleted_bank_cards_summary(
     })
 }
 
+<<<<<<< HEAD
 pub fn list_deleted_bank_card_ids(state: &Arc<AppState>, profile_id: &str) -> Result<Vec<String>> {
+=======
+pub fn list_deleted_bank_card_ids(
+    state: &Arc<AppState>,
+    profile_id: &str,
+) -> Result<Vec<String>> {
+>>>>>>> origin/main
     with_connection_in_active_vault(state, profile_id, |conn, active_vault_id| {
         let mut stmt = conn
             .prepare(
@@ -1661,6 +1746,7 @@ fn get_bank_card_by_id_conn(conn: &Connection, id: &str, vault_id: &str) -> Resu
 
     match stmt.query_row(params![id, vault_id], map_bank_card) {
         Ok(card) => Ok(card),
+<<<<<<< HEAD
         Err(rusqlite::Error::QueryReturnedNoRows) => {
             Err(ErrorCodeString::new("BANK_CARD_NOT_FOUND"))
         }
@@ -1670,6 +1756,11 @@ fn get_bank_card_by_id_conn(conn: &Connection, id: &str, vault_id: &str) -> Resu
                 "SELECT * FROM bank_cards WHERE id = ?1",
                 &err,
             );
+=======
+        Err(rusqlite::Error::QueryReturnedNoRows) => Err(ErrorCodeString::new("BANK_CARD_NOT_FOUND")),
+        Err(err) => {
+            log_sqlite_err("get_bank_card.query_row", "SELECT * FROM bank_cards WHERE id = ?1", &err);
+>>>>>>> origin/main
             Err(ErrorCodeString::new("DB_QUERY_FAILED"))
         }
     }
@@ -1872,7 +1963,11 @@ pub fn purge_bank_cards_in_folder(
             "DELETE FROM bank_cards WHERE folder_id = ?1 AND vault_id = ?2",
             params![folder_id, active_vault_id],
         )
+<<<<<<< HEAD
         .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
+=======
+            .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
+>>>>>>> origin/main
         Ok(true)
     })
 }
@@ -2021,6 +2116,7 @@ pub fn soft_delete_attachment(
     })
 }
 
+<<<<<<< HEAD
 pub fn rename_attachment(
     state: &Arc<AppState>,
     profile_id: &str,
@@ -2044,6 +2140,8 @@ pub fn rename_attachment(
     })
 }
 
+=======
+>>>>>>> origin/main
 pub fn set_datacard_preview_fields_for_card(
     state: &Arc<AppState>,
     profile_id: &str,
@@ -2138,10 +2236,14 @@ pub fn list_password_history(
             .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
 
         let rows = stmt
+<<<<<<< HEAD
             .query_map(
                 params![datacard_id, active_vault_id],
                 map_password_history_row,
             )
+=======
+            .query_map(params![datacard_id, active_vault_id], map_password_history_row)
+>>>>>>> origin/main
             .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?
             .collect::<rusqlite::Result<Vec<_>>>()
             .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;

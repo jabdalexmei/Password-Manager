@@ -21,8 +21,21 @@ const MAX_RESTORE_TOTAL_BYTES: i64 = 512 * 1024 * 1024;
 
 use crate::data::fs::atomic_write::write_atomic;
 use crate::data::profiles::paths::{
+<<<<<<< HEAD
     backup_registry_path, backups_dir, ensure_profile_dirs, kdf_salt_path, key_check_path,
     profile_config_path, profile_dir, user_settings_path, vault_db_path, vault_key_path,
+=======
+    backup_registry_path,
+    backups_dir,
+    kdf_salt_path,
+    key_check_path,
+    profile_config_path,
+    profile_dir,
+    ensure_profile_dirs,
+    user_settings_path,
+    vault_db_path,
+    vault_key_path,
+>>>>>>> origin/main
 };
 use crate::data::profiles::registry;
 use crate::data::storage_paths::StoragePaths;
@@ -121,8 +134,12 @@ fn load_registry(sp: &StoragePaths, profile_id: &str) -> Result<BackupRegistry> 
     if !path.exists() {
         return Ok(BackupRegistry::default());
     }
+<<<<<<< HEAD
     let content =
         fs::read_to_string(&path).map_err(|_| ErrorCodeString::new("BACKUP_CREATE_FAILED"))?;
+=======
+    let content = fs::read_to_string(&path).map_err(|_| ErrorCodeString::new("BACKUP_CREATE_FAILED"))?;
+>>>>>>> origin/main
     serde_json::from_str(&content).map_err(|_| ErrorCodeString::new("BACKUP_CREATE_FAILED"))
 }
 
@@ -130,6 +147,7 @@ fn save_registry(sp: &StoragePaths, profile_id: &str, registry: &BackupRegistry)
     let path = backup_registry_path(sp, profile_id)?;
     let serialized = serde_json::to_string_pretty(registry)
         .map_err(|_| ErrorCodeString::new("BACKUP_CREATE_FAILED"))?;
+<<<<<<< HEAD
     write_atomic(&path, serialized.as_bytes())
         .map_err(|_| ErrorCodeString::new("BACKUP_CREATE_FAILED"))
 }
@@ -139,6 +157,12 @@ fn update_registry(
     profile_id: &str,
     update: impl FnOnce(&mut BackupRegistry),
 ) -> Result<()> {
+=======
+    write_atomic(&path, serialized.as_bytes()).map_err(|_| ErrorCodeString::new("BACKUP_CREATE_FAILED"))
+}
+
+fn update_registry(sp: &StoragePaths, profile_id: &str, update: impl FnOnce(&mut BackupRegistry)) -> Result<()> {
+>>>>>>> origin/main
     let mut registry = load_registry(sp, profile_id)?;
     update(&mut registry);
     save_registry(sp, profile_id, &registry)
@@ -174,10 +198,14 @@ fn validate_profile_id_component(profile_id: &str) -> bool {
     let p = Path::new(profile_id);
     let mut components = p.components();
 
+<<<<<<< HEAD
     matches!(
         (components.next(), components.next()),
         (Some(Component::Normal(_)), None)
     )
+=======
+    matches!((components.next(), components.next()), (Some(Component::Normal(_)), None))
+>>>>>>> origin/main
 }
 
 // Backup restore safety: we refuse to write any file that looks like plaintext vault data.
@@ -293,6 +321,12 @@ fn validate_backup_entry_header(
     Ok(())
 }
 
+<<<<<<< HEAD
+=======
+
+
+
+>>>>>>> origin/main
 fn best_effort_fsync_rename_dirs(_src: &Path, _dst: &Path) {
     // Windows-only build: directory fsync is not portable; keep best-effort hook as no-op.
     let _ = (_src, _dst);
@@ -306,6 +340,7 @@ fn rename_platform(src: &Path, dst: &Path) -> std::io::Result<()> {
     let src_w: Vec<u16> = src.as_os_str().encode_wide().chain(iter::once(0)).collect();
     let dst_w: Vec<u16> = dst.as_os_str().encode_wide().chain(iter::once(0)).collect();
     let ok = unsafe { MoveFileExW(src_w.as_ptr(), dst_w.as_ptr(), MOVEFILE_WRITE_THROUGH) };
+<<<<<<< HEAD
     if ok == 0 {
         Err(std::io::Error::last_os_error())
     } else {
@@ -313,6 +348,13 @@ fn rename_platform(src: &Path, dst: &Path) -> std::io::Result<()> {
     }
 }
 
+=======
+    if ok == 0 { Err(std::io::Error::last_os_error()) } else { Ok(()) }
+}
+
+
+
+>>>>>>> origin/main
 fn is_transient_windows_fs_error(e: &std::io::Error) -> bool {
     // Windows can report file-in-use scenarios either as PermissionDenied or as raw OS errors.
     // Retrying helps when antivirus/indexer/Explorer briefly holds the file.
@@ -352,7 +394,11 @@ fn map_restore_io_error(
 
     match os {
         Some(206) => ErrorCodeString::new("BACKUP_RESTORE_PATH_TOO_LONG"), // ERROR_FILENAME_EXCED_RANGE
+<<<<<<< HEAD
         Some(112) => ErrorCodeString::new("BACKUP_RESTORE_DISK_FULL"),     // ERROR_DISK_FULL
+=======
+        Some(112) => ErrorCodeString::new("BACKUP_RESTORE_DISK_FULL"),    // ERROR_DISK_FULL
+>>>>>>> origin/main
         _ => ErrorCodeString::new("BACKUP_RESTORE_FAILED"),
     }
 }
@@ -387,7 +433,13 @@ fn rename_with_retry(src: &Path, dst: &Path) -> std::io::Result<()> {
             }
         }
     }
+<<<<<<< HEAD
     Err(last_err.unwrap_or_else(|| std::io::Error::new(std::io::ErrorKind::Other, "rename failed")))
+=======
+    Err(last_err.unwrap_or_else(|| {
+        std::io::Error::new(std::io::ErrorKind::Other, "rename failed")
+    }))
+>>>>>>> origin/main
 }
 
 fn ensure_backup_guard(state: &Arc<AppState>) -> Result<std::sync::MutexGuard<'_, ()>> {
@@ -411,8 +463,12 @@ fn add_file_to_zip(
     writer
         .start_file(archive_path, options)
         .map_err(|_| ErrorCodeString::new("BACKUP_ZIP_WRITE_FAILED"))?;
+<<<<<<< HEAD
     let file =
         fs::File::open(source_path).map_err(|_| ErrorCodeString::new("BACKUP_CREATE_FAILED"))?;
+=======
+    let file = fs::File::open(source_path).map_err(|_| ErrorCodeString::new("BACKUP_CREATE_FAILED"))?;
+>>>>>>> origin/main
     let mut reader = BufReader::new(file);
     let mut buffer = [0u8; 64 * 1024];
     let mut hasher = Sha256::new();
@@ -525,6 +581,7 @@ fn create_archive(
     created_at_utc: &str,
 ) -> Result<i64> {
     let tmp_dest = PathBuf::from(format!("{}.tmp", destination.display()));
+<<<<<<< HEAD
     let file = fs::File::create(&tmp_dest)
         .map_err(|_| ErrorCodeString::new("BACKUP_DESTINATION_UNAVAILABLE"))?;
     let mut writer = ZipWriter::new(file);
@@ -541,6 +598,18 @@ fn create_archive(
         for entry_res in WalkDir::new(&source.attachments_path).into_iter() {
             let entry =
                 entry_res.map_err(|_| ErrorCodeString::new("BACKUP_ATTACHMENTS_ENUM_FAILED"))?;
+=======
+    let file = fs::File::create(&tmp_dest).map_err(|_| ErrorCodeString::new("BACKUP_DESTINATION_UNAVAILABLE"))?;
+    let mut writer = ZipWriter::new(file);
+    let mut manifest_entries = Vec::new();
+
+    add_file_to_zip(&mut writer, &source.vault_path, "vault.db", &mut manifest_entries)?;
+
+    if source.attachments_path.exists() {
+        for entry_res in WalkDir::new(&source.attachments_path).into_iter() {
+            let entry = entry_res
+                .map_err(|_| ErrorCodeString::new("BACKUP_ATTACHMENTS_ENUM_FAILED"))?;
+>>>>>>> origin/main
             if !entry.file_type().is_file() {
                 continue;
             }
@@ -550,6 +619,7 @@ fn create_archive(
                 .map_err(|_| ErrorCodeString::new("BACKUP_CREATE_FAILED"))?;
             let relative_str = relative.to_string_lossy().replace('\\', "/");
             let archive_path = format!("attachments/{relative_str}");
+<<<<<<< HEAD
             add_file_to_zip(
                 &mut writer,
                 entry.path(),
@@ -565,6 +635,13 @@ fn create_archive(
         "config.json",
         &mut manifest_entries,
     )?;
+=======
+            add_file_to_zip(&mut writer, entry.path(), &archive_path, &mut manifest_entries)?;
+        }
+    }
+
+    add_optional_file(&mut writer, source.config_path, "config.json", &mut manifest_entries)?;
+>>>>>>> origin/main
     add_optional_file(
         &mut writer,
         source.settings_path,
@@ -579,12 +656,16 @@ fn create_archive(
         if !vault_key_path.exists() {
             return Err(ErrorCodeString::new("VAULT_KEY_MISSING"));
         }
+<<<<<<< HEAD
         add_file_to_zip(
             &mut writer,
             vault_key_path,
             "vault_key.bin",
             &mut manifest_entries,
         )?;
+=======
+        add_file_to_zip(&mut writer, vault_key_path, "vault_key.bin", &mut manifest_entries)?;
+>>>>>>> origin/main
 
         let salt_path = source
             .kdf_salt_path
@@ -593,12 +674,16 @@ fn create_archive(
         if !salt_path.exists() {
             return Err(ErrorCodeString::new("KDF_SALT_MISSING"));
         }
+<<<<<<< HEAD
         add_file_to_zip(
             &mut writer,
             salt_path,
             "kdf_salt.bin",
             &mut manifest_entries,
         )?;
+=======
+        add_file_to_zip(&mut writer, salt_path, "kdf_salt.bin", &mut manifest_entries)?;
+>>>>>>> origin/main
 
         let key_check_path = source
             .key_check_path
@@ -607,12 +692,16 @@ fn create_archive(
         if !key_check_path.exists() {
             return Err(ErrorCodeString::new("KEY_CHECK_MISSING"));
         }
+<<<<<<< HEAD
         add_file_to_zip(
             &mut writer,
             key_check_path,
             "key_check.bin",
             &mut manifest_entries,
         )?;
+=======
+        add_file_to_zip(&mut writer, key_check_path, "key_check.bin", &mut manifest_entries)?;
+>>>>>>> origin/main
     } else if vault_mode == "passwordless" {
         let vault_key_path = source
             .vault_key_path
@@ -621,12 +710,16 @@ fn create_archive(
         if !vault_key_path.exists() {
             return Err(ErrorCodeString::new("VAULT_KEY_MISSING"));
         }
+<<<<<<< HEAD
         add_file_to_zip(
             &mut writer,
             vault_key_path,
             "vault_key.bin",
             &mut manifest_entries,
         )?;
+=======
+        add_file_to_zip(&mut writer, vault_key_path, "vault_key.bin", &mut manifest_entries)?;
+>>>>>>> origin/main
     } else {
         return Err(ErrorCodeString::new("BACKUP_MANIFEST_INVALID"));
     }
@@ -672,9 +765,13 @@ fn create_archive(
 }
 
 fn prune_registry(registry: &mut BackupRegistry) {
+<<<<<<< HEAD
     registry
         .backups
         .retain(|item| PathBuf::from(&item.path).exists());
+=======
+    registry.backups.retain(|item| PathBuf::from(&item.path).exists());
+>>>>>>> origin/main
 }
 
 fn apply_max_copies(settings: &UserSettings, managed_root: &Path, registry: &mut BackupRegistry) {
@@ -739,8 +836,12 @@ fn resolve_destination_path(
         return Ok((id, path.to_string_lossy().to_string()));
     }
 
+<<<<<<< HEAD
     let destination_path =
         destination_path.ok_or_else(|| ErrorCodeString::new("BACKUP_DESTINATION_REQUIRED"))?;
+=======
+    let destination_path = destination_path.ok_or_else(|| ErrorCodeString::new("BACKUP_DESTINATION_REQUIRED"))?;
+>>>>>>> origin/main
     let destination = PathBuf::from(destination_path);
     if let Some(parent) = destination.parent() {
         if !parent.exists() {
@@ -762,8 +863,12 @@ fn create_backup_internal(
     let profile_id = require_unlocked_active_profile_id(state)?;
     let sp = state.get_storage_paths()?;
 
+<<<<<<< HEAD
     let (backup_id, destination) =
         resolve_destination_path(&sp, &profile_id, destination_path, use_default_path)?;
+=======
+    let (backup_id, destination) = resolve_destination_path(&sp, &profile_id, destination_path, use_default_path)?;
+>>>>>>> origin/main
     let destination_path = PathBuf::from(&destination);
 
     if let Some(parent) = destination_path.parent() {
@@ -830,8 +935,13 @@ fn read_backup_manifest_and_name(backup_path: &Path) -> Result<(BackupManifest, 
         return Err(ErrorCodeString::new("BACKUP_ARCHIVE_INVALID"));
     }
 
+<<<<<<< HEAD
     let archive_file =
         fs::File::open(backup_path).map_err(|_| ErrorCodeString::new("BACKUP_ARCHIVE_INVALID"))?;
+=======
+    let archive_file = fs::File::open(backup_path)
+        .map_err(|_| ErrorCodeString::new("BACKUP_ARCHIVE_INVALID"))?;
+>>>>>>> origin/main
     let mut archive = ZipArchive::new(archive_file)
         .map_err(|_| ErrorCodeString::new("BACKUP_ARCHIVE_INVALID"))?;
 
@@ -845,8 +955,13 @@ fn read_backup_manifest_and_name(backup_path: &Path) -> Result<(BackupManifest, 
             .map_err(|_| ErrorCodeString::new("BACKUP_MANIFEST_INVALID"))?;
     }
 
+<<<<<<< HEAD
     let manifest: BackupManifest = serde_json::from_str(&manifest_contents)
         .map_err(|_| ErrorCodeString::new("BACKUP_MANIFEST_INVALID"))?;
+=======
+    let manifest: BackupManifest =
+        serde_json::from_str(&manifest_contents).map_err(|_| ErrorCodeString::new("BACKUP_MANIFEST_INVALID"))?;
+>>>>>>> origin/main
 
     if manifest.format_version != 1 {
         return Err(ErrorCodeString::new("BACKUP_UNSUPPORTED_FORMAT"));
@@ -908,8 +1023,13 @@ fn restore_archive_to_profile(
         backup_path
     );
 
+<<<<<<< HEAD
     let archive_file =
         fs::File::open(&backup_path).map_err(|_| ErrorCodeString::new("BACKUP_ARCHIVE_INVALID"))?;
+=======
+    let archive_file = fs::File::open(&backup_path)
+        .map_err(|_| ErrorCodeString::new("BACKUP_ARCHIVE_INVALID"))?;
+>>>>>>> origin/main
     let mut archive = ZipArchive::new(archive_file)
         .map_err(|_| ErrorCodeString::new("BACKUP_ARCHIVE_INVALID"))?;
 
@@ -923,8 +1043,13 @@ fn restore_archive_to_profile(
             .map_err(|_| ErrorCodeString::new("BACKUP_MANIFEST_INVALID"))?;
     }
 
+<<<<<<< HEAD
     let manifest: BackupManifest = serde_json::from_str(&manifest_contents)
         .map_err(|_| ErrorCodeString::new("BACKUP_MANIFEST_INVALID"))?;
+=======
+    let manifest: BackupManifest =
+        serde_json::from_str(&manifest_contents).map_err(|_| ErrorCodeString::new("BACKUP_MANIFEST_INVALID"))?;
+>>>>>>> origin/main
 
     let has_password = manifest.vault_mode == "protected";
     ensure_profile_dirs(sp, target_profile_id, has_password)?;
@@ -1035,18 +1160,29 @@ fn restore_archive_to_profile(
                 .map_err(|e| map_restore_io_error("create_parent_dirs", Some(parent), None, e))?;
         }
 
+<<<<<<< HEAD
         let file = fs::File::create(&target_path).map_err(|e| {
             map_restore_io_error("create_extracted_file", Some(&target_path), None, e)
         })?;
+=======
+        let file = fs::File::create(&target_path)
+            .map_err(|e| map_restore_io_error("create_extracted_file", Some(&target_path), None, e))?;
+>>>>>>> origin/main
         let mut writer = BufWriter::new(file);
         let mut buffer = [0u8; 64 * 1024];
         let mut hasher = Sha256::new();
         let mut bytes_written = 0i64;
 
         if !pre_read.is_empty() {
+<<<<<<< HEAD
             writer.write_all(&pre_read).map_err(|e| {
                 map_restore_io_error("write_extracted_file", Some(&target_path), None, e)
             })?;
+=======
+            writer
+                .write_all(&pre_read)
+                .map_err(|e| map_restore_io_error("write_extracted_file", Some(&target_path), None, e))?;
+>>>>>>> origin/main
             bytes_written = bytes_written
                 .checked_add(pre_read.len() as i64)
                 .ok_or_else(|| ErrorCodeString::new("BACKUP_ARCHIVE_TOO_LARGE"))?;
@@ -1068,9 +1204,15 @@ fn restore_archive_to_profile(
             if read == 0 {
                 break;
             }
+<<<<<<< HEAD
             writer.write_all(&buffer[..read]).map_err(|e| {
                 map_restore_io_error("write_extracted_file", Some(&target_path), None, e)
             })?;
+=======
+            writer
+                .write_all(&buffer[..read])
+                .map_err(|e| map_restore_io_error("write_extracted_file", Some(&target_path), None, e))?;
+>>>>>>> origin/main
             bytes_written = bytes_written
                 .checked_add(read as i64)
                 .ok_or_else(|| ErrorCodeString::new("BACKUP_ARCHIVE_TOO_LARGE"))?;
@@ -1085,12 +1227,22 @@ fn restore_archive_to_profile(
             hasher.update(&buffer[..read]);
         }
 
+<<<<<<< HEAD
         writer.flush().map_err(|e| {
             map_restore_io_error("flush_extracted_file", Some(&target_path), None, e)
         })?;
         writer.get_ref().sync_all().map_err(|e| {
             map_restore_io_error("sync_extracted_file", Some(&target_path), None, e)
         })?;
+=======
+        writer
+            .flush()
+            .map_err(|e| map_restore_io_error("flush_extracted_file", Some(&target_path), None, e))?;
+        writer
+            .get_ref()
+            .sync_all()
+            .map_err(|e| map_restore_io_error("sync_extracted_file", Some(&target_path), None, e))?;
+>>>>>>> origin/main
 
         let sha256 = hex::encode(hasher.finalize());
         if sha256 != entry.sha256 || bytes_written != entry.bytes {
@@ -1133,9 +1285,14 @@ fn restore_archive_to_profile(
 
         let tmp = profile_root.join(format!("vault.db.restore.{}", Uuid::new_v4()));
         vault_tmp_path = Some(tmp.clone());
+<<<<<<< HEAD
         fs::copy(&extracted_vault, &tmp).map_err(|e| {
             map_restore_io_error("copy_vault_to_tmp", Some(&extracted_vault), Some(&tmp), e)
         })?;
+=======
+        fs::copy(&extracted_vault, &tmp)
+            .map_err(|e| map_restore_io_error("copy_vault_to_tmp", Some(&extracted_vault), Some(&tmp), e))?;
+>>>>>>> origin/main
         fs::OpenOptions::new()
             .read(true)
             .write(true)
@@ -1145,7 +1302,16 @@ fn restore_archive_to_profile(
             .map_err(|e| map_restore_io_error("sync_tmp_vault", Some(&tmp), None, e))?;
 
         rename_with_retry(&tmp, &vault_path).map_err(|e| {
+<<<<<<< HEAD
             map_restore_io_error("rename_tmp_vault_to_live", Some(&tmp), Some(&vault_path), e)
+=======
+            map_restore_io_error(
+                "rename_tmp_vault_to_live",
+                Some(&tmp),
+                Some(&vault_path),
+                e,
+            )
+>>>>>>> origin/main
         })?;
         vault_replaced = true;
 
@@ -1171,11 +1337,19 @@ fn restore_archive_to_profile(
                 )
             })?;
             restored_attachments_created = true;
+<<<<<<< HEAD
         } else {
             if !attachments_path.exists() {
                 fs::create_dir_all(&attachments_path).map_err(|e| {
                     map_restore_io_error("create_attachments_dir", Some(&attachments_path), None, e)
                 })?;
+=======
+
+        } else {
+            if !attachments_path.exists() {
+                fs::create_dir_all(&attachments_path)
+                    .map_err(|e| map_restore_io_error("create_attachments_dir", Some(&attachments_path), None, e))?;
+>>>>>>> origin/main
                 restored_attachments_created = true;
             }
         }
@@ -1192,6 +1366,7 @@ fn restore_archive_to_profile(
                 let target = profile_root.join(file_name);
 
                 let tmp = profile_root.join(format!("{}.restore.{}", file_name, Uuid::new_v4()));
+<<<<<<< HEAD
                 fs::copy(&extracted_file, &tmp).map_err(|e| {
                     map_restore_io_error(
                         "copy_keyfile_to_tmp",
@@ -1200,6 +1375,10 @@ fn restore_archive_to_profile(
                         e,
                     )
                 })?;
+=======
+                fs::copy(&extracted_file, &tmp)
+                    .map_err(|e| map_restore_io_error("copy_keyfile_to_tmp", Some(&extracted_file), Some(&tmp), e))?;
+>>>>>>> origin/main
                 fs::OpenOptions::new()
                     .read(true)
                     .write(true)
@@ -1256,10 +1435,14 @@ fn restore_archive_to_profile(
                 let _ = fs::remove_dir_all(&attachments_path);
             }
             let _ = rename_with_retry(&attachments_backup_path, &attachments_path);
+<<<<<<< HEAD
         } else if !attachments_existed_before
             && restored_attachments_created
             && attachments_path.exists()
         {
+=======
+        } else if !attachments_existed_before && restored_attachments_created && attachments_path.exists() {
+>>>>>>> origin/main
             let _ = fs::remove_dir_all(&attachments_path);
         }
 
@@ -1342,8 +1525,12 @@ pub fn backup_restore_workflow(state: &Arc<AppState>, backup_path: String) -> Re
 
     // Keep profiles registry in sync with restored state (name + vault mode).
     let has_password = manifest.vault_mode == "protected";
+<<<<<<< HEAD
     let _ =
         registry::upsert_profile_with_id(&sp, &manifest.profile_id, &profile_name, has_password);
+=======
+    let _ = registry::upsert_profile_with_id(&sp, &manifest.profile_id, &profile_name, has_password);
+>>>>>>> origin/main
 
     Ok(restored)
 }

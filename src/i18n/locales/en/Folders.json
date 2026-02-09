@@ -1,7 +1,11 @@
 {
   "title": "Folders",
   "vaults.title": "Vaults",
+<<<<<<< HEAD
   "vaults.default": "Default",
+=======
+  "vaults.default": "default",
+>>>>>>> origin/main
   "category.title": "Category",
   "category.dataCards": "Data cards",
   "category.bankCards": "Bank cards",
@@ -12,8 +16,11 @@
   "nav.deleted": "Deleted",
   "action.addFolder": "Add folder",
   "action.addVault": "Add vault",
+<<<<<<< HEAD
   "action.makeDefaultVault": "Make it default",
   "action.defaultVault": "Default",
+=======
+>>>>>>> origin/main
   "action.renameVault": "Rename vault",
   "action.deleteVault": "Delete vault",
   "action.addSubfolder": "Add subfolder",

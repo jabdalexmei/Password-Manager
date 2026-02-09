@@ -452,7 +452,10 @@ export default function Vault({
             multiplyVaultsEnabled={Boolean(vault.settings?.multiply_vaults_enabled)}
             onSelectVault={(vaultId) => void handleSelectVault(vaultId)}
             onCreateVault={handleCreateVault}
+<<<<<<< HEAD
             onSetDefaultVault={vault.setDefaultVault}
+=======
+>>>>>>> origin/main
             onRenameVault={vault.renameVault}
             onDeleteVault={vault.deleteVault}
             selectedCategory={selectedCategory}

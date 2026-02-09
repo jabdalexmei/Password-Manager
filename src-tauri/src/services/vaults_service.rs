@@ -61,6 +61,7 @@ pub fn delete_vault(id: String, state: &Arc<AppState>) -> Result<bool> {
     let deleted = repo_impl::delete_vault(state, &profile_id, &id)?;
     if deleted {
         if settings.active_vault_id == id {
+<<<<<<< HEAD
             let default_vault = repo_impl::get_default_vault(state, &profile_id)?;
             let mut next_settings = settings;
             next_settings.active_vault_id = default_vault.id.clone();
@@ -69,6 +70,11 @@ pub fn delete_vault(id: String, state: &Arc<AppState>) -> Result<bool> {
                 next_settings.clone(),
                 &profile_id,
             )?;
+=======
+            let mut next_settings = settings;
+            next_settings.active_vault_id = settings_service::DEFAULT_VAULT_ID.to_string();
+            let updated = settings_service::update_settings(&storage_paths, next_settings.clone(), &profile_id)?;
+>>>>>>> origin/main
             if updated {
                 if let Ok(mut active_vault_id) = state.active_vault_id.lock() {
                     *active_vault_id = Some(next_settings.active_vault_id);
@@ -80,6 +86,7 @@ pub fn delete_vault(id: String, state: &Arc<AppState>) -> Result<bool> {
     Ok(deleted)
 }
 
+<<<<<<< HEAD
 pub fn set_default_vault(id: String, state: &Arc<AppState>) -> Result<bool> {
     let profile_id = security_service::require_unlocked_active_profile(state)?.profile_id;
     let trimmed_id = id.trim();
@@ -103,14 +110,22 @@ pub fn set_default_vault(id: String, state: &Arc<AppState>) -> Result<bool> {
     Ok(updated)
 }
 
+=======
+>>>>>>> origin/main
 pub fn set_active_vault(id: String, state: &Arc<AppState>) -> Result<bool> {
     let profile_id = security_service::require_unlocked_active_profile(state)?.profile_id;
     let storage_paths = state.get_storage_paths()?;
     let mut settings = settings_service::get_settings(&storage_paths, &profile_id)?;
 
+<<<<<<< HEAD
     let mut normalized = settings_service::normalize_active_vault_id(&id);
     if !settings.multiply_vaults_enabled {
         normalized = repo_impl::get_default_vault(state, &profile_id)?.id;
+=======
+    let normalized = settings_service::normalize_active_vault_id(&id);
+    if !settings.multiply_vaults_enabled && normalized != settings_service::DEFAULT_VAULT_ID {
+        return Err(ErrorCodeString::new("MULTIPLY_VAULTS_DISABLED"));
+>>>>>>> origin/main
     }
 
     let _ = repo_impl::get_vault(state, &profile_id, &normalized)?;

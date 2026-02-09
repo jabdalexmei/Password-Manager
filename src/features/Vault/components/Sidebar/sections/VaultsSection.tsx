@@ -10,7 +10,10 @@ type VaultsSectionProps = {
   multiplyVaultsEnabled: boolean;
   onSelectVault: (vaultId: string) => void | Promise<void>;
   onCreateVault: (name: string) => Promise<VaultItem | void | null> | VaultItem | void | null;
+<<<<<<< HEAD
   onSetDefaultVault: (id: string) => boolean | void | Promise<boolean | void>;
+=======
+>>>>>>> origin/main
   onRenameVault: (id: string, name: string) => boolean | void | Promise<boolean | void>;
   onDeleteVault: (id: string) => boolean | void | Promise<boolean | void>;
   openMenu: SidebarMenu;
@@ -23,7 +26,10 @@ export function VaultsSection({
   multiplyVaultsEnabled,
   onSelectVault,
   onCreateVault,
+<<<<<<< HEAD
   onSetDefaultVault,
+=======
+>>>>>>> origin/main
   onRenameVault,
   onDeleteVault,
   openMenu,
@@ -43,7 +49,10 @@ export function VaultsSection({
   const [renameVaultName, setRenameVaultName] = useState('');
   const [renameVaultError, setRenameVaultError] = useState<string | null>(null);
   const [isRenamingVault, setIsRenamingVault] = useState(false);
+<<<<<<< HEAD
   const [isSettingDefaultVault, setIsSettingDefaultVault] = useState(false);
+=======
+>>>>>>> origin/main
 
   const [deleteVaultTarget, setDeleteVaultTarget] = useState<{ id: string; name: string } | null>(null);
   const [isDeletingVault, setIsDeletingVault] = useState(false);
@@ -140,6 +149,7 @@ export function VaultsSection({
     setDeleteVaultTarget({ id: vault.id, name: vault.name });
   };
 
+<<<<<<< HEAD
   const handleSetDefaultVaultFromMenu = async (vaultId: string) => {
     if (isSettingDefaultVault) return;
     setOpenMenu(null);
@@ -155,6 +165,8 @@ export function VaultsSection({
     ? vaults.find((item) => item.id === openMenu.vaultId) ?? null
     : null;
 
+=======
+>>>>>>> origin/main
   const renderCreateVaultDialog = () => {
     if (!isCreateVaultOpen) return null;
 
@@ -305,14 +317,22 @@ export function VaultsSection({
                 type="button"
                 onClick={() => void onSelectVault(vault.id)}
                 onContextMenu={(event) => {
+<<<<<<< HEAD
+=======
+                  if (vault.isDefault) return;
+>>>>>>> origin/main
                   event.preventDefault();
                   setOpenMenu({ type: 'vault', vaultId: vault.id, x: event.clientX, y: event.clientY });
                 }}
               >
+<<<<<<< HEAD
                 <span className="vault-folder-main">
                   <span className="folder-name">{vault.name}</span>
                   {vault.isDefault && <span className="folder-badge">{t('action.defaultVault')}</span>}
                 </span>
+=======
+                <span className="folder-name">{vault.name}</span>
+>>>>>>> origin/main
               </button>
             </li>
           );
@@ -339,6 +359,7 @@ export function VaultsSection({
             style={{ top: openMenu.y, left: openMenu.x }}
             onClick={(event) => event.stopPropagation()}
           >
+<<<<<<< HEAD
             {menuVault?.isDefault ? (
               <button type="button" className="vault-context-item" disabled>
                 {t('action.defaultVault')}
@@ -353,6 +374,8 @@ export function VaultsSection({
                 {t('action.makeDefaultVault')}
               </button>
             )}
+=======
+>>>>>>> origin/main
             <button
               type="button"
               className="vault-context-item"
@@ -363,7 +386,10 @@ export function VaultsSection({
             <button
               type="button"
               className="vault-context-item"
+<<<<<<< HEAD
               disabled={Boolean(menuVault?.isDefault)}
+=======
+>>>>>>> origin/main
               onClick={() => handleDeleteVaultFromMenu(openMenu.vaultId)}
             >
               {t('action.deleteVault')}

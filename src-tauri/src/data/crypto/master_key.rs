@@ -76,6 +76,10 @@ pub fn write_master_key_wrapped_with_password(
     cipher::write_encrypted_file(&vault_key_path(sp, profile_id)?, &blob)
 }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main
 /// Build the password-wrapped master key blob without writing it to disk.
 ///
 /// This is used for crash-safe password rotation, where we want to stage the new

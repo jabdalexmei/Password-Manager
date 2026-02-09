@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+=======
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
+>>>>>>> origin/main
 import { CustomField, DataCard, Folder } from '../../types/ui';
 import { useTranslation } from '../../../../shared/lib/i18n';
 import { useDetails } from './useDetails';
@@ -12,10 +16,15 @@ import {
   IconImport,
   IconPreview,
   IconPreviewOff,
+<<<<<<< HEAD
   IconRename,
 } from '@/shared/icons/lucide/icons';
 import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../../../../shared/ui/dialog';
+=======
+} from '@/shared/icons/lucide/icons';
+import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
+>>>>>>> origin/main
 import {
   loadPreviewFields,
   onPreviewFieldsChanged,
@@ -29,7 +38,10 @@ import {
   type DataCardCoreField,
 } from '../../lib/datacardCoreHiddenFields';
 import { setDataCardPreviewFieldsForCard } from '../../api/vaultApi';
+<<<<<<< HEAD
 import { getCurrentWebview } from '@tauri-apps/api/webview';
+=======
+>>>>>>> origin/main
 
 const LazyAttachmentPreviewModal = React.lazy(() =>
   import('../modals/AttachmentPreviewModal').then((m) => ({ default: m.default })),
@@ -95,6 +107,7 @@ export function Details({
     clipboardClearTimeoutSeconds,
   });
 
+<<<<<<< HEAD
   const attachmentsDropRef = useRef<HTMLDivElement | null>(null);
   const [isAttachmentsDragOver, setIsAttachmentsDragOver] = useState(false);
 
@@ -174,6 +187,8 @@ export function Details({
     };
   }, [card?.id, isTrashMode]);
 
+=======
+>>>>>>> origin/main
   const folderName = useMemo(() => {
     if (!card) return '';
     return card.folderId ? folders.find((f) => f.id === card.folderId)?.name ?? '' : '';
@@ -182,10 +197,13 @@ export function Details({
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [purgeConfirmOpen, setPurgeConfirmOpen] = useState(false);
   const [attachmentToDelete, setAttachmentToDelete] = useState<string | null>(null);
+<<<<<<< HEAD
   const [renameAttachmentOpen, setRenameAttachmentOpen] = useState(false);
   const [renameAttachmentId, setRenameAttachmentId] = useState<string | null>(null);
   const [renameAttachmentValue, setRenameAttachmentValue] = useState('');
   const [isRenamingAttachment, setIsRenamingAttachment] = useState(false);
+=======
+>>>>>>> origin/main
   const [historyOpen, setHistoryOpen] = useState(false);
   const [seedPhraseViewOpen, setSeedPhraseViewOpen] = useState(false);
   const [revealedCustomFields, setRevealedCustomFields] = useState<Record<string, boolean>>({});
@@ -491,6 +509,7 @@ export function Details({
           onCancel={() => setAttachmentToDelete(null)}
         />
 
+<<<<<<< HEAD
         <Dialog
           open={renameAttachmentOpen}
           onOpenChange={(nextOpen) => {
@@ -568,6 +587,8 @@ export function Details({
           </DialogContent>
         </Dialog>
 
+=======
+>>>>>>> origin/main
       {hasTitle && (
         <div className="detail-field">
           <div className="detail-label">{t('label.title')}</div>
@@ -859,10 +880,14 @@ export function Details({
             </button>
           )}
         </div>
+<<<<<<< HEAD
         <div
           ref={attachmentsDropRef}
           className={`attachments-body${isAttachmentsDragOver ? ' drag-over' : ''}`}
         >
+=======
+        <div className="attachments-body">
+>>>>>>> origin/main
           {detailActions.attachments.length === 0 && (
             <div className="muted">{t('attachments.hint')}</div>
           )}
@@ -887,6 +912,7 @@ export function Details({
                   <button
                     className="icon-button"
                     type="button"
+<<<<<<< HEAD
                     onClick={() => {
                       setRenameAttachmentId(attachment.id);
                       setRenameAttachmentValue(attachment.fileName);
@@ -900,6 +926,8 @@ export function Details({
                   <button
                     className="icon-button"
                     type="button"
+=======
+>>>>>>> origin/main
                     onClick={() =>
                       detailActions.onDownloadAttachment(attachment.id, attachment.fileName)
                     }

@@ -4,7 +4,10 @@ use std::sync::Arc;
 use crate::app_state::AppState;
 use crate::data::fs::atomic_write::write_atomic;
 use crate::data::profiles::paths::user_settings_path;
+<<<<<<< HEAD
 use crate::data::sqlite::repo_impl;
+=======
+>>>>>>> origin/main
 use crate::data::storage_paths::StoragePaths;
 use crate::error::{ErrorCodeString, Result};
 use crate::services::security_service;
@@ -78,7 +81,15 @@ pub fn update_settings(
     mut new_settings: UserSettings,
     profile_id: &str,
 ) -> Result<bool> {
+<<<<<<< HEAD
     new_settings.active_vault_id = normalize_active_vault_id(&new_settings.active_vault_id);
+=======
+    if !new_settings.multiply_vaults_enabled {
+        new_settings.active_vault_id = DEFAULT_VAULT_ID.to_string();
+    } else {
+        new_settings.active_vault_id = normalize_active_vault_id(&new_settings.active_vault_id);
+    }
+>>>>>>> origin/main
 
     validate_settings(&new_settings)?;
     let path = user_settings_path(sp, profile_id)?;
@@ -89,6 +100,7 @@ pub fn update_settings(
     Ok(true)
 }
 
+<<<<<<< HEAD
 pub fn update_settings_command(state: &Arc<AppState>, mut settings: UserSettings) -> Result<bool> {
     let profile_id = security_service::require_unlocked_active_profile(state)?.profile_id;
     let storage_paths = state.get_storage_paths()?;
@@ -106,6 +118,29 @@ pub fn update_settings_command(state: &Arc<AppState>, mut settings: UserSettings
         };
         if let Ok(mut active_vault_id) = state.active_vault_id.lock() {
             *active_vault_id = Some(runtime_active_vault_id);
+=======
+pub fn resolve_active_vault_id(sp: &StoragePaths, profile_id: &str) -> Result<String> {
+    let settings = get_settings(sp, profile_id)?;
+    if !settings.multiply_vaults_enabled {
+        return Ok(DEFAULT_VAULT_ID.to_string());
+    }
+    Ok(normalize_active_vault_id(&settings.active_vault_id))
+}
+
+pub fn update_settings_command(state: &Arc<AppState>, mut settings: UserSettings) -> Result<bool> {
+    let profile_id = security_service::require_unlocked_active_profile(state)?.profile_id;
+    let storage_paths = state.get_storage_paths()?;
+    if !settings.multiply_vaults_enabled {
+        settings.active_vault_id = DEFAULT_VAULT_ID.to_string();
+    } else {
+        settings.active_vault_id = normalize_active_vault_id(&settings.active_vault_id);
+    }
+
+    let updated = update_settings(&storage_paths, settings.clone(), &profile_id)?;
+    if updated {
+        if let Ok(mut active_vault_id) = state.active_vault_id.lock() {
+            *active_vault_id = Some(settings.active_vault_id);
+>>>>>>> origin/main
         }
     }
     Ok(updated)

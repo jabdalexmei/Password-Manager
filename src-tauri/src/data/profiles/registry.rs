@@ -7,7 +7,15 @@ use uuid::Uuid;
 use crate::data::crypto::cipher::PM_ENC_MAGIC;
 use crate::data::fs::atomic_write::write_atomic;
 use crate::data::profiles::paths::{
+<<<<<<< HEAD
     ensure_profiles_dir, profile_config_path, profile_dir, registry_path, vault_key_path,
+=======
+    ensure_profiles_dir,
+    profile_config_path,
+    profile_dir,
+    registry_path,
+    vault_key_path,
+>>>>>>> origin/main
 };
 use crate::data::storage_paths::StoragePaths;
 use crate::error::{ErrorCodeString, Result};
@@ -193,11 +201,15 @@ fn infer_has_password(sp: &StoragePaths, id: &str, record_has_password: bool) ->
 
 pub fn list_profiles(sp: &StoragePaths) -> Result<Vec<ProfileMeta>> {
     let registry = load_registry(sp)?;
+<<<<<<< HEAD
     Ok(registry
         .profiles
         .into_iter()
         .map(ProfileMeta::from)
         .collect())
+=======
+    Ok(registry.profiles.into_iter().map(ProfileMeta::from).collect())
+>>>>>>> origin/main
 }
 
 pub fn create_profile(

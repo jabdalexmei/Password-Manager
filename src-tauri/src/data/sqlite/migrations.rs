@@ -4,7 +4,11 @@ use rusqlite::OptionalExtension;
 
 use crate::error::{ErrorCodeString, Result};
 
+<<<<<<< HEAD
 const CURRENT_SCHEMA_VERSION: i32 = 3;
+=======
+const CURRENT_SCHEMA_VERSION: i32 = 2;
+>>>>>>> origin/main
 
 fn log_sqlite_err(ctx: &str, err: &RusqliteError) {
     match err {
@@ -147,6 +151,7 @@ CREATE INDEX IF NOT EXISTS idx_bank_cards_vault ON bank_cards(vault_id);
     Ok(())
 }
 
+<<<<<<< HEAD
 fn migrate_v2_to_v3(conn: &Connection) -> Result<()> {
     conn.execute_batch(
         r#"
@@ -187,6 +192,8 @@ WHERE is_default = 1;
     Ok(())
 }
 
+=======
+>>>>>>> origin/main
 pub fn migrate_to_latest(conn: &Connection) -> Result<()> {
     conn.execute_batch("PRAGMA foreign_keys = ON;")
         .map_err(|e| {
@@ -216,13 +223,18 @@ pub fn migrate_to_latest(conn: &Connection) -> Result<()> {
         return Ok(());
     }
 
+<<<<<<< HEAD
     let mut current = version;
 
     if current == 1 {
+=======
+    if version == 1 {
+>>>>>>> origin/main
         log::info!("[DB][migrate] migrate from=1 to=2");
         migrate_v1_to_v2(conn)?;
         conn.execute_batch("PRAGMA user_version = 2;")
             .map_err(|_| ErrorCodeString::new("DB_MIGRATION_FAILED"))?;
+<<<<<<< HEAD
         current = 2;
     }
 
@@ -235,6 +247,8 @@ pub fn migrate_to_latest(conn: &Connection) -> Result<()> {
     }
 
     if current == CURRENT_SCHEMA_VERSION {
+=======
+>>>>>>> origin/main
         return Ok(());
     }
 

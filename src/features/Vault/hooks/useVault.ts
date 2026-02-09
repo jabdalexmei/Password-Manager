@@ -23,7 +23,10 @@ import {
   restoreAllDeletedDataCards,
   setDataCardFavorite,
   setActiveVault,
+<<<<<<< HEAD
   setDefaultVault,
+=======
+>>>>>>> origin/main
   setDataCardArchived,
   searchDataCards,
   updateDataCard,
@@ -298,6 +301,7 @@ export function useVault(profileId: string, onLocked: () => void) {
     }
   }, [dtf, handleError, sortCardsWithSettings]);
 
+<<<<<<< HEAD
   const refreshVaults = useCallback(async (): Promise<VaultItem[] | null> => {
     try {
       const fetchedVaults = await listVaults();
@@ -307,6 +311,14 @@ export function useVault(profileId: string, onLocked: () => void) {
     } catch (err) {
       handleError(err);
       return null;
+=======
+  const refreshVaults = useCallback(async () => {
+    try {
+      const fetchedVaults = await listVaults();
+      setVaults(sortVaultItems(fetchedVaults.map(mapVaultFromBackend)));
+    } catch (err) {
+      handleError(err);
+>>>>>>> origin/main
     }
   }, [handleError]);
 
@@ -314,6 +326,7 @@ export function useVault(profileId: string, onLocked: () => void) {
     async (nextSettings: BackendUserSettings) => {
       try {
         await updateSettings(nextSettings);
+<<<<<<< HEAD
         const requestedActiveVaultId = nextSettings.multiply_vaults_enabled
           ? (nextSettings.active_vault_id || activeVaultId || DEFAULT_ACTIVE_VAULT_ID)
           : DEFAULT_ACTIVE_VAULT_ID;
@@ -331,6 +344,19 @@ export function useVault(profileId: string, onLocked: () => void) {
 
         setActiveVaultId(runtimeActiveVaultId);
         setSettings({ ...nextSettings, active_vault_id: runtimeActiveVaultId });
+=======
+        const normalizedActiveVaultId = nextSettings.multiply_vaults_enabled
+          ? (nextSettings.active_vault_id || activeVaultId || DEFAULT_ACTIVE_VAULT_ID)
+          : DEFAULT_ACTIVE_VAULT_ID;
+
+        if (normalizedActiveVaultId !== activeVaultId) {
+          await setActiveVault(normalizedActiveVaultId);
+          setActiveVaultId(normalizedActiveVaultId);
+        }
+
+        setSettings({ ...nextSettings, active_vault_id: normalizedActiveVaultId });
+        await refreshVaults();
+>>>>>>> origin/main
         return true;
       } catch (err) {
         handleError(err);
@@ -389,7 +415,13 @@ export function useVault(profileId: string, onLocked: () => void) {
     refreshVaults();
     getSettings()
       .then((nextSettings) => {
+<<<<<<< HEAD
         const normalizedActiveVaultId = nextSettings.active_vault_id || DEFAULT_ACTIVE_VAULT_ID;
+=======
+        const normalizedActiveVaultId = nextSettings.multiply_vaults_enabled
+          ? (nextSettings.active_vault_id || DEFAULT_ACTIVE_VAULT_ID)
+          : DEFAULT_ACTIVE_VAULT_ID;
+>>>>>>> origin/main
         setSettings({ ...nextSettings, active_vault_id: normalizedActiveVaultId });
         setActiveVaultId(normalizedActiveVaultId);
       })
@@ -449,6 +481,7 @@ export function useVault(profileId: string, onLocked: () => void) {
     [handleError]
   );
 
+<<<<<<< HEAD
   const setDefaultVaultAction = useCallback(
     async (id: string) => {
       try {
@@ -474,10 +507,13 @@ export function useVault(profileId: string, onLocked: () => void) {
     [handleError, settings?.multiply_vaults_enabled]
   );
 
+=======
+>>>>>>> origin/main
   const deleteVaultAction = useCallback(
     async (id: string) => {
       try {
         await deleteVault(id);
+<<<<<<< HEAD
         let nextDefaultVaultId = DEFAULT_ACTIVE_VAULT_ID;
         setVaults((prev) => {
           const remaining = prev.filter((vaultItem) => vaultItem.id !== id);
@@ -489,6 +525,13 @@ export function useVault(profileId: string, onLocked: () => void) {
         if (id === activeVaultId) {
           setActiveVaultId(nextDefaultVaultId);
           setSettings((prev) => (prev ? { ...prev, active_vault_id: nextDefaultVaultId } : prev));
+=======
+        setVaults((prev) => prev.filter((vaultItem) => vaultItem.id !== id));
+
+        if (id === activeVaultId) {
+          setActiveVaultId(DEFAULT_ACTIVE_VAULT_ID);
+          setSettings((prev) => (prev ? { ...prev, active_vault_id: DEFAULT_ACTIVE_VAULT_ID } : prev));
+>>>>>>> origin/main
         }
 
         return true;
@@ -505,19 +548,28 @@ export function useVault(profileId: string, onLocked: () => void) {
       if (!vaultId || vaultId === activeVaultId) return true;
       try {
         await setActiveVault(vaultId);
+<<<<<<< HEAD
         const nextActiveVaultId =
           settings?.multiply_vaults_enabled === false
             ? (vaults.find((vaultItem) => vaultItem.isDefault)?.id ?? DEFAULT_ACTIVE_VAULT_ID)
             : vaultId;
         setActiveVaultId(nextActiveVaultId);
         setSettings((prev) => (prev ? { ...prev, active_vault_id: nextActiveVaultId } : prev));
+=======
+        setActiveVaultId(vaultId);
+        setSettings((prev) => (prev ? { ...prev, active_vault_id: vaultId } : prev));
+>>>>>>> origin/main
         return true;
       } catch (err) {
         handleError(err);
         return false;
       }
     },
+<<<<<<< HEAD
     [activeVaultId, handleError, settings?.multiply_vaults_enabled, vaults]
+=======
+    [activeVaultId, handleError]
+>>>>>>> origin/main
   );
 
   const createFolderAction = useCallback(
@@ -1057,7 +1109,10 @@ export function useVault(profileId: string, onLocked: () => void) {
     selectNav,
     selectCard,
     createVault: createVaultAction,
+<<<<<<< HEAD
     setDefaultVault: setDefaultVaultAction,
+=======
+>>>>>>> origin/main
     renameVault: renameVaultAction,
     deleteVault: deleteVaultAction,
     selectVault: selectVaultAction,

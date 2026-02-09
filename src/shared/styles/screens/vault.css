@@ -434,12 +434,15 @@
   outline: none;
 }
 
+<<<<<<< HEAD
 .vault-context-item:disabled {
   color: var(--color-text-muted);
   background: transparent;
   cursor: not-allowed;
 }
 
+=======
+>>>>>>> origin/main
 /* !!! КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: НЕ СБРАСЫВАЕМ СТИЛИ ДЛЯ li button !!!
    иначе .vault-folder становится прозрачным и “кривым”
 */
@@ -485,6 +488,7 @@
   color: var(--color-text);
 }
 
+<<<<<<< HEAD
 .vault-folder-main {
   display: inline-flex;
   align-items: center;
@@ -500,6 +504,11 @@
   border-radius: 999px;
   padding: 1px 8px;
   line-height: 1.4;
+=======
+.folder-badge {
+  color: var(--color-primary);
+  margin-left: 6px;
+>>>>>>> origin/main
 }
 
 .folder-count {
@@ -1052,12 +1061,15 @@
   gap: 8px;
 }
 
+<<<<<<< HEAD
 .attachments-body.drag-over {
   outline: 2px dashed var(--focus-border-strong);
   outline-offset: 4px;
   border-radius: var(--radius-sm);
 }
 
+=======
+>>>>>>> origin/main
 .attachment-row {
   display: flex;
   justify-content: space-between;

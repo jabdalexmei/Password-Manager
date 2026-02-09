@@ -106,7 +106,10 @@ export function BankCardsBody({
           multiplyVaultsEnabled={false}
           onSelectVault={() => undefined}
           onCreateVault={() => null}
+<<<<<<< HEAD
           onSetDefaultVault={() => undefined}
+=======
+>>>>>>> origin/main
           onRenameVault={() => undefined}
           onDeleteVault={() => undefined}
           selectedCategory={selectedCategory}

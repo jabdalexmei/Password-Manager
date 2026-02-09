@@ -29,7 +29,10 @@ export function VaultSidebar(props: VaultSidebarProps) {
         multiplyVaultsEnabled={props.multiplyVaultsEnabled}
         onSelectVault={props.onSelectVault}
         onCreateVault={props.onCreateVault}
+<<<<<<< HEAD
         onSetDefaultVault={props.onSetDefaultVault}
+=======
+>>>>>>> origin/main
         onRenameVault={props.onRenameVault}
         onDeleteVault={props.onDeleteVault}
         openMenu={openMenu}

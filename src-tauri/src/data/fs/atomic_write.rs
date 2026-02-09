@@ -16,7 +16,15 @@ fn replace_platform(from: &Path, to: &Path) -> io::Result<()> {
         .encode_wide()
         .chain(iter::once(0))
         .collect();
+<<<<<<< HEAD
     let to_w: Vec<u16> = to.as_os_str().encode_wide().chain(iter::once(0)).collect();
+=======
+    let to_w: Vec<u16> = to
+        .as_os_str()
+        .encode_wide()
+        .chain(iter::once(0))
+        .collect();
+>>>>>>> origin/main
 
     let flags = MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH;
     let ok = unsafe { MoveFileExW(from_w.as_ptr(), to_w.as_ptr(), flags) };
@@ -59,10 +67,14 @@ pub fn write_atomic(path: &Path, bytes: &[u8]) -> io::Result<()> {
     }
 
     let parent = path.parent().ok_or_else(|| {
+<<<<<<< HEAD
         io::Error::new(
             io::ErrorKind::InvalidInput,
             "write_atomic: path has no parent",
         )
+=======
+        io::Error::new(io::ErrorKind::InvalidInput, "write_atomic: path has no parent")
+>>>>>>> origin/main
     })?;
     fs::create_dir_all(parent)?;
 

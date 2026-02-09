@@ -124,11 +124,16 @@ fn normalize_bankcard_core_hidden_fields(input: Vec<String>) -> Vec<String> {
 pub fn get_datacard_preview_fields(state: &Arc<AppState>) -> Result<Vec<String>> {
     let profile_id = security_service::require_unlocked_active_profile(state)?.profile_id;
 
+<<<<<<< HEAD
     let raw = repo_impl::get_ui_preference_value_json(
         state,
         &profile_id,
         PREF_KEY_DATACARD_PREVIEW_FIELDS,
     )?;
+=======
+    let raw =
+        repo_impl::get_ui_preference_value_json(state, &profile_id, PREF_KEY_DATACARD_PREVIEW_FIELDS)?;
+>>>>>>> origin/main
     if let Some(value_json) = raw {
         let parsed: Result<Vec<String>> =
             serde_json::from_str(&value_json).map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"));
@@ -166,8 +171,13 @@ pub fn get_bankcard_preview_fields(state: &Arc<AppState>) -> Result<BankCardPrev
         PREF_KEY_BANKCARD_PREVIEW_FIELDS,
     )?;
     if let Some(value_json) = raw {
+<<<<<<< HEAD
         let parsed: Result<BankCardPreviewFields> =
             serde_json::from_str(&value_json).map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"));
+=======
+        let parsed: Result<BankCardPreviewFields> = serde_json::from_str(&value_json)
+            .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"));
+>>>>>>> origin/main
         if let Ok(v) = parsed {
             return Ok(BankCardPreviewFields {
                 fields: normalize_bankcard_preview_fields(v.fields),
@@ -202,6 +212,10 @@ pub fn set_bankcard_preview_fields(
     )
 }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main
 pub fn get_datacard_core_hidden_fields(state: &Arc<AppState>) -> Result<Vec<String>> {
     let profile_id = security_service::require_unlocked_active_profile(state)?.profile_id;
 

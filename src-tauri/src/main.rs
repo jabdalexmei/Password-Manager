@@ -3,6 +3,10 @@
 #[cfg(not(windows))]
 compile_error!("This application is Windows-only.");
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main
 mod app_state;
 mod commands;
 mod data {
@@ -63,8 +67,13 @@ use services::security_service;
 use tauri::{Manager, WindowEvent};
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 
+<<<<<<< HEAD
 use webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2Settings4;
 use windows::core::Interface;
+=======
+use windows::core::Interface;
+use webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2Settings4;
+>>>>>>> origin/main
 
 fn main() {
     tauri::Builder::default()
@@ -136,12 +145,18 @@ fn main() {
             is_logged_in,
             health_check,
             list_attachments,
+<<<<<<< HEAD
             rename_attachment,
+=======
+>>>>>>> origin/main
             attachments_pick_files,
             attachments_discard_pick,
             add_attachments_from_pick,
             add_attachments_via_dialog,
+<<<<<<< HEAD
             add_attachments_from_paths,
+=======
+>>>>>>> origin/main
             remove_attachment,
             purge_attachment,
             get_attachment_bytes_base64,
@@ -160,7 +175,10 @@ fn main() {
             rename_vault,
             delete_vault,
             set_active_vault,
+<<<<<<< HEAD
             set_default_vault,
+=======
+>>>>>>> origin/main
             create_folder,
             rename_folder,
             move_folder,

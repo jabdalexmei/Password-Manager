@@ -4,11 +4,17 @@ import { useTranslation } from '../../../../shared/lib/i18n';
 import { useToaster } from '../../../../shared/components/Toaster';
 import { clipboardClearAll } from '../../../../shared/lib/tauri';
 import {
+<<<<<<< HEAD
   addAttachmentsFromPaths,
   addAttachmentsViaDialog,
   getAttachmentBytesBase64,
   listAttachments,
   renameAttachment,
+=======
+  addAttachmentsViaDialog,
+  getAttachmentBytesBase64,
+  listAttachments,
+>>>>>>> origin/main
   removeAttachment,
   saveAttachmentViaDialog,
 } from '../../api/vaultApi';
@@ -40,11 +46,17 @@ type UseDetailsResult = {
   purgeCard: () => void;
   attachments: Attachment[];
   onAddAttachment: () => Promise<void>;
+<<<<<<< HEAD
   onAddAttachmentsFromPaths: (paths: string[]) => Promise<void>;
   onDeleteAttachment: (attachmentId: string) => Promise<void>;
   onPreviewAttachment: (attachmentId: string) => Promise<void>;
   onDownloadAttachment: (attachmentId: string, defaultName: string) => Promise<void>;
   onRenameAttachment: (attachmentId: string, nextName: string) => Promise<boolean>;
+=======
+  onDeleteAttachment: (attachmentId: string) => Promise<void>;
+  onPreviewAttachment: (attachmentId: string) => Promise<void>;
+  onDownloadAttachment: (attachmentId: string, defaultName: string) => Promise<void>;
+>>>>>>> origin/main
   previewOpen: boolean;
   closePreview: () => void;
   previewPayload: AttachmentPreviewState;
@@ -220,6 +232,7 @@ export function useDetails({
     }
   }, [card, isTrashMode, refreshAttachments, showToast, t]);
 
+<<<<<<< HEAD
   const onAddAttachmentsFromPaths = useCallback(
     async (paths: string[]) => {
       if (!card || isTrashMode) return;
@@ -237,6 +250,8 @@ export function useDetails({
     [card, isTrashMode, refreshAttachments, showToast, t]
   );
 
+=======
+>>>>>>> origin/main
   const onDeleteAttachment = useCallback(
     async (attachmentId: string) => {
       if (!card) return;
@@ -298,6 +313,7 @@ export function useDetails({
     [card, showToast, t]
   );
 
+<<<<<<< HEAD
   const onRenameAttachment = useCallback(
     async (attachmentId: string, nextName: string) => {
       if (!card || isTrashMode) return false;
@@ -315,6 +331,8 @@ export function useDetails({
     [card, isTrashMode, refreshAttachments, showToast, t]
   );
 
+=======
+>>>>>>> origin/main
   const closePreview = useCallback(() => {
     setPreviewOpen(false);
     setPreviewPayload(null);
@@ -332,11 +350,17 @@ export function useDetails({
     purgeCard,
     attachments,
     onAddAttachment,
+<<<<<<< HEAD
     onAddAttachmentsFromPaths,
     onDeleteAttachment,
     onPreviewAttachment,
     onDownloadAttachment,
     onRenameAttachment,
+=======
+    onDeleteAttachment,
+    onPreviewAttachment,
+    onDownloadAttachment,
+>>>>>>> origin/main
     previewOpen,
     closePreview,
     previewPayload,

@@ -29,5 +29,10 @@ pub fn save_settings(sp: &StoragePaths, settings: &UserSettings) -> Result<()> {
     let serialized = serde_json::to_string_pretty(settings)
         .map_err(|_| ErrorCodeString::new("SETTINGS_WRITE"))?;
     let path = settings_path(sp)?;
+<<<<<<< HEAD
     write_atomic(&path, serialized.as_bytes()).map_err(|_| ErrorCodeString::new("SETTINGS_WRITE"))
+=======
+    write_atomic(&path, serialized.as_bytes())
+        .map_err(|_| ErrorCodeString::new("SETTINGS_WRITE"))
+>>>>>>> origin/main
 }

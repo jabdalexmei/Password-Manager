@@ -5,12 +5,20 @@ use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::time::Duration;
 
+<<<<<<< HEAD
 use rand::rngs::OsRng;
 use rand::RngCore;
+=======
+>>>>>>> origin/main
 use rusqlite::ffi;
 use rusqlite::serialize::OwnedData;
 use rusqlite::DatabaseName;
 use zeroize::{Zeroize, Zeroizing};
+<<<<<<< HEAD
+=======
+use rand::rngs::OsRng;
+use rand::RngCore;
+>>>>>>> origin/main
 
 use crate::app_state::{AppState, VaultSession};
 use crate::data::crypto::{cipher, kdf, key_check, master_key};
@@ -20,7 +28,10 @@ use crate::data::profiles::paths::{
 };
 use crate::data::profiles::registry;
 use crate::data::sqlite::migrations;
+<<<<<<< HEAD
 use crate::data::sqlite::repo_impl;
+=======
+>>>>>>> origin/main
 use crate::error::{ErrorCodeString, Result};
 use crate::services::attachments_service;
 use crate::services::settings_service;
@@ -93,8 +104,12 @@ PRAGMA synchronous=OFF;
 fn best_effort_force_journal_mode_memory(conn: &rusqlite::Connection, profile_id: &str, ctx: &str) {
     // Best-effort: we do not fail the whole flow if this pragma fails.
     // The goal is to ensure serialized in-memory images are not WAL-marked.
+<<<<<<< HEAD
     let res: rusqlite::Result<String> =
         conn.query_row("PRAGMA journal_mode=MEMORY;", [], |row| row.get(0));
+=======
+    let res: rusqlite::Result<String> = conn.query_row("PRAGMA journal_mode=MEMORY;", [], |row| row.get(0));
+>>>>>>> origin/main
     if let Err(e) = res {
         log::warn!(
             "[SECURITY][pragmas] profile_id={} ctx={} action=journal_mode_memory_failed err={}",
@@ -196,8 +211,13 @@ fn open_vault_session_with_master_key(
     ensure_ciphertext_vault_on_disk(&vault_path, profile_id)?;
 
     let encrypted = cipher::read_encrypted_file(&vault_path)?;
+<<<<<<< HEAD
     let decrypted = cipher::decrypt_vault_blob(profile_id, &master, &encrypted)
         .map_err(map_vault_decrypt_error)?;
+=======
+    let decrypted =
+        cipher::decrypt_vault_blob(profile_id, &master, &encrypted).map_err(map_vault_decrypt_error)?;
+>>>>>>> origin/main
 
     // If the stored DB image is marked WAL, SQLite may try to open -wal/-shm even for :memory:
     // deserialization and fail with SQLITE_CANTOPEN (14). Normalize header before deserialize.
@@ -220,6 +240,7 @@ fn open_vault_session_with_master_key(
     // Set pragmas BEFORE deserialize to avoid temp file writes during the first statements.
     apply_in_memory_pragmas(&conn, profile_id, "open_in_memory_before_deserialize")?;
     let owned = owned_data_from_bytes(decrypted)?;
+<<<<<<< HEAD
     conn.deserialize(DatabaseName::Main, owned, false)
         .map_err(|e| {
             log::error!(
@@ -229,6 +250,16 @@ fn open_vault_session_with_master_key(
             );
             ErrorCodeString::new("VAULT_CORRUPTED")
         })?;
+=======
+    conn.deserialize(DatabaseName::Main, owned, false).map_err(|e| {
+        log::error!(
+            "[SECURITY][login] profile_id={} step=deserialize err={}",
+            profile_id,
+            format_rusqlite_error(&e)
+        );
+        ErrorCodeString::new("VAULT_CORRUPTED")
+    })?;
+>>>>>>> origin/main
 
     if let Err(e) = migrations::migrate_to_latest(&conn) {
         log::error!(
@@ -238,7 +269,12 @@ fn open_vault_session_with_master_key(
         );
         return Err(e);
     }
+<<<<<<< HEAD
     migrations::validate_core_schema(&conn).map_err(|_| ErrorCodeString::new("VAULT_CORRUPTED"))?;
+=======
+    migrations::validate_core_schema(&conn)
+        .map_err(|_| ErrorCodeString::new("VAULT_CORRUPTED"))?;
+>>>>>>> origin/main
 
     best_effort_force_journal_mode_memory(&conn, profile_id, "unlock_after_deserialize");
 
@@ -367,6 +403,7 @@ fn rollback_set_password_tx(
     // Restore backups (overwrite if needed).
     if vault_key_bak.exists() {
         if vault_key_final.exists() {
+<<<<<<< HEAD
             replace_file_retry(
                 &vault_key_bak,
                 vault_key_final,
@@ -380,6 +417,11 @@ fn rollback_set_password_tx(
                 20,
                 Duration::from_millis(50),
             )?;
+=======
+            replace_file_retry(&vault_key_bak, vault_key_final, 20, Duration::from_millis(50))?;
+        } else {
+            rename_retry(&vault_key_bak, vault_key_final, 20, Duration::from_millis(50))?;
+>>>>>>> origin/main
         }
     }
 
@@ -395,6 +437,7 @@ fn rollback_set_password_tx(
 
     if key_check_bak.exists() {
         if key_check_final.exists() {
+<<<<<<< HEAD
             replace_file_retry(
                 &key_check_bak,
                 key_check_final,
@@ -408,6 +451,11 @@ fn rollback_set_password_tx(
                 20,
                 Duration::from_millis(50),
             )?;
+=======
+            replace_file_retry(&key_check_bak, key_check_final, 20, Duration::from_millis(50))?;
+        } else {
+            rename_retry(&key_check_bak, key_check_final, 20, Duration::from_millis(50))?;
+>>>>>>> origin/main
         }
     } else {
         let _ = remove_file_retry(key_check_final, 20, Duration::from_millis(50));
@@ -448,6 +496,7 @@ fn recover_set_password_tx(
             if vault_key_final.exists() {
                 let _ = remove_file_retry(&vault_key_new, 20, Duration::from_millis(50));
             } else {
+<<<<<<< HEAD
                 rename_retry(
                     &vault_key_new,
                     &vault_key_final,
@@ -455,6 +504,10 @@ fn recover_set_password_tx(
                     Duration::from_millis(50),
                 )
                 .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
+=======
+                rename_retry(&vault_key_new, &vault_key_final, 20, Duration::from_millis(50))
+                    .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
+>>>>>>> origin/main
             }
         }
         if salt_new.exists() {
@@ -469,6 +522,7 @@ fn recover_set_password_tx(
             if key_check_final.exists() {
                 let _ = remove_file_retry(&key_check_new, 20, Duration::from_millis(50));
             } else {
+<<<<<<< HEAD
                 rename_retry(
                     &key_check_new,
                     &key_check_final,
@@ -476,6 +530,10 @@ fn recover_set_password_tx(
                     Duration::from_millis(50),
                 )
                 .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
+=======
+                rename_retry(&key_check_new, &key_check_final, 20, Duration::from_millis(50))
+                    .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
+>>>>>>> origin/main
             }
         }
 
@@ -489,6 +547,7 @@ fn recover_set_password_tx(
         }
 
         // Best-effort cleanup of backups and tx dir.
+<<<<<<< HEAD
         let _ = remove_file_retry(
             &tx_root.join("vault_key.bin.bak"),
             20,
@@ -504,6 +563,11 @@ fn recover_set_password_tx(
             20,
             Duration::from_millis(50),
         );
+=======
+        let _ = remove_file_retry(&tx_root.join("vault_key.bin.bak"), 20, Duration::from_millis(50));
+        let _ = remove_file_retry(&tx_root.join("kdf_salt.bin.bak"), 20, Duration::from_millis(50));
+        let _ = remove_file_retry(&tx_root.join("key_check.bin.bak"), 20, Duration::from_millis(50));
+>>>>>>> origin/main
         let _ = remove_file_retry(&commit, 20, Duration::from_millis(50));
 
         registry::upsert_profile_with_id(storage_paths, profile_id, profile_name, true)?;
@@ -540,6 +604,7 @@ fn rollback_remove_password_tx(
     // Restore backups (overwrite if needed).
     if vault_key_bak.exists() {
         if vault_key_final.exists() {
+<<<<<<< HEAD
             replace_file_retry(
                 &vault_key_bak,
                 vault_key_final,
@@ -553,6 +618,11 @@ fn rollback_remove_password_tx(
                 20,
                 Duration::from_millis(50),
             )?;
+=======
+            replace_file_retry(&vault_key_bak, vault_key_final, 20, Duration::from_millis(50))?;
+        } else {
+            rename_retry(&vault_key_bak, vault_key_final, 20, Duration::from_millis(50))?;
+>>>>>>> origin/main
         }
     }
 
@@ -566,6 +636,7 @@ fn rollback_remove_password_tx(
 
     if key_check_bak.exists() {
         if key_check_final.exists() {
+<<<<<<< HEAD
             replace_file_retry(
                 &key_check_bak,
                 key_check_final,
@@ -579,6 +650,11 @@ fn rollback_remove_password_tx(
                 20,
                 Duration::from_millis(50),
             )?;
+=======
+            replace_file_retry(&key_check_bak, key_check_final, 20, Duration::from_millis(50))?;
+        } else {
+            rename_retry(&key_check_bak, key_check_final, 20, Duration::from_millis(50))?;
+>>>>>>> origin/main
         }
     }
 
@@ -612,6 +688,7 @@ fn recover_remove_password_tx(
             if vault_key_final.exists() {
                 let _ = remove_file_retry(&vault_key_new, 20, Duration::from_millis(50));
             } else {
+<<<<<<< HEAD
                 rename_retry(
                     &vault_key_new,
                     &vault_key_final,
@@ -619,6 +696,10 @@ fn recover_remove_password_tx(
                     Duration::from_millis(50),
                 )
                 .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
+=======
+                rename_retry(&vault_key_new, &vault_key_final, 20, Duration::from_millis(50))
+                    .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
+>>>>>>> origin/main
             }
         }
 
@@ -642,6 +723,10 @@ fn recover_remove_password_tx(
     Ok(())
 }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main
 fn rollback_change_password_tx(
     tx_root: &Path,
     vault_key_final: &Path,
@@ -659,6 +744,7 @@ fn rollback_change_password_tx(
     // Restore backups (overwrite if needed).
     if vault_key_bak.exists() {
         if vault_key_final.exists() {
+<<<<<<< HEAD
             replace_file_retry(
                 &vault_key_bak,
                 vault_key_final,
@@ -672,11 +758,17 @@ fn rollback_change_password_tx(
                 20,
                 Duration::from_millis(50),
             )?;
+=======
+            replace_file_retry(&vault_key_bak, vault_key_final, 20, Duration::from_millis(50))?;
+        } else {
+            rename_retry(&vault_key_bak, vault_key_final, 20, Duration::from_millis(50))?;
+>>>>>>> origin/main
         }
     }
 
     if key_check_bak.exists() {
         if key_check_final.exists() {
+<<<<<<< HEAD
             replace_file_retry(
                 &key_check_bak,
                 key_check_final,
@@ -690,6 +782,11 @@ fn rollback_change_password_tx(
                 20,
                 Duration::from_millis(50),
             )?;
+=======
+            replace_file_retry(&key_check_bak, key_check_final, 20, Duration::from_millis(50))?;
+        } else {
+            rename_retry(&key_check_bak, key_check_final, 20, Duration::from_millis(50))?;
+>>>>>>> origin/main
         }
     }
 
@@ -724,6 +821,7 @@ fn recover_change_password_tx(
             if vault_key_final.exists() {
                 let _ = remove_file_retry(&vault_key_new, 20, Duration::from_millis(50));
             } else {
+<<<<<<< HEAD
                 rename_retry(
                     &vault_key_new,
                     &vault_key_final,
@@ -731,6 +829,10 @@ fn recover_change_password_tx(
                     Duration::from_millis(50),
                 )
                 .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
+=======
+                rename_retry(&vault_key_new, &vault_key_final, 20, Duration::from_millis(50))
+                    .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
+>>>>>>> origin/main
             }
         }
 
@@ -738,6 +840,7 @@ fn recover_change_password_tx(
             if key_check_final.exists() {
                 let _ = remove_file_retry(&key_check_new, 20, Duration::from_millis(50));
             } else {
+<<<<<<< HEAD
                 rename_retry(
                     &key_check_new,
                     &key_check_final,
@@ -745,10 +848,15 @@ fn recover_change_password_tx(
                     Duration::from_millis(50),
                 )
                 .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
+=======
+                rename_retry(&key_check_new, &key_check_final, 20, Duration::from_millis(50))
+                    .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
+>>>>>>> origin/main
             }
         }
 
         // Best-effort cleanup of backups and tx dir.
+<<<<<<< HEAD
         let _ = remove_file_retry(
             &tx_root.join("vault_key.bin.bak"),
             20,
@@ -759,6 +867,10 @@ fn recover_change_password_tx(
             20,
             Duration::from_millis(50),
         );
+=======
+        let _ = remove_file_retry(&tx_root.join("vault_key.bin.bak"), 20, Duration::from_millis(50));
+        let _ = remove_file_retry(&tx_root.join("key_check.bin.bak"), 20, Duration::from_millis(50));
+>>>>>>> origin/main
         let _ = remove_file_retry(&commit, 20, Duration::from_millis(50));
         best_effort_remove_dir_all_retry(&tx_root, 40, Duration::from_millis(50));
         return Ok(());
@@ -824,16 +936,24 @@ fn best_effort_fsync_rename_dirs(_from: &Path, _to: &Path) {
     let _ = (_from, _to);
 }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main
 fn rename_platform(from: &Path, to: &Path) -> io::Result<()> {
     use std::iter;
     use std::os::windows::ffi::OsStrExt;
     use windows_sys::Win32::Storage::FileSystem::{MoveFileExW, MOVEFILE_WRITE_THROUGH};
 
+<<<<<<< HEAD
     let from_w: Vec<u16> = from
         .as_os_str()
         .encode_wide()
         .chain(iter::once(0))
         .collect();
+=======
+    let from_w: Vec<u16> = from.as_os_str().encode_wide().chain(iter::once(0)).collect();
+>>>>>>> origin/main
     let to_w: Vec<u16> = to.as_os_str().encode_wide().chain(iter::once(0)).collect();
 
     let ok = unsafe { MoveFileExW(from_w.as_ptr(), to_w.as_ptr(), MOVEFILE_WRITE_THROUGH) };
@@ -844,6 +964,10 @@ fn rename_platform(from: &Path, to: &Path) -> io::Result<()> {
     }
 }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main
 fn rename_retry(from: &Path, to: &Path, attempts: u32, base_delay: Duration) -> io::Result<()> {
     let mut i = 0;
     loop {
@@ -893,11 +1017,15 @@ fn replace_platform(from: &Path, to: &Path) -> io::Result<()> {
         MoveFileExW, MOVEFILE_REPLACE_EXISTING, MOVEFILE_WRITE_THROUGH,
     };
 
+<<<<<<< HEAD
     let from_w: Vec<u16> = from
         .as_os_str()
         .encode_wide()
         .chain(iter::once(0))
         .collect();
+=======
+    let from_w: Vec<u16> = from.as_os_str().encode_wide().chain(iter::once(0)).collect();
+>>>>>>> origin/main
     let to_w: Vec<u16> = to.as_os_str().encode_wide().chain(iter::once(0)).collect();
 
     let ok = unsafe {
@@ -914,12 +1042,17 @@ fn replace_platform(from: &Path, to: &Path) -> io::Result<()> {
     }
 }
 
+<<<<<<< HEAD
 fn replace_file_retry(
     from: &Path,
     to: &Path,
     attempts: u32,
     base_delay: Duration,
 ) -> io::Result<()> {
+=======
+
+fn replace_file_retry(from: &Path, to: &Path, attempts: u32, base_delay: Duration) -> io::Result<()> {
+>>>>>>> origin/main
     let mut i = 0;
     loop {
         match replace_platform(from, to) {
@@ -945,7 +1078,12 @@ fn prepare_empty_dir(path: &Path) -> Result<()> {
         remove_dir_all_retry(path, 40, Duration::from_millis(50))
             .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
     }
+<<<<<<< HEAD
     std::fs::create_dir_all(path).map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
+=======
+    std::fs::create_dir_all(path)
+        .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
+>>>>>>> origin/main
     Ok(())
 }
 
@@ -976,6 +1114,7 @@ pub fn login_vault(id: &str, password: Option<&str>, state: &Arc<AppState>) -> R
     // Recover any pending profile transitions (password changes) and incomplete restore (if any) before opening
     recover_incomplete_profile_transitions_with_password(&storage_paths, id, &profile.name)?;
     {
+<<<<<<< HEAD
         use crate::data::profiles::paths::{profile_dir, vault_db_path};
         use std::fs;
         let profile_root = profile_dir(&storage_paths, id)?;
@@ -987,6 +1126,15 @@ pub fn login_vault(id: &str, password: Option<&str>, state: &Arc<AppState>) -> R
                 let path = entry
                     .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_READ"))?
                     .path();
+=======
+        use std::fs;
+        use crate::data::profiles::paths::{profile_dir, vault_db_path};
+        let profile_root = profile_dir(&storage_paths, id)?;
+        let vault_path = vault_db_path(&storage_paths, id)?;
+        if !vault_path.exists() {
+            for entry in fs::read_dir(&profile_root).map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_READ"))? {
+                let path = entry.map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_READ"))?.path();
+>>>>>>> origin/main
                 if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
                     if name.starts_with("vault.db.old.") {
                         fs::rename(&path, &vault_path)
@@ -1033,6 +1181,7 @@ pub fn login_vault(id: &str, password: Option<&str>, state: &Arc<AppState>) -> R
     if let Ok(mut active) = state.active_profile.lock() {
         *active = Some(id.to_string());
     }
+<<<<<<< HEAD
     let active_vault_id = settings_service::get_settings(&storage_paths, id)
         .ok()
         .and_then(|settings| {
@@ -1047,6 +1196,12 @@ pub fn login_vault(id: &str, password: Option<&str>, state: &Arc<AppState>) -> R
             }
         })
         .unwrap_or_else(|| settings_service::DEFAULT_VAULT_ID.to_string());
+=======
+    let active_vault_id =
+        settings_service::resolve_active_vault_id(&storage_paths, id).unwrap_or_else(|_| {
+            settings_service::DEFAULT_VAULT_ID.to_string()
+        });
+>>>>>>> origin/main
     if let Ok(mut active) = state.active_vault_id.lock() {
         *active = Some(active_vault_id);
     }
@@ -1146,6 +1301,7 @@ pub fn lock_vault(state: &Arc<AppState>) -> Result<bool> {
         *session = None;
     }
 
+<<<<<<< HEAD
     {
         let mut active = state
             .active_profile
@@ -1153,6 +1309,15 @@ pub fn lock_vault(state: &Arc<AppState>) -> Result<bool> {
             .map_err(|_| ErrorCodeString::new("STATE_UNAVAILABLE"))?;
         *active = None;
     }
+=======
+	{
+		let mut active = state
+			.active_profile
+			.lock()
+			.map_err(|_| ErrorCodeString::new("STATE_UNAVAILABLE"))?;
+		*active = None;
+	}
+>>>>>>> origin/main
     {
         let mut active_vault_id = state
             .active_vault_id
@@ -1161,6 +1326,7 @@ pub fn lock_vault(state: &Arc<AppState>) -> Result<bool> {
         *active_vault_id = None;
     }
 
+<<<<<<< HEAD
     Ok(true)
 }
 
@@ -1169,6 +1335,12 @@ pub fn set_profile_password(
     password: &str,
     state: &Arc<AppState>,
 ) -> Result<ProfileMeta> {
+=======
+	Ok(true)
+}
+
+pub fn set_profile_password(id: &str, password: &str, state: &Arc<AppState>) -> Result<ProfileMeta> {
+>>>>>>> origin/main
     let _flight_guard = state
         .vault_persist_guard
         .lock()
@@ -1230,7 +1402,12 @@ pub fn set_profile_password(
 
     write_atomic(&vault_key_new, &vault_key_blob)
         .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
+<<<<<<< HEAD
     write_atomic(&salt_new, &salt).map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
+=======
+    write_atomic(&salt_new, &salt)
+        .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
+>>>>>>> origin/main
     write_atomic(&key_check_new, &key_check_blob)
         .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
 
@@ -1254,12 +1431,16 @@ pub fn set_profile_password(
         if vault_key_bak.exists() {
             remove_file_retry(&vault_key_bak, 20, Duration::from_millis(50))?;
         }
+<<<<<<< HEAD
         rename_retry(
             &vault_key_final,
             &vault_key_bak,
             20,
             Duration::from_millis(50),
         )?;
+=======
+        rename_retry(&vault_key_final, &vault_key_bak, 20, Duration::from_millis(50))?;
+>>>>>>> origin/main
 
         // Backup existing protected-only files if they exist (stale leftovers).
         if salt_final.exists() {
@@ -1272,6 +1453,7 @@ pub fn set_profile_password(
             if key_check_bak.exists() {
                 remove_file_retry(&key_check_bak, 20, Duration::from_millis(50))?;
             }
+<<<<<<< HEAD
             rename_retry(
                 &key_check_final,
                 &key_check_bak,
@@ -1294,6 +1476,15 @@ pub fn set_profile_password(
             20,
             Duration::from_millis(50),
         )?;
+=======
+            rename_retry(&key_check_final, &key_check_bak, 20, Duration::from_millis(50))?;
+        }
+
+        // Move staged files into place.
+        rename_retry(&vault_key_new, &vault_key_final, 20, Duration::from_millis(50))?;
+        rename_retry(&salt_new, &salt_final, 20, Duration::from_millis(50))?;
+        rename_retry(&key_check_new, &key_check_final, 20, Duration::from_millis(50))?;
+>>>>>>> origin/main
 
         // Commit marker is written last to make crash recovery deterministic.
         write_atomic(&commit, b"1")?;
@@ -1362,9 +1553,13 @@ pub fn change_profile_password(id: &str, password: &str, state: &Arc<AppState>) 
             .vault_session
             .lock()
             .map_err(|_| ErrorCodeString::new("STATE_UNAVAILABLE"))?;
+<<<<<<< HEAD
         let s = session
             .as_ref()
             .ok_or_else(|| ErrorCodeString::new("VAULT_LOCKED"))?;
+=======
+        let s = session.as_ref().ok_or_else(|| ErrorCodeString::new("VAULT_LOCKED"))?;
+>>>>>>> origin/main
         if s.profile_id != id {
             return Err(ErrorCodeString::new("VAULT_LOCKED"));
         }
@@ -1373,8 +1568,13 @@ pub fn change_profile_password(id: &str, password: &str, state: &Arc<AppState>) 
 
     // Keep the existing salt to avoid multi-file atomicity problems.
     let salt_path = kdf_salt_path(&storage_paths, id)?;
+<<<<<<< HEAD
     let salt =
         std::fs::read(&salt_path).map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_READ"))?;
+=======
+    let salt = std::fs::read(&salt_path)
+        .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_READ"))?;
+>>>>>>> origin/main
     if salt.is_empty() {
         return Err(ErrorCodeString::new("VAULT_CORRUPTED"));
     }
@@ -1400,8 +1600,12 @@ pub fn change_profile_password(id: &str, password: &str, state: &Arc<AppState>) 
     let vault_key_bak = tx_root.join("vault_key.bin.bak");
     let key_check_bak = tx_root.join("key_check.bin.bak");
 
+<<<<<<< HEAD
     let vault_key_blob =
         master_key::wrap_master_key_with_password_blob(id, &*wrapping_key, &*master)?;
+=======
+    let vault_key_blob = master_key::wrap_master_key_with_password_blob(id, &*wrapping_key, &*master)?;
+>>>>>>> origin/main
     let key_check_blob = key_check::create_key_check_blob(id, &*wrapping_key)?;
 
     write_atomic(&vault_key_new, &vault_key_blob)
@@ -1411,6 +1615,7 @@ pub fn change_profile_password(id: &str, password: &str, state: &Arc<AppState>) 
 
     let tx_result: Result<()> = (|| {
         // 1) Move the old files into tx_root as backups
+<<<<<<< HEAD
         rename_retry(
             &vault_key_final,
             &vault_key_bak,
@@ -1441,6 +1646,18 @@ pub fn change_profile_password(id: &str, password: &str, state: &Arc<AppState>) 
             Duration::from_millis(50),
         )
         .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
+=======
+        rename_retry(&vault_key_final, &vault_key_bak, 20, Duration::from_millis(50))
+            .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
+        rename_retry(&key_check_final, &key_check_bak, 20, Duration::from_millis(50))
+            .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
+
+        // 2) Move the new files into place
+        rename_retry(&vault_key_new, &vault_key_final, 20, Duration::from_millis(50))
+            .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
+        rename_retry(&key_check_new, &key_check_final, 20, Duration::from_millis(50))
+            .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
+>>>>>>> origin/main
 
         // 3) Mark commit (best-effort cleanup will remove tx_root later)
         write_atomic(&tx_root.join(CHANGE_PASSWORD_TX_COMMIT_MARKER), b"1")
@@ -1526,12 +1743,16 @@ pub fn remove_profile_password(id: &str, state: &Arc<AppState>) -> Result<Profil
             if vault_key_bak.exists() {
                 remove_file_retry(&vault_key_bak, 20, Duration::from_millis(50))?;
             }
+<<<<<<< HEAD
             rename_retry(
                 &vault_key_final,
                 &vault_key_bak,
                 20,
                 Duration::from_millis(50),
             )?;
+=======
+            rename_retry(&vault_key_final, &vault_key_bak, 20, Duration::from_millis(50))?;
+>>>>>>> origin/main
         } else {
             return Err(io::Error::new(
                 io::ErrorKind::NotFound,
@@ -1550,6 +1771,7 @@ pub fn remove_profile_password(id: &str, state: &Arc<AppState>) -> Result<Profil
             if key_check_bak.exists() {
                 remove_file_retry(&key_check_bak, 20, Duration::from_millis(50))?;
             }
+<<<<<<< HEAD
             rename_retry(
                 &key_check_final,
                 &key_check_bak,
@@ -1565,6 +1787,13 @@ pub fn remove_profile_password(id: &str, state: &Arc<AppState>) -> Result<Profil
             20,
             Duration::from_millis(50),
         )?;
+=======
+            rename_retry(&key_check_final, &key_check_bak, 20, Duration::from_millis(50))?;
+        }
+
+        // Move staged new vault_key.bin into place.
+        rename_retry(&vault_key_new, &vault_key_final, 20, Duration::from_millis(50))?;
+>>>>>>> origin/main
 
         // Commit marker is written last to make crash recovery deterministic.
         write_atomic(&commit, b"1")?;
@@ -1577,8 +1806,12 @@ pub fn remove_profile_password(id: &str, state: &Arc<AppState>) -> Result<Profil
             id,
             e
         );
+<<<<<<< HEAD
         let _ =
             rollback_remove_password_tx(&tx_root, &vault_key_final, &salt_final, &key_check_final);
+=======
+        let _ = rollback_remove_password_tx(&tx_root, &vault_key_final, &salt_final, &key_check_final);
+>>>>>>> origin/main
         best_effort_remove_dir_all_retry(&tx_root, 40, Duration::from_millis(50));
         return Err(ErrorCodeString::new("PROFILE_STORAGE_WRITE"));
     }

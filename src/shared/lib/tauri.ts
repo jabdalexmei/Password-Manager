@@ -79,8 +79,13 @@ export function workspaceSelect(id: string): Promise<boolean> {
   return invoke('workspace_select', { id });
 }
 
+<<<<<<< HEAD
 export function workspaceCreateViaDialog(dialogTitle?: string): Promise<boolean> {
   return invoke('workspace_create_via_dialog', { dialogTitle: dialogTitle ?? null });
+=======
+export function workspaceCreateViaDialog(): Promise<boolean> {
+  return invoke('workspace_create_via_dialog');
+>>>>>>> origin/main
 }
 
 export function workspaceCreateDefault(): Promise<boolean> {

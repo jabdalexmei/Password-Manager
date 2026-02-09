@@ -24,11 +24,15 @@ pub async fn create_vault(name: String, state: State<'_, Arc<AppState>>) -> Resu
 }
 
 #[tauri::command]
+<<<<<<< HEAD
 pub async fn rename_vault(
     id: String,
     name: String,
     state: State<'_, Arc<AppState>>,
 ) -> Result<bool> {
+=======
+pub async fn rename_vault(id: String, name: String, state: State<'_, Arc<AppState>>) -> Result<bool> {
+>>>>>>> origin/main
     let app = state.inner().clone();
     tauri::async_runtime::spawn_blocking(move || vaults_service::rename_vault(id, name, &app))
         .await
@@ -50,6 +54,7 @@ pub async fn set_active_vault(id: String, state: State<'_, Arc<AppState>>) -> Re
         .await
         .map_err(|_| ErrorCodeString::new("TASK_JOIN_FAILED"))?
 }
+<<<<<<< HEAD
 
 #[tauri::command]
 pub async fn set_default_vault(id: String, state: State<'_, Arc<AppState>>) -> Result<bool> {
@@ -58,3 +63,5 @@ pub async fn set_default_vault(id: String, state: State<'_, Arc<AppState>>) -> R
         .await
         .map_err(|_| ErrorCodeString::new("TASK_JOIN_FAILED"))?
 }
+=======
+>>>>>>> origin/main

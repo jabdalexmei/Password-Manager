@@ -29,6 +29,7 @@ fn now_ms() -> Result<u128> {
 }
 
 #[tauri::command]
+<<<<<<< HEAD
 pub async fn rename_attachment(
     app: AppHandle,
     attachment_id: String,
@@ -42,6 +43,8 @@ pub async fn rename_attachment(
 }
 
 #[tauri::command]
+=======
+>>>>>>> origin/main
 pub async fn remove_attachment(app: AppHandle, attachment_id: String) -> Result<()> {
     tauri::async_runtime::spawn_blocking(move || {
         attachments_service::remove_attachment(&app, attachment_id)
@@ -198,11 +201,16 @@ pub async fn add_attachments_from_pick(
                     continue;
                 }
             }
+<<<<<<< HEAD
             let meta = attachments_service::add_attachment_from_fs_path(
                 &app,
                 datacard_id.clone(),
                 &f.path,
             )?;
+=======
+            let meta =
+                attachments_service::add_attachment_from_fs_path(&app, datacard_id.clone(), &f.path)?;
+>>>>>>> origin/main
             out.push(meta);
         }
         Ok(out)
@@ -236,6 +244,7 @@ pub async fn add_attachments_via_dialog(
 }
 
 #[tauri::command]
+<<<<<<< HEAD
 pub async fn add_attachments_from_paths(
     app: AppHandle,
     datacard_id: String,
@@ -256,6 +265,8 @@ pub async fn add_attachments_from_paths(
 }
 
 #[tauri::command]
+=======
+>>>>>>> origin/main
 pub async fn save_attachment_via_dialog(app: AppHandle, attachment_id: String) -> Result<bool> {
     tauri::async_runtime::spawn_blocking(move || {
         let preview = attachments_service::get_attachment_preview(&app, attachment_id.clone())?;
