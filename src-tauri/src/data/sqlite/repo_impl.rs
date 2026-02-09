@@ -162,6 +162,8 @@ fn canonicalize_datacard_field_key(raw: &str) -> String {
         "tags" => "tag".to_string(),
         "notes" => "note".to_string(),
         "site" => "url".to_string(),
+        "recoveryemail" => "recovery_email".to_string(),
+        "mobilephone" => "mobile_phone".to_string(),
         _ => key,
     }
 }
