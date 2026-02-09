@@ -119,7 +119,7 @@ pub async fn backup_pick_file(
         let mut dialog = app
             .dialog()
             .file()
-            .set_title("Select backup archive (.pmbackup.zip)");
+            .set_title("Step 2 of 2: Select backup archive (.pmbackup.zip)");
 
         if let Ok(sp) = st.get_storage_paths() {
             if let Ok(profiles_root) = sp.profiles_root() {
