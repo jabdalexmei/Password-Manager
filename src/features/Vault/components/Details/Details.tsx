@@ -106,6 +106,7 @@ export function Details({
   const [renameAttachmentId, setRenameAttachmentId] = useState<string | null>(null);
   const [renameAttachmentValue, setRenameAttachmentValue] = useState('');
   const [isRenamingAttachment, setIsRenamingAttachment] = useState(false);
+  const [isAttachmentDragOver, setIsAttachmentDragOver] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [seedPhraseViewOpen, setSeedPhraseViewOpen] = useState(false);
   const [revealedCustomFields, setRevealedCustomFields] = useState<Record<string, boolean>>({});
@@ -206,6 +207,72 @@ export function Details({
     e.stopPropagation();
     setPreviewMenu(null);
     setCoreMenu({ x: e.clientX, y: e.clientY, field });
+  };
+
+  const handleAttachmentsDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    if (isTrashMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setIsAttachmentDragOver(true);
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'copy';
+    }
+  };
+
+  const handleAttachmentsDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    if (isTrashMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setIsAttachmentDragOver(false);
+  };
+
+  const handleAttachmentsDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    if (isTrashMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setIsAttachmentDragOver(false);
+
+    const paths: string[] = [];
+
+    const tryAddFile = (file: File | null) => {
+      if (!file) return;
+      const anyFile = file as any;
+      const path = typeof anyFile.path === 'string' ? anyFile.path : '';
+      if (path && !paths.includes(path)) paths.push(path);
+    };
+
+    if (e.dataTransfer?.items && e.dataTransfer.items.length) {
+      for (const item of Array.from(e.dataTransfer.items)) {
+        if (item.kind !== 'file') continue;
+        tryAddFile(item.getAsFile());
+      }
+    }
+
+    if (e.dataTransfer?.files && e.dataTransfer.files.length) {
+      for (const file of Array.from(e.dataTransfer.files)) {
+        tryAddFile(file);
+      }
+    }
+
+    const uriList = e.dataTransfer?.getData('text/uri-list') ?? '';
+    if (uriList) {
+      for (const line of uriList.split(/\r?\n/)) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) continue;
+        if (trimmed.startsWith('file://')) {
+          try {
+            const url = new URL(trimmed);
+            const decoded = decodeURIComponent(url.pathname);
+            if (decoded && !paths.includes(decoded)) paths.push(decoded);
+          } catch {
+            // ignore
+          }
+        }
+      }
+    }
+
+    if (!paths.length) return;
+    await detailActions.onAddAttachmentsFromPaths(paths);
   };
 
   const isAllowedGlobalPreviewField = (value: string): value is DataCardPreviewField =>
@@ -779,9 +846,15 @@ export function Details({
             </button>
           )}
         </div>
-        <div className="attachments-body">
-          {detailActions.attachments.length === 0 && (
-            <div className="muted">{t('attachments.hint')}</div>
+        <div
+          className={`attachments-body${isAttachmentDragOver && !isTrashMode ? ' attachments-body--dragover' : ''}`}
+          onDragEnter={handleAttachmentsDragOver}
+          onDragOver={handleAttachmentsDragOver}
+          onDragLeave={handleAttachmentsDragLeave}
+          onDrop={handleAttachmentsDrop}
+        >
+          {(detailActions.attachments.length === 0 || !isTrashMode) && (
+            <div className="muted attachments-drop-hint">{t('attachments.hint')}</div>
           )}
           {detailActions.attachments.map((attachment) => (
             <div key={attachment.id} className="attachment-row">

@@ -300,6 +300,13 @@ export async function addAttachmentsViaDialog(datacardId: string): Promise<Backe
   return invoke('add_attachments_via_dialog', { datacardId });
 }
 
+export async function addAttachmentsFromPaths(
+  datacardId: string,
+  paths: string[]
+): Promise<BackendAttachmentMeta[]> {
+  return invoke('add_attachments_from_paths', { datacardId, paths });
+}
+
 export async function removeAttachment(attachmentId: string): Promise<void> {
   return invoke('remove_attachment', { attachmentId });
 }
