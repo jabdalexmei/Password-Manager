@@ -349,3 +349,19 @@ index 4bedc1e..ef3c2db 100644
    Trash2 as IconDelete,
    Trash2 as IconTrash,
  
+
+diff --git a/src-tauri/permissions/app-default.toml b/src-tauri/permissions/app-default.toml
+--- a/src-tauri/permissions/app-default.toml
++++ b/src-tauri/permissions/app-default.toml
+@@ -21,10 +21,11 @@
+   "health_check",
+ 
+   "list_attachments",
++  "rename_attachment",
+   "attachments_pick_files",
+   "attachments_discard_pick",
+   "add_attachments_from_pick",
+   "add_attachments_via_dialog",
+   "remove_attachment",
+   "purge_attachment",
+   "get_attachment_bytes_base64",
