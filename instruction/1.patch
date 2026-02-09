@@ -1,0 +1,11 @@
+--- a/src-tauri/src/data/sqlite/repo_impl.rs
++++ b/src-tauri/src/data/sqlite/repo_impl.rs
+@@ -162,6 +162,8 @@
+         "tags" => "tag".to_string(),
+         "notes" => "note".to_string(),
+         "site" => "url".to_string(),
++        "recoveryemail" => "recovery_email".to_string(),
++        "mobilephone" => "mobile_phone".to_string(),
+         _ => key,
+     }
+ }

@@ -1034,6 +1034,12 @@
   gap: 8px;
 }
 
+.attachments-body.drag-over {
+  outline: 2px dashed var(--focus-border-strong);
+  outline-offset: 4px;
+  border-radius: var(--radius-sm);
+}
+
 .attachment-row {
   display: flex;
   justify-content: space-between;

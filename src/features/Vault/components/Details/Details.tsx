@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { CustomField, DataCard, Folder } from '../../types/ui';
 import { useTranslation } from '../../../../shared/lib/i18n';
 import { useDetails } from './useDetails';
@@ -12,8 +12,10 @@ import {
   IconImport,
   IconPreview,
   IconPreviewOff,
+  IconRename,
 } from '@/shared/icons/lucide/icons';
 import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../../../../shared/ui/dialog';
 import {
   loadPreviewFields,
   onPreviewFieldsChanged,
@@ -27,6 +29,7 @@ import {
   type DataCardCoreField,
 } from '../../lib/datacardCoreHiddenFields';
 import { setDataCardPreviewFieldsForCard } from '../../api/vaultApi';
+import { getCurrentWebview } from '@tauri-apps/api/webview';
 
 const LazyAttachmentPreviewModal = React.lazy(() =>
   import('../modals/AttachmentPreviewModal').then((m) => ({ default: m.default })),
@@ -92,6 +95,85 @@ export function Details({
     clipboardClearTimeoutSeconds,
   });
 
+  const attachmentsDropRef = useRef<HTMLDivElement | null>(null);
+  const [isAttachmentsDragOver, setIsAttachmentsDragOver] = useState(false);
+
+  const addAttachmentsFromDrop = detailActions.onAddAttachmentsFromPaths;
+  const addAttachmentsFromDropRef = useRef(addAttachmentsFromDrop);
+  useEffect(() => {
+    addAttachmentsFromDropRef.current = addAttachmentsFromDrop;
+  }, [addAttachmentsFromDrop]);
+
+  const pendingDropPathsRef = useRef<Set<string>>(new Set());
+  const dropFlushTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    setIsAttachmentsDragOver(false);
+    if (!card?.id || isTrashMode) return;
+
+    let disposed = false;
+
+    const clearDropFlushTimer = () => {
+      if (dropFlushTimerRef.current !== null) {
+        window.clearTimeout(dropFlushTimerRef.current);
+        dropFlushTimerRef.current = null;
+      }
+      pendingDropPathsRef.current.clear();
+    };
+
+    clearDropFlushTimer();
+
+    const isInsideDropZone = (position: { x: number; y: number } | null | undefined) => {
+      const el = attachmentsDropRef.current;
+      if (!el || !position) return false;
+      const rect = el.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const x = position.x / dpr;
+      const y = position.y / dpr;
+      return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+    };
+
+    const scheduleAddFromDrop = (paths: string[]) => {
+      for (const p of paths) pendingDropPathsRef.current.add(p);
+      if (dropFlushTimerRef.current !== null) return;
+
+      dropFlushTimerRef.current = window.setTimeout(() => {
+        dropFlushTimerRef.current = null;
+        const uniquePaths = Array.from(pendingDropPathsRef.current);
+        pendingDropPathsRef.current.clear();
+        if (disposed || uniquePaths.length === 0) return;
+        void addAttachmentsFromDropRef.current(uniquePaths);
+      }, 25);
+    };
+
+    const unlistenPromise = getCurrentWebview().onDragDropEvent((event) => {
+      if (disposed) return;
+
+      const payload: any = event.payload as any;
+      if (payload?.type === 'over') {
+        setIsAttachmentsDragOver(isInsideDropZone(payload.position));
+        return;
+      }
+      if (payload?.type === 'drop') {
+        const inside = isInsideDropZone(payload.position);
+        setIsAttachmentsDragOver(false);
+        if (inside) {
+          scheduleAddFromDrop((payload.paths ?? []) as string[]);
+        }
+        return;
+      }
+      setIsAttachmentsDragOver(false);
+    });
+
+    unlistenPromise.catch((err) => console.error(err));
+
+    return () => {
+      disposed = true;
+      clearDropFlushTimer();
+      void unlistenPromise.then((unlisten) => unlisten()).catch(() => undefined);
+    };
+  }, [card?.id, isTrashMode]);
+
   const folderName = useMemo(() => {
     if (!card) return '';
     return card.folderId ? folders.find((f) => f.id === card.folderId)?.name ?? '' : '';
@@ -100,6 +182,10 @@ export function Details({
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [purgeConfirmOpen, setPurgeConfirmOpen] = useState(false);
   const [attachmentToDelete, setAttachmentToDelete] = useState<string | null>(null);
+  const [renameAttachmentOpen, setRenameAttachmentOpen] = useState(false);
+  const [renameAttachmentId, setRenameAttachmentId] = useState<string | null>(null);
+  const [renameAttachmentValue, setRenameAttachmentValue] = useState('');
+  const [isRenamingAttachment, setIsRenamingAttachment] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [seedPhraseViewOpen, setSeedPhraseViewOpen] = useState(false);
   const [revealedCustomFields, setRevealedCustomFields] = useState<Record<string, boolean>>({});
@@ -405,6 +491,83 @@ export function Details({
           onCancel={() => setAttachmentToDelete(null)}
         />
 
+        <Dialog
+          open={renameAttachmentOpen}
+          onOpenChange={(nextOpen) => {
+            if (isRenamingAttachment) return;
+            if (!nextOpen) {
+              setRenameAttachmentOpen(false);
+              setRenameAttachmentId(null);
+            }
+          }}
+        >
+          <DialogContent aria-labelledby="rename-attachment-title">
+            <DialogHeader>
+              <DialogTitle id="rename-attachment-title">{t('attachments.renameTitle')}</DialogTitle>
+            </DialogHeader>
+
+            <div className="dialog-body" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div className="form-field">
+                <label className="form-label" htmlFor="rename-attachment-input">
+                  {t('attachments.renameLabel')}
+                </label>
+                <input
+                  id="rename-attachment-input"
+                  type="text"
+                  value={renameAttachmentValue}
+                  disabled={isRenamingAttachment}
+                  onChange={(e) => setRenameAttachmentValue(e.target.value)}
+                  autoComplete="off"
+                  className="input"
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="dialog-footer--split">
+              <div className="dialog-footer-left">
+                <button
+                  className="btn btn-secondary"
+                  type="button"
+                  onClick={() => {
+                    setRenameAttachmentOpen(false);
+                    setRenameAttachmentId(null);
+                  }}
+                  disabled={isRenamingAttachment}
+                >
+                  {tCommon('action.cancel')}
+                </button>
+              </div>
+
+              <div className="dialog-footer-right">
+                <button
+                  className="btn btn-primary"
+                  type="button"
+                  onClick={async () => {
+                    if (!renameAttachmentId) return;
+                    setIsRenamingAttachment(true);
+                    const ok = await detailActions.onRenameAttachment(
+                      renameAttachmentId,
+                      renameAttachmentValue
+                    );
+                    setIsRenamingAttachment(false);
+                    if (ok) {
+                      setRenameAttachmentOpen(false);
+                      setRenameAttachmentId(null);
+                    }
+                  }}
+                  disabled={
+                    isRenamingAttachment ||
+                    !renameAttachmentId ||
+                    !renameAttachmentValue.trim()
+                  }
+                >
+                  {t('attachments.renameConfirm')}
+                </button>
+              </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
       {hasTitle && (
         <div className="detail-field">
           <div className="detail-label">{t('label.title')}</div>
@@ -696,7 +859,10 @@ export function Details({
             </button>
           )}
         </div>
-        <div className="attachments-body">
+        <div
+          ref={attachmentsDropRef}
+          className={`attachments-body${isAttachmentsDragOver ? ' drag-over' : ''}`}
+        >
           {detailActions.attachments.length === 0 && (
             <div className="muted">{t('attachments.hint')}</div>
           )}
@@ -717,6 +883,19 @@ export function Details({
                     aria-label={t('attachments.open')}
                   >
                     <IconPreview />
+                  </button>
+                  <button
+                    className="icon-button"
+                    type="button"
+                    onClick={() => {
+                      setRenameAttachmentId(attachment.id);
+                      setRenameAttachmentValue(attachment.fileName);
+                      setRenameAttachmentOpen(true);
+                    }}
+                    aria-label={t('attachments.rename')}
+                    title={t('attachments.rename')}
+                  >
+                    <IconRename />
                   </button>
                   <button
                     className="icon-button"
