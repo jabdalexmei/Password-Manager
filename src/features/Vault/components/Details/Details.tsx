@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { CustomField, DataCard, Folder } from '../../types/ui';
 import { useTranslation } from '../../../../shared/lib/i18n';
 import { useDetails } from './useDetails';
@@ -29,6 +29,7 @@ import {
   type DataCardCoreField,
 } from '../../lib/datacardCoreHiddenFields';
 import { setDataCardPreviewFieldsForCard } from '../../api/vaultApi';
+import { getCurrentWebview } from '@tauri-apps/api/webview';
 
 const LazyAttachmentPreviewModal = React.lazy(() =>
   import('../modals/AttachmentPreviewModal').then((m) => ({ default: m.default })),
@@ -93,6 +94,54 @@ export function Details({
     clipboardAutoClearEnabled,
     clipboardClearTimeoutSeconds,
   });
+
+  const attachmentsDropRef = useRef<HTMLDivElement | null>(null);
+  const [isAttachmentsDragOver, setIsAttachmentsDragOver] = useState(false);
+  const addAttachmentsFromDrop = detailActions.onAddAttachmentsFromPaths;
+
+  useEffect(() => {
+    setIsAttachmentsDragOver(false);
+    if (!card?.id || isTrashMode) return;
+
+    let unlisten: null | (() => void) = null;
+
+    const isInsideDropZone = (position: { x: number; y: number } | null | undefined) => {
+      const el = attachmentsDropRef.current;
+      if (!el || !position) return false;
+      const rect = el.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const x = position.x / dpr;
+      const y = position.y / dpr;
+      return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+    };
+
+    void (async () => {
+      try {
+        unlisten = await getCurrentWebview().onDragDropEvent((event) => {
+          const payload: any = event.payload as any;
+          if (payload?.type === 'over') {
+            setIsAttachmentsDragOver(isInsideDropZone(payload.position));
+            return;
+          }
+          if (payload?.type === 'drop') {
+            const inside = isInsideDropZone(payload.position);
+            setIsAttachmentsDragOver(false);
+            if (inside) {
+              void addAttachmentsFromDrop((payload.paths ?? []) as string[]);
+            }
+            return;
+          }
+          setIsAttachmentsDragOver(false);
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    })();
+
+    return () => {
+      if (unlisten) unlisten();
+    };
+  }, [card?.id, isTrashMode, addAttachmentsFromDrop]);
 
   const folderName = useMemo(() => {
     if (!card) return '';
@@ -779,7 +828,10 @@ export function Details({
             </button>
           )}
         </div>
-        <div className="attachments-body">
+        <div
+          ref={attachmentsDropRef}
+          className={`attachments-body${isAttachmentsDragOver ? ' drag-over' : ''}`}
+        >
           {detailActions.attachments.length === 0 && (
             <div className="muted">{t('attachments.hint')}</div>
           )}

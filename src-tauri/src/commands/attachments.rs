@@ -233,6 +233,26 @@ pub async fn add_attachments_via_dialog(
 }
 
 #[tauri::command]
+pub async fn add_attachments_from_paths(
+    app: AppHandle,
+    datacard_id: String,
+    paths: Vec<String>,
+) -> Result<Vec<AttachmentMeta>> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let mut out: Vec<AttachmentMeta> = Vec::new();
+        for p in paths {
+            let path = std::path::PathBuf::from(p);
+            let meta =
+                attachments_service::add_attachment_from_fs_path(&app, datacard_id.clone(), &path)?;
+            out.push(meta);
+        }
+        Ok(out)
+    })
+    .await
+    .map_err(|_| ErrorCodeString::new("TASK_JOIN_FAILED"))?
+}
+
+#[tauri::command]
 pub async fn save_attachment_via_dialog(app: AppHandle, attachment_id: String) -> Result<bool> {
     tauri::async_runtime::spawn_blocking(move || {
         let preview = attachments_service::get_attachment_preview(&app, attachment_id.clone())?;
