@@ -1,367 +1,222 @@
-diff --git a/src-tauri/src/commands/attachments.rs b/src-tauri/src/commands/attachments.rs
-index 7649628..b190665 100644
+--- a/src/features/Vault/api/vaultApi.ts
++++ b/src/features/Vault/api/vaultApi.ts
+@@ -300,6 +300,13 @@
+   return invoke('add_attachments_via_dialog', { datacardId });
+ }
+ 
++export async function addAttachmentsFromPaths(
++  datacardId: string,
++  paths: string[]
++): Promise<BackendAttachmentMeta[]> {
++  return invoke('add_attachments_from_paths', { datacardId, paths });
++}
++
+ export async function removeAttachment(attachmentId: string): Promise<void> {
+   return invoke('remove_attachment', { attachmentId });
+ }
+
+--- a/src/features/Vault/components/Details/useDetails.tsx
++++ b/src/features/Vault/components/Details/useDetails.tsx
+@@ -5,6 +5,7 @@
+ import { clipboardClearAll } from '../../../../shared/lib/tauri';
+ import {
+   addAttachmentsViaDialog,
++  addAttachmentsFromPaths,
+   getAttachmentBytesBase64,
+   listAttachments,
+   renameAttachment,
+@@ -39,6 +40,7 @@
+   purgeCard: () => void;
+   attachments: Attachment[];
+   onAddAttachment: () => Promise<void>;
++  onAddAttachmentsFromPaths: (paths: string[]) => Promise<void>;
+   onDeleteAttachment: (attachmentId: string) => Promise<void>;
+   onPreviewAttachment: (attachmentId: string) => Promise<void>;
+   onDownloadAttachment: (attachmentId: string, defaultName: string) => Promise<void>;
+@@ -218,6 +220,23 @@
+     }
+   }, [card, isTrashMode, refreshAttachments, showToast, t]);
+ 
++  const onAddAttachmentsFromPaths = useCallback(
++    async (paths: string[]) => {
++      if (!card || isTrashMode) return;
++      if (!paths.length) return;
++      try {
++        const added = await addAttachmentsFromPaths(card.id, paths);
++        if (!added.length) return;
++        await refreshAttachments();
++        showToast(t('toast.attachmentAddSuccess'), 'success');
++      } catch (err) {
++        console.error(err);
++        showToast(t('toast.attachmentAddError'), 'error');
++      }
++    },
++    [card, isTrashMode, refreshAttachments, showToast, t]
++  );
++
+   const onDeleteAttachment = useCallback(
+     async (attachmentId: string) => {
+       if (!card) return;
+@@ -313,6 +332,7 @@
+     purgeCard,
+     attachments,
+     onAddAttachment,
++    onAddAttachmentsFromPaths,
+     onDeleteAttachment,
+     onPreviewAttachment,
+     onDownloadAttachment,
+
+--- a/src/features/Vault/components/Details/Details.tsx
++++ b/src/features/Vault/components/Details/Details.tsx
+@@ -1,4 +1,4 @@
+-import React, { Suspense, useEffect, useMemo, useState } from 'react';
++import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+ import { CustomField, DataCard, Folder } from '../../types/ui';
+ import { useTranslation } from '../../../../shared/lib/i18n';
+ import { useDetails } from './useDetails';
+@@ -29,6 +29,7 @@
+   type DataCardCoreField,
+ } from '../../lib/datacardCoreHiddenFields';
+ import { setDataCardPreviewFieldsForCard } from '../../api/vaultApi';
++import { getCurrentWebview } from '@tauri-apps/api/webview';
+ 
+ const LazyAttachmentPreviewModal = React.lazy(() =>
+   import('../modals/AttachmentPreviewModal').then((m) => ({ default: m.default })),
+@@ -94,6 +95,54 @@
+     clipboardClearTimeoutSeconds,
+   });
+ 
++  const attachmentsDropRef = useRef<HTMLDivElement | null>(null);
++  const [isAttachmentsDragOver, setIsAttachmentsDragOver] = useState(false);
++  const addAttachmentsFromDrop = detailActions.onAddAttachmentsFromPaths;
++
++  useEffect(() => {
++    setIsAttachmentsDragOver(false);
++    if (!card?.id || isTrashMode) return;
++
++    let unlisten: null | (() => void) = null;
++
++    const isInsideDropZone = (position: { x: number; y: number } | null | undefined) => {
++      const el = attachmentsDropRef.current;
++      if (!el || !position) return false;
++      const rect = el.getBoundingClientRect();
++      const dpr = window.devicePixelRatio || 1;
++      const x = position.x / dpr;
++      const y = position.y / dpr;
++      return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
++    };
++
++    void (async () => {
++      try {
++        unlisten = await getCurrentWebview().onDragDropEvent((event) => {
++          const payload: any = event.payload as any;
++          if (payload?.type === 'over') {
++            setIsAttachmentsDragOver(isInsideDropZone(payload.position));
++            return;
++          }
++          if (payload?.type === 'drop') {
++            const inside = isInsideDropZone(payload.position);
++            setIsAttachmentsDragOver(false);
++            if (inside) {
++              void addAttachmentsFromDrop((payload.paths ?? []) as string[]);
++            }
++            return;
++          }
++          setIsAttachmentsDragOver(false);
++        });
++      } catch (err) {
++        console.error(err);
++      }
++    })();
++
++    return () => {
++      if (unlisten) unlisten();
++    };
++  }, [card?.id, isTrashMode, addAttachmentsFromDrop]);
++
+   const folderName = useMemo(() => {
+     if (!card) return '';
+     return card.folderId ? folders.find((f) => f.id === card.folderId)?.name ?? '' : '';
+@@ -779,7 +828,10 @@
+             </button>
+           )}
+         </div>
+-        <div className="attachments-body">
++        <div
++          ref={attachmentsDropRef}
++          className={`attachments-body${isAttachmentsDragOver ? ' drag-over' : ''}`}
++        >
+           {detailActions.attachments.length === 0 && (
+             <div className="muted">{t('attachments.hint')}</div>
+           )}
+
+--- a/src/shared/styles/screens/vault.css
++++ b/src/shared/styles/screens/vault.css
+@@ -1034,6 +1034,12 @@
+   gap: 8px;
+ }
+ 
++.attachments-body.drag-over {
++  outline: 2px dashed var(--focus-border-strong);
++  outline-offset: 4px;
++  border-radius: var(--radius-sm);
++}
++
+ .attachment-row {
+   display: flex;
+   justify-content: space-between;
+
 --- a/src-tauri/src/commands/attachments.rs
 +++ b/src-tauri/src/commands/attachments.rs
-@@ -28,6 +28,21 @@ fn now_ms() -> Result<u128> {
-         .map_err(|_| ErrorCodeString::new("TIME_UNAVAILABLE"))
+@@ -232,6 +232,28 @@
+     .map_err(|_| ErrorCodeString::new("TASK_JOIN_FAILED"))?
  }
  
 +
 +
 +#[tauri::command]
-+pub async fn rename_attachment(
++pub async fn add_attachments_from_paths(
 +    app: AppHandle,
-+    attachment_id: String,
-+    file_name: String,
-+) -> Result<AttachmentMeta> {
++    datacard_id: String,
++    paths: Vec<String>,
++) -> Result<Vec<AttachmentMeta>> {
 +    tauri::async_runtime::spawn_blocking(move || {
-+        attachments_service::rename_attachment(&app, attachment_id, file_name)
++        let mut out: Vec<AttachmentMeta> = Vec::new();
++        for p in paths {
++            let path = std::path::PathBuf::from(p);
++            let meta =
++                attachments_service::add_attachment_from_fs_path(&app, datacard_id.clone(), &path)?;
++            out.push(meta);
++        }
++        Ok(out)
 +    })
 +    .await
 +    .map_err(|_| ErrorCodeString::new("TASK_JOIN_FAILED"))?
 +}
 +
  #[tauri::command]
- pub async fn remove_attachment(app: AppHandle, attachment_id: String) -> Result<()> {
+ pub async fn save_attachment_via_dialog(app: AppHandle, attachment_id: String) -> Result<bool> {
      tauri::async_runtime::spawn_blocking(move || {
-diff --git a/src-tauri/src/data/sqlite/repo_impl.rs b/src-tauri/src/data/sqlite/repo_impl.rs
-index 5d12088..c5e88aa 100644
---- a/src-tauri/src/data/sqlite/repo_impl.rs
-+++ b/src-tauri/src/data/sqlite/repo_impl.rs
-@@ -1725,6 +1725,30 @@ pub fn soft_delete_attachment(
-     })
- }
- 
-+
-+
-+pub fn rename_attachment(
-+    state: &Arc<AppState>,
-+    profile_id: &str,
-+    attachment_id: &str,
-+    file_name: &str,
-+    updated_at: &str,
-+) -> Result<()> {
-+    with_connection_in_active_vault(state, profile_id, |conn, active_vault_id| {
-+        let rows = conn
-+            .execute(
-+                "UPDATE attachments SET file_name = ?1, updated_at = ?2 WHERE id = ?3 AND deleted_at IS NULL AND EXISTS (SELECT 1 FROM datacards d WHERE d.id = attachments.datacard_id AND d.vault_id = ?4)",
-+                params![file_name, updated_at, attachment_id, active_vault_id],
-+            )
-+            .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
-+
-+        if rows == 0 {
-+            return Err(ErrorCodeString::new("ATTACHMENT_NOT_FOUND"));
-+        }
-+
-+        Ok(())
-+    })
-+}
- pub fn set_datacard_preview_fields_for_card(
-     state: &Arc<AppState>,
-     profile_id: &str,
-diff --git a/src-tauri/src/main.rs b/src-tauri/src/main.rs
-index ac69d78..19207e1 100644
+
 --- a/src-tauri/src/main.rs
 +++ b/src-tauri/src/main.rs
-@@ -137,6 +137,7 @@ fn main() {
-             is_logged_in,
-             health_check,
-             list_attachments,
-+            rename_attachment,
-             attachments_pick_files,
+@@ -142,6 +142,7 @@
              attachments_discard_pick,
              add_attachments_from_pick,
-diff --git a/src-tauri/src/services/attachments_service.rs b/src-tauri/src/services/attachments_service.rs
-index d78f9c5..db27095 100644
---- a/src-tauri/src/services/attachments_service.rs
-+++ b/src-tauri/src/services/attachments_service.rs
-@@ -119,6 +119,38 @@ pub fn list_attachments(app: &AppHandle, datacard_id: String) -> Result<Vec<Atta
-     repo_impl::list_attachments_by_datacard(&session.state, &session.profile_id, &datacard_id)
- }
- 
-+
-+fn validate_file_name(name: &str) -> Result<String> {
-+    let trimmed = name.trim();
-+    if trimmed.is_empty() {
-+        return Err(ErrorCodeString::new("ATTACHMENT_INVALID_FILE_NAME"));
-+    }
-+    if trimmed.contains('/') || trimmed.contains('\\') || trimmed.contains('\0') {
-+        return Err(ErrorCodeString::new("ATTACHMENT_INVALID_FILE_NAME"));
-+    }
-+    if trimmed.len() > 255 {
-+        return Err(ErrorCodeString::new("ATTACHMENT_INVALID_FILE_NAME"));
-+    }
-+    Ok(trimmed.to_string())
-+}
-+
-+pub fn rename_attachment(app: &AppHandle, attachment_id: String, file_name: String) -> Result<AttachmentMeta> {
-+    let session = require_logged_in(app)?;
-+    let meta = repo_impl::get_attachment(&session.state, &session.profile_id, &attachment_id)?
-+        .ok_or_else(|| ErrorCodeString::new("ATTACHMENT_NOT_FOUND"))?;
-+    if meta.deleted_at.is_some() {
-+        return Err(ErrorCodeString::new("ATTACHMENT_NOT_FOUND"));
-+    }
-+
-+    let cleaned = validate_file_name(&file_name)?;
-+    let now = Utc::now().to_rfc3339();
-+    repo_impl::rename_attachment(&session.state, &session.profile_id, &attachment_id, &cleaned, &now)?;
-+    security_service::request_persist_active_vault(session.state.clone());
-+
-+    repo_impl::get_attachment(&session.state, &session.profile_id, &attachment_id)?
-+        .ok_or_else(|| ErrorCodeString::new("ATTACHMENT_NOT_FOUND"))
-+}
-+
- pub fn remove_attachment(app: &AppHandle, attachment_id: String) -> Result<()> {
-     let session = require_logged_in(app)?;
-     let now = Utc::now().to_rfc3339();
-diff --git a/src/features/Vault/api/vaultApi.ts b/src/features/Vault/api/vaultApi.ts
-index 3d86879..7cc1f08 100644
---- a/src/features/Vault/api/vaultApi.ts
-+++ b/src/features/Vault/api/vaultApi.ts
-@@ -312,6 +312,11 @@ export async function saveAttachmentViaDialog(attachmentId: string): Promise<boo
-   return invoke('save_attachment_via_dialog', { attachmentId });
- }
- 
-+export async function renameAttachment(attachmentId: string, fileName: string): Promise<BackendAttachmentMeta> {
-+  return invoke('rename_attachment', { attachmentId, fileName });
-+}
-+
-+
- export type AttachmentPreviewDto = {
-   attachmentId: string;
-   fileName: string;
-diff --git a/src/features/Vault/components/Details/Details.tsx b/src/features/Vault/components/Details/Details.tsx
-index 8689e94..37c8955 100644
---- a/src/features/Vault/components/Details/Details.tsx
-+++ b/src/features/Vault/components/Details/Details.tsx
-@@ -12,8 +12,10 @@ import {
-   IconImport,
-   IconPreview,
-   IconPreviewOff,
-+  IconRename,
- } from '@/shared/icons/lucide/icons';
- import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
-+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../../../../shared/ui/dialog';
- import {
-   loadPreviewFields,
-   onPreviewFieldsChanged,
-@@ -100,6 +102,10 @@ export function Details({
-   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-   const [purgeConfirmOpen, setPurgeConfirmOpen] = useState(false);
-   const [attachmentToDelete, setAttachmentToDelete] = useState<string | null>(null);
-+  const [renameAttachmentOpen, setRenameAttachmentOpen] = useState(false);
-+  const [renameAttachmentId, setRenameAttachmentId] = useState<string | null>(null);
-+  const [renameAttachmentValue, setRenameAttachmentValue] = useState('');
-+  const [isRenamingAttachment, setIsRenamingAttachment] = useState(false);
-   const [historyOpen, setHistoryOpen] = useState(false);
-   const [seedPhraseViewOpen, setSeedPhraseViewOpen] = useState(false);
-   const [revealedCustomFields, setRevealedCustomFields] = useState<Record<string, boolean>>({});
-@@ -405,6 +411,80 @@ export function Details({
-           onCancel={() => setAttachmentToDelete(null)}
-         />
- 
-+        <Dialog
-+          open={renameAttachmentOpen}
-+          onOpenChange={(nextOpen) => {
-+            if (isRenamingAttachment) return;
-+            if (!nextOpen) {
-+              setRenameAttachmentOpen(false);
-+              setRenameAttachmentId(null);
-+            }
-+          }}
-+        >
-+          <DialogContent aria-labelledby="rename-attachment-title">
-+            <DialogHeader>
-+              <DialogTitle id="rename-attachment-title">{t('attachments.renameTitle')}</DialogTitle>
-+            </DialogHeader>
-+
-+            <div className="dialog-body" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-+              <div className="form-field">
-+                <label className="form-label" htmlFor="rename-attachment-input">
-+                  {t('attachments.renameLabel')}
-+                </label>
-+                <input
-+                  id="rename-attachment-input"
-+                  type="text"
-+                  value={renameAttachmentValue}
-+                  disabled={isRenamingAttachment}
-+                  onChange={(e) => setRenameAttachmentValue(e.target.value)}
-+                  autoComplete="off"
-+                  className="input"
-+                />
-+              </div>
-+            </div>
-+
-+            <DialogFooter className="dialog-footer--split">
-+              <div className="dialog-footer-left">
-+                <button
-+                  className="btn btn-secondary"
-+                  type="button"
-+                  onClick={() => {
-+                    setRenameAttachmentOpen(false);
-+                    setRenameAttachmentId(null);
-+                  }}
-+                  disabled={isRenamingAttachment}
-+                >
-+                  {tCommon('action.cancel')}
-+                </button>
-+              </div>
-+
-+              <div className="dialog-footer-right">
-+                <button
-+                  className="btn btn-primary"
-+                  type="button"
-+                  onClick={async () => {
-+                    if (!renameAttachmentId) return;
-+                    setIsRenamingAttachment(true);
-+                    const ok = await detailActions.onRenameAttachment(renameAttachmentId, renameAttachmentValue);
-+                    setIsRenamingAttachment(false);
-+                    if (ok) {
-+                      setRenameAttachmentOpen(false);
-+                      setRenameAttachmentId(null);
-+                    }
-+                  }}
-+                  disabled={
-+                    isRenamingAttachment ||
-+                    !renameAttachmentId ||
-+                    !renameAttachmentValue.trim()
-+                  }
-+                >
-+                  {t('attachments.renameConfirm')}
-+                </button>
-+              </div>
-+            </DialogFooter>
-+          </DialogContent>
-+        </Dialog>
-+
-       {hasTitle && (
-         <div className="detail-field">
-           <div className="detail-label">{t('label.title')}</div>
-@@ -718,6 +798,19 @@ export function Details({
-                   >
-                     <IconPreview />
-                   </button>
-+                  <button
-+                    className="icon-button"
-+                    type="button"
-+                    onClick={() => {
-+                      setRenameAttachmentId(attachment.id);
-+                      setRenameAttachmentValue(attachment.fileName);
-+                      setRenameAttachmentOpen(true);
-+                    }}
-+                    aria-label={t('attachments.rename')}
-+                    title={t('attachments.rename')}
-+                  >
-+                    <IconRename />
-+                  </button>
-                   <button
-                     className="icon-button"
-                     type="button"
-diff --git a/src/features/Vault/components/Details/useDetails.tsx b/src/features/Vault/components/Details/useDetails.tsx
-index b829f11..0bd6c87 100644
---- a/src/features/Vault/components/Details/useDetails.tsx
-+++ b/src/features/Vault/components/Details/useDetails.tsx
-@@ -9,6 +9,7 @@ import {
-   listAttachments,
-   removeAttachment,
-   saveAttachmentViaDialog,
-+  renameAttachment,
- } from '../../api/vaultApi';
- import { mapAttachmentFromBackend } from '../../types/mappers';
- 
-@@ -41,6 +42,7 @@ type UseDetailsResult = {
-   onDeleteAttachment: (attachmentId: string) => Promise<void>;
-   onPreviewAttachment: (attachmentId: string) => Promise<void>;
-   onDownloadAttachment: (attachmentId: string, defaultName: string) => Promise<void>;
-+  onRenameAttachment: (attachmentId: string, nextName: string) => Promise<boolean>;
-   previewOpen: boolean;
-   closePreview: () => void;
-   previewPayload: AttachmentPreviewState;
-@@ -277,6 +279,24 @@ export function useDetails({
-     [card, showToast, t]
-   );
- 
-+  const onRenameAttachment = useCallback(
-+    async (attachmentId: string, nextName: string) => {
-+      if (!card || isTrashMode) return false;
-+      try {
-+        await renameAttachment(attachmentId, nextName);
-+        await refreshAttachments();
-+        showToast(t('toast.attachmentRenameSuccess'), 'success');
-+        return true;
-+      } catch (err) {
-+        console.error(err);
-+        showToast(t('toast.attachmentRenameError'), 'error');
-+        return false;
-+      }
-+    },
-+    [card, isTrashMode, refreshAttachments, showToast, t]
-+  );
-+
-+
-   const closePreview = useCallback(() => {
-     setPreviewOpen(false);
-     setPreviewPayload(null);
-@@ -297,6 +317,7 @@ export function useDetails({
-     onDeleteAttachment,
-     onPreviewAttachment,
-     onDownloadAttachment,
-+    onRenameAttachment,
-     previewOpen,
-     closePreview,
-     previewPayload,
-diff --git a/src/i18n/locales/en/Details.json b/src/i18n/locales/en/Details.json
-index 9590606..265511a 100644
---- a/src/i18n/locales/en/Details.json
-+++ b/src/i18n/locales/en/Details.json
-@@ -67,14 +67,18 @@
-   "seedPhrase.wordsCount": "{{count}} words",
-   "seedPhrase.gridAria": "Seed phrase words",
-   "seedPhrase.wordAria": "Seed phrase word {{index}}",
--
-   "coreMenu.showInList": "Show in list",
-   "coreMenu.hideInList": "Hide in list",
--
-   "previewMenu.showThis": "Show in preview",
-   "previewMenu.hideThis": "Hide in preview",
-   "previewMenu.maxThis": "Max {{count}} fields (this card)",
-   "previewMenu.showAll": "Show in preview all",
-   "previewMenu.hideAll": "Hide in preview all",
--  "previewMenu.maxAll": "Max {{count}} fields (all cards)"
-+  "previewMenu.maxAll": "Max {{count}} fields (all cards)",
-+  "attachments.rename": "Rename",
-+  "attachments.renameTitle": "Rename attachment",
-+  "attachments.renameLabel": "File name",
-+  "attachments.renameConfirm": "Save",
-+  "toast.attachmentRenameSuccess": "Attachment renamed",
-+  "toast.attachmentRenameError": "Unable to rename attachment"
- }
-diff --git a/src/shared/icons/lucide/icons.ts b/src/shared/icons/lucide/icons.ts
-index 4bedc1e..ef3c2db 100644
---- a/src/shared/icons/lucide/icons.ts
-+++ b/src/shared/icons/lucide/icons.ts
-@@ -9,7 +9,7 @@ export {
-   // Up arrow = Export (upload / send out of the app)
-   Upload as IconExport,
- 
--  SquarePen as IconRename,
-+  Pencil as IconRename,
-   Trash2 as IconDelete,
-   Trash2 as IconTrash,
- 
+             add_attachments_via_dialog,
++            add_attachments_from_paths,
+             remove_attachment,
+             purge_attachment,
+             get_attachment_bytes_base64,
 
-diff --git a/src-tauri/permissions/app-default.toml b/src-tauri/permissions/app-default.toml
 --- a/src-tauri/permissions/app-default.toml
 +++ b/src-tauri/permissions/app-default.toml
-@@ -21,10 +21,11 @@
-   "health_check",
- 
-   "list_attachments",
-+  "rename_attachment",
-   "attachments_pick_files",
+@@ -26,6 +26,7 @@
    "attachments_discard_pick",
    "add_attachments_from_pick",
    "add_attachments_via_dialog",
++  "add_attachments_from_paths",
    "remove_attachment",
    "purge_attachment",
    "get_attachment_bytes_base64",
+
