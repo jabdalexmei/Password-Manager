@@ -1,42 +1,11 @@
---- a/src-tauri/src/commands/workspace.rs
-+++ b/src-tauri/src/commands/workspace.rs
-@@ -235,13 +235,14 @@
- pub async fn workspace_create_via_dialog(
-     app: AppHandle,
-     state: State<'_, Arc<AppState>>,
-+    dialog_title: Option<String>,
- ) -> Result<bool> {
-     let app_state = state.inner().clone();
-     tauri::async_runtime::spawn_blocking(move || {
-         let selection = app
-             .dialog()
-             .file()
--            .set_title("Step 1 of 2: Select destination folder for restored profile")
-+            .set_title(dialog_title.unwrap_or_else(|| "Select data folder".to_string()))
-             .blocking_pick_folder();
-         let Some(fp) = selection else {
-             return Ok(false);
---- a/src/shared/lib/tauri.ts
-+++ b/src/shared/lib/tauri.ts
-@@ -79,8 +79,8 @@
-   return invoke('workspace_select', { id });
+--- a/src-tauri/src/data/sqlite/repo_impl.rs
++++ b/src-tauri/src/data/sqlite/repo_impl.rs
+@@ -162,6 +162,8 @@
+         "tags" => "tag".to_string(),
+         "notes" => "note".to_string(),
+         "site" => "url".to_string(),
++        "recoveryemail" => "recovery_email".to_string(),
++        "mobilephone" => "mobile_phone".to_string(),
+         _ => key,
+     }
  }
- 
--export function workspaceCreateViaDialog(): Promise<boolean> {
--  return invoke('workspace_create_via_dialog');
-+export function workspaceCreateViaDialog(dialogTitle?: string): Promise<boolean> {
-+  return invoke('workspace_create_via_dialog', { dialogTitle: dialogTitle ?? null });
- }
- 
- export function workspaceCreateDefault(): Promise<boolean> {
---- a/src/features/Workspace/Workspace.tsx
-+++ b/src/features/Workspace/Workspace.tsx
-@@ -119,7 +119,7 @@
-   const handleRestoreFromBackup = useCallback(async () => {
-     setBusy(true);
-     try {
--      const ok = await workspaceCreateViaDialog();
-+      const ok = await workspaceCreateViaDialog('Step 1 of 2: Select destination folder for restored profile');
-       if (!ok) return;
-       await refresh();
- 
