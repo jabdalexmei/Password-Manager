@@ -1,26 +1,142 @@
---- /mnt/data/orig_pm/Password-Manager-Make-it-default/src/features/Vault/components/DataCards/DataCards.tsx	2026-02-09 20:50:40.000000000 +0000
-+++ /mnt/data/project/Password-Manager-Make-it-default/src/features/Vault/components/DataCards/DataCards.tsx	2026-02-10 09:11:03.800419192 +0000
-@@ -1172,10 +1172,12 @@
-                 >
-                 <div className="datacard-top">
-                   <div className="datacard-title">{displayTitleText}</div>
--                  {(card.hasTotp || isFavorite) && (
-+                  {(card.hasTotp || card.hasSeedPhrase || card.hasAttachments || isFavorite) && (
+--- a/src/features/Vault/Vault.tsx
++++ b/src/features/Vault/Vault.tsx
+@@ -98,6 +98,7 @@
+     onToggleArchive: vault.toggleArchive,
+     onCreateCard: vault.createCard,
+     onUploadAttachments: vault.uploadAttachments,
++    onAttachmentPresenceChange: vault.setCardHasAttachments,
+     onUpdateCard: vault.updateCard,
+     onDeleteCard: vault.deleteCard,
+     onRestoreCard: vault.restoreCard,
+
+--- a/src/features/Vault/components/DataCards/DataCards.tsx
++++ b/src/features/Vault/components/DataCards/DataCards.tsx
+@@ -1175,9 +1175,9 @@
+                   {(card.hasTotp || card.hasSeedPhrase || card.hasAttachments || isFavorite) && (
                      <div className="datacard-badges">
                        {isFavorite && <span className="pill datacard-favorite">{t('label.favorite')}</span>}
-                       {card.hasTotp && <span className="pill">{t('twoFactor.pill')}</span>}
+-                      {card.hasTotp && <span className="pill">{t('twoFactor.pill')}</span>}
+-                      {card.hasSeedPhrase && <span className="pill">{t('seedPhrase.title')}</span>}
+                       {card.hasAttachments && <span className="pill">{t('attachments.pill')}</span>}
 +                      {card.hasSeedPhrase && <span className="pill">{t('seedPhrase.title')}</span>}
-+                      {card.hasAttachments && <span className="pill">{t('attachments.pill')}</span>}
++                      {card.hasTotp && <span className="pill">{t('twoFactor.pill')}</span>}
                      </div>
                    )}
                  </div>
---- /mnt/data/orig_pm/Password-Manager-Make-it-default/src/i18n/locales/en/DataCards.json	2026-02-09 20:50:40.000000000 +0000
-+++ /mnt/data/project/Password-Manager-Make-it-default/src/i18n/locales/en/DataCards.json	2026-02-10 09:11:35.535537747 +0000
-@@ -69,6 +69,7 @@
-   "attachments.add": "Add file",
-   "attachments.selected": "Selected files",
-   "attachments.remove": "Remove",
-+  "attachments.pill": "Attachments",
-   "toast.attachmentUploadError": "Some files failed to upload",
-   "customFields.add": "Add field",
-   "customFields.editFields": "Edit fields",
+
+--- a/src/features/Vault/components/DataCards/useDataCards.ts
++++ b/src/features/Vault/components/DataCards/useDataCards.ts
+@@ -1,7 +1,7 @@
+ import { useCallback, useEffect, useState } from 'react';
+ import { useTranslation } from '../../../../shared/lib/i18n';
+ import { useToaster } from '../../../../shared/components/Toaster';
+-import { addAttachmentsFromPick, attachmentsDiscardPick, attachmentsPickFiles } from '../../api/vaultApi';
++import { addAttachmentsFromPick, attachmentsDiscardPick, attachmentsPickFiles, listAttachments } from '../../api/vaultApi';
+ import {
+   CreateDataCardInput,
+   CustomField,
+@@ -48,6 +48,7 @@
+   onToggleArchive: (id: string) => Promise<void> | void;
+   onCreateCard: (input: CreateDataCardInput) => Promise<DataCard | void | null>;
+   onUploadAttachments: (cardId: string, paths: string[]) => Promise<string[]>;
++  onAttachmentPresenceChange?: (cardId: string, hasAttachments: boolean) => void;
+   onUpdateCard: (input: UpdateDataCardInput) => Promise<boolean>;
+   onDeleteCard: (id: string) => Promise<void> | void;
+   onRestoreCard: (id: string) => Promise<void> | void;
+@@ -203,6 +204,7 @@
+   onToggleArchive,
+   onCreateCard,
+   onUploadAttachments,
++  onAttachmentPresenceChange,
+   onUpdateCard,
+   onDeleteCard,
+   onRestoreCard,
+@@ -537,10 +539,19 @@
+       if (created && createAttachments.length > 0 && createAttachmentPickToken) {
+         try {
+           const fileIds = createAttachments.map((a) => a.id);
+-          await addAttachmentsFromPick(created.id, createAttachmentPickToken, fileIds);
++          const uploaded = await addAttachmentsFromPick(created.id, createAttachmentPickToken, fileIds);
++          onAttachmentPresenceChange?.(created.id, uploaded.length > 0);
+         } catch (err) {
+           console.error(err);
+           showToast(t('toast.attachmentUploadError'), 'error');
++          if (onAttachmentPresenceChange) {
++            try {
++              const existing = await listAttachments(created.id);
++              onAttachmentPresenceChange(created.id, existing.length > 0);
++            } catch {
++              // ignore
++            }
++          }
+         } finally {
+           await attachmentsDiscardPick(createAttachmentPickToken);
+           setCreateAttachmentPickToken(null);
+@@ -564,6 +575,7 @@
+     createForm,
+     isCreateSubmitting,
+     onCreateCard,
++    onAttachmentPresenceChange,
+     resetCreateForm,
+     showToast,
+     t,
+
+--- a/src/features/Vault/hooks/useVault.ts
++++ b/src/features/Vault/hooks/useVault.ts
+@@ -346,6 +346,8 @@
+             const merged = {
+               ...summary,
+               hasAttachments: existing?.hasAttachments ?? summary.hasAttachments,
++              hasTotp: summary.hasTotp || (existing?.hasTotp ?? false),
++              hasSeedPhrase: summary.hasSeedPhrase || (existing?.hasSeedPhrase ?? false),
+               deletedAt: mapped.deletedAt,
+             };
+             const filtered = prev.filter((c) => c.id !== id);
+@@ -358,6 +360,8 @@
+             const merged = {
+               ...summary,
+               hasAttachments: existing?.hasAttachments ?? summary.hasAttachments,
++              hasTotp: summary.hasTotp || (existing?.hasTotp ?? false),
++              hasSeedPhrase: summary.hasSeedPhrase || (existing?.hasSeedPhrase ?? false),
+             };
+             const filtered = prev.filter((c) => c.id !== id);
+             return sortCardsWithSettings([...filtered, merged]);
+@@ -598,7 +602,13 @@
+       try {
+         const created = await createDataCard(mapCreateCardToBackend(input));
+         const mapped = mapCardFromBackend(created);
+-        const summary = mapCardToSummary(mapped, dtf);
++        const inputHasTotp = (input.totpUri ?? '').trim().length > 0;
++        const inputHasSeedPhrase = (input.seedPhrase ?? '').trim().length > 0;
++        const summary = {
++          ...mapCardToSummary(mapped, dtf),
++          hasTotp: inputHasTotp,
++          hasSeedPhrase: inputHasSeedPhrase,
++        };
+ 
+         setCards((prev) => sortCardsWithSettings([summary, ...prev]));
+         setCardDetailsById((prev) => ({ ...prev, [mapped.id]: mapped }));
+@@ -634,6 +644,22 @@
+     async (input: UpdateDataCardInput) => {
+       try {
+         await updateDataCard(mapUpdateCardToBackend(input));
++        const inputHasTotp = (input.totpUri ?? '').trim().length > 0;
++        const inputHasSeedPhrase = (input.seedPhrase ?? '').trim().length > 0;
++        setCards((prev) =>
++          prev.map((card) =>
++            card.id === input.id
++              ? { ...card, hasTotp: inputHasTotp, hasSeedPhrase: inputHasSeedPhrase }
++              : card
++          )
++        );
++        setDeletedCards((prev) =>
++          prev.map((card) =>
++            card.id === input.id
++              ? { ...card, hasTotp: inputHasTotp, hasSeedPhrase: inputHasSeedPhrase }
++              : card
++          )
++        );
+         await loadCard(input.id);
+         if (isTrashMode) await refreshTrash();
+         return true;
+
