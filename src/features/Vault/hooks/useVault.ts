@@ -346,6 +346,8 @@ export function useVault(profileId: string, onLocked: () => void) {
             const merged = {
               ...summary,
               hasAttachments: existing?.hasAttachments ?? summary.hasAttachments,
+              hasTotp: summary.hasTotp || (existing?.hasTotp ?? false),
+              hasSeedPhrase: summary.hasSeedPhrase || (existing?.hasSeedPhrase ?? false),
               deletedAt: mapped.deletedAt,
             };
             const filtered = prev.filter((c) => c.id !== id);
@@ -358,6 +360,8 @@ export function useVault(profileId: string, onLocked: () => void) {
             const merged = {
               ...summary,
               hasAttachments: existing?.hasAttachments ?? summary.hasAttachments,
+              hasTotp: summary.hasTotp || (existing?.hasTotp ?? false),
+              hasSeedPhrase: summary.hasSeedPhrase || (existing?.hasSeedPhrase ?? false),
             };
             const filtered = prev.filter((c) => c.id !== id);
             return sortCardsWithSettings([...filtered, merged]);
@@ -598,7 +602,13 @@ export function useVault(profileId: string, onLocked: () => void) {
       try {
         const created = await createDataCard(mapCreateCardToBackend(input));
         const mapped = mapCardFromBackend(created);
-        const summary = mapCardToSummary(mapped, dtf);
+        const inputHasTotp = (input.totpUri ?? '').trim().length > 0;
+        const inputHasSeedPhrase = (input.seedPhrase ?? '').trim().length > 0;
+        const summary = {
+          ...mapCardToSummary(mapped, dtf),
+          hasTotp: inputHasTotp,
+          hasSeedPhrase: inputHasSeedPhrase,
+        };
 
         setCards((prev) => sortCardsWithSettings([summary, ...prev]));
         setCardDetailsById((prev) => ({ ...prev, [mapped.id]: mapped }));
@@ -634,6 +644,22 @@ export function useVault(profileId: string, onLocked: () => void) {
     async (input: UpdateDataCardInput) => {
       try {
         await updateDataCard(mapUpdateCardToBackend(input));
+        const inputHasTotp = (input.totpUri ?? '').trim().length > 0;
+        const inputHasSeedPhrase = (input.seedPhrase ?? '').trim().length > 0;
+        setCards((prev) =>
+          prev.map((card) =>
+            card.id === input.id
+              ? { ...card, hasTotp: inputHasTotp, hasSeedPhrase: inputHasSeedPhrase }
+              : card
+          )
+        );
+        setDeletedCards((prev) =>
+          prev.map((card) =>
+            card.id === input.id
+              ? { ...card, hasTotp: inputHasTotp, hasSeedPhrase: inputHasSeedPhrase }
+              : card
+          )
+        );
         await loadCard(input.id);
         if (isTrashMode) await refreshTrash();
         return true;

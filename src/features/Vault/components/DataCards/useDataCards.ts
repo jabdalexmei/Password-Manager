@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from '../../../../shared/lib/i18n';
 import { useToaster } from '../../../../shared/components/Toaster';
-import { addAttachmentsFromPick, attachmentsDiscardPick, attachmentsPickFiles } from '../../api/vaultApi';
+import { addAttachmentsFromPick, attachmentsDiscardPick, attachmentsPickFiles, listAttachments } from '../../api/vaultApi';
 import {
   CreateDataCardInput,
   CustomField,
@@ -48,6 +48,7 @@ type UseDataCardsParams = {
   onToggleArchive: (id: string) => Promise<void> | void;
   onCreateCard: (input: CreateDataCardInput) => Promise<DataCard | void | null>;
   onUploadAttachments: (cardId: string, paths: string[]) => Promise<string[]>;
+  onAttachmentPresenceChange?: (cardId: string, hasAttachments: boolean) => void;
   onUpdateCard: (input: UpdateDataCardInput) => Promise<boolean>;
   onDeleteCard: (id: string) => Promise<void> | void;
   onRestoreCard: (id: string) => Promise<void> | void;
@@ -203,6 +204,7 @@ export function useDataCards({
   onToggleArchive,
   onCreateCard,
   onUploadAttachments,
+  onAttachmentPresenceChange,
   onUpdateCard,
   onDeleteCard,
   onRestoreCard,
@@ -537,10 +539,19 @@ export function useDataCards({
       if (created && createAttachments.length > 0 && createAttachmentPickToken) {
         try {
           const fileIds = createAttachments.map((a) => a.id);
-          await addAttachmentsFromPick(created.id, createAttachmentPickToken, fileIds);
+          const uploaded = await addAttachmentsFromPick(created.id, createAttachmentPickToken, fileIds);
+          onAttachmentPresenceChange?.(created.id, uploaded.length > 0);
         } catch (err) {
           console.error(err);
           showToast(t('toast.attachmentUploadError'), 'error');
+          if (onAttachmentPresenceChange) {
+            try {
+              const existing = await listAttachments(created.id);
+              onAttachmentPresenceChange(created.id, existing.length > 0);
+            } catch {
+              // ignore
+            }
+          }
         } finally {
           await attachmentsDiscardPick(createAttachmentPickToken);
           setCreateAttachmentPickToken(null);
@@ -564,6 +575,7 @@ export function useDataCards({
     createForm,
     isCreateSubmitting,
     onCreateCard,
+    onAttachmentPresenceChange,
     resetCreateForm,
     showToast,
     t,
