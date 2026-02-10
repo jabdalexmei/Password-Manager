@@ -183,6 +183,7 @@ export type BackendUserSettings = {
   clipboard_auto_clear_enabled: boolean;
   clipboard_clear_timeout_seconds: number;
   soft_delete_enabled: boolean;
+  trash_auto_cleanup_enabled: boolean;
   trash_retention_days: number;
   backups_enabled: boolean;
   auto_backup_interval_minutes: number;
@@ -193,4 +194,10 @@ export type BackendUserSettings = {
   mask_password_by_default: boolean;
   multiply_vaults_enabled: boolean;
   active_vault_id: string;
+};
+
+export type BackendTrashCleanupResult = {
+  enabled: boolean;
+  purged_datacards: number;
+  purged_bank_cards: number;
 };

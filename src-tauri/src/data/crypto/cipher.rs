@@ -1,9 +1,9 @@
+use crate::data::fs::atomic_write::write_atomic;
+use crate::error::{ErrorCodeString, Result};
 use chacha20poly1305::aead::{Aead, KeyInit};
 use chacha20poly1305::{XChaCha20Poly1305, XNonce};
 use rand::rngs::OsRng;
 use rand::RngCore;
-use crate::data::fs::atomic_write::write_atomic;
-use crate::error::{ErrorCodeString, Result};
 
 pub const PM_ENC_MAGIC: [u8; 6] = *b"PMENC1";
 pub const PM_ENC_VERSION: u8 = 1;

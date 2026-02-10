@@ -177,10 +177,7 @@ pub async fn workspace_list(state: State<'_, Arc<AppState>>) -> Result<Vec<Works
 }
 
 #[tauri::command]
-pub async fn workspace_select(
-    id: String,
-    state: State<'_, Arc<AppState>>,
-) -> Result<bool> {
+pub async fn workspace_select(id: String, state: State<'_, Arc<AppState>>) -> Result<bool> {
     let app_state = state.inner().clone();
     tauri::async_runtime::spawn_blocking(move || {
         let app_dir = app_dir_from_state(&app_state)?;
@@ -201,10 +198,10 @@ pub async fn workspace_select(
         if registry.active_workspace_id.as_deref() == Some(&id) {
             if let Ok(sp) = app_state.get_storage_paths() {
                 if let Ok(current) = sp.workspace_root() {
-                    let current_can = std::fs::canonicalize(current)
-                        .unwrap_or_else(|_| current.clone());
-                    let resolved_can = std::fs::canonicalize(&resolved)
-                        .unwrap_or_else(|_| resolved.clone());
+                    let current_can =
+                        std::fs::canonicalize(current).unwrap_or_else(|_| current.clone());
+                    let resolved_can =
+                        std::fs::canonicalize(&resolved).unwrap_or_else(|_| resolved.clone());
                     if current_can == resolved_can {
                         return Ok(true);
                     }
@@ -235,10 +232,15 @@ pub async fn workspace_create(path: String, state: State<'_, Arc<AppState>>) -> 
 pub async fn workspace_create_via_dialog(
     app: AppHandle,
     state: State<'_, Arc<AppState>>,
+    dialog_title: Option<String>,
 ) -> Result<bool> {
     let app_state = state.inner().clone();
     tauri::async_runtime::spawn_blocking(move || {
-        let selection = app.dialog().file().blocking_pick_folder();
+        let selection = app
+            .dialog()
+            .file()
+            .set_title(dialog_title.unwrap_or_else(|| "Select data folder".to_string()))
+            .blocking_pick_folder();
         let Some(fp) = selection else {
             return Ok(false);
         };

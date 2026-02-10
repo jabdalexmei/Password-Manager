@@ -4,9 +4,11 @@ import { useTranslation } from '../../../../shared/lib/i18n';
 import { useToaster } from '../../../../shared/components/Toaster';
 import { clipboardClearAll } from '../../../../shared/lib/tauri';
 import {
+  addAttachmentsFromPaths,
   addAttachmentsViaDialog,
   getAttachmentBytesBase64,
   listAttachments,
+  renameAttachment,
   removeAttachment,
   saveAttachmentViaDialog,
 } from '../../api/vaultApi';
@@ -27,7 +29,7 @@ type UseDetailsParams = {
   clipboardClearTimeoutSeconds?: number;
 };
 
-type UseDetailsResult = {
+export type UseDetailsResult = {
   showPassword: boolean;
   togglePasswordVisibility: () => void;
   copyToClipboard: (value: string | null | undefined, opts?: { isSecret?: boolean }) => Promise<void>;
@@ -38,9 +40,11 @@ type UseDetailsResult = {
   purgeCard: () => void;
   attachments: Attachment[];
   onAddAttachment: () => Promise<void>;
+  onAddAttachmentsFromPaths: (paths: string[]) => Promise<void>;
   onDeleteAttachment: (attachmentId: string) => Promise<void>;
   onPreviewAttachment: (attachmentId: string) => Promise<void>;
   onDownloadAttachment: (attachmentId: string, defaultName: string) => Promise<void>;
+  onRenameAttachment: (attachmentId: string, nextName: string) => Promise<boolean>;
   previewOpen: boolean;
   closePreview: () => void;
   previewPayload: AttachmentPreviewState;
@@ -216,6 +220,23 @@ export function useDetails({
     }
   }, [card, isTrashMode, refreshAttachments, showToast, t]);
 
+  const onAddAttachmentsFromPaths = useCallback(
+    async (paths: string[]) => {
+      if (!card || isTrashMode) return;
+      if (!paths.length) return;
+      try {
+        const added = await addAttachmentsFromPaths(card.id, paths);
+        if (!added.length) return;
+        await refreshAttachments();
+        showToast(t('toast.attachmentAddSuccess'), 'success');
+      } catch (err) {
+        console.error(err);
+        showToast(t('toast.attachmentAddError'), 'error');
+      }
+    },
+    [card, isTrashMode, refreshAttachments, showToast, t]
+  );
+
   const onDeleteAttachment = useCallback(
     async (attachmentId: string) => {
       if (!card) return;
@@ -277,6 +298,23 @@ export function useDetails({
     [card, showToast, t]
   );
 
+  const onRenameAttachment = useCallback(
+    async (attachmentId: string, nextName: string) => {
+      if (!card || isTrashMode) return false;
+      try {
+        await renameAttachment(attachmentId, nextName);
+        await refreshAttachments();
+        showToast(t('toast.attachmentRenameSuccess'), 'success');
+        return true;
+      } catch (err) {
+        console.error(err);
+        showToast(t('toast.attachmentRenameError'), 'error');
+        return false;
+      }
+    },
+    [card, isTrashMode, refreshAttachments, showToast, t]
+  );
+
   const closePreview = useCallback(() => {
     setPreviewOpen(false);
     setPreviewPayload(null);
@@ -294,9 +332,11 @@ export function useDetails({
     purgeCard,
     attachments,
     onAddAttachment,
+    onAddAttachmentsFromPaths,
     onDeleteAttachment,
     onPreviewAttachment,
     onDownloadAttachment,
+    onRenameAttachment,
     previewOpen,
     closePreview,
     previewPayload,

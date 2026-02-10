@@ -1,0 +1,26 @@
+diff --git a/src/features/Vault/components/Details/Details.tsx b/src/features/Vault/components/Details/Details.tsx
+index f4c6db9..15884b0 100644
+--- a/src/features/Vault/components/Details/Details.tsx
++++ b/src/features/Vault/components/Details/Details.tsx
+@@ -1059,7 +1059,7 @@ export function Details({
+                     onClick={() => togglePreviewFieldFolderOnlyForCurrentFolder(previewMenu.field)}
+                   >
+                     {isFieldInFolderOnlyPreviewForCurrentFolder(previewMenu.field)
+-                      ? t('previewMenu.hideFolderOnly')
++                      ? t('previewMenu.hideFolderOnlyAll')
+                       : t('previewMenu.showFolderOnly')}
+                   </button>
+                 </>
+diff --git a/src/i18n/locales/en/Details.json b/src/i18n/locales/en/Details.json
+index e9711e8..908e301 100644
+--- a/src/i18n/locales/en/Details.json
++++ b/src/i18n/locales/en/Details.json
+@@ -77,7 +77,7 @@
+   "previewMenu.showAll": "Show in preview all",
+   "previewMenu.hideAll": "Hide in preview all",
+   "previewMenu.showFolderOnly": "Show in preview folder only",
+-  "previewMenu.hideFolderOnly": "Hide in preview folder only all",
++  "previewMenu.hideFolderOnlyAll": "Hide in preview folder only all",
+   "previewMenu.maxAll": "Max {{count}} fields (all cards)",
+   "attachments.rename": "Rename",
+   "attachments.renameTitle": "Rename attachment",

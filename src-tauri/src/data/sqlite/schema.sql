@@ -11,6 +11,10 @@ CREATE TABLE IF NOT EXISTS vaults (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_vaults_unique_name
 ON vaults(name);
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_vaults_single_default
+ON vaults(is_default)
+WHERE is_default = 1;
+
 INSERT OR IGNORE INTO vaults (id, name, is_default, created_at, updated_at)
 VALUES ('default', 'Default vault', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 

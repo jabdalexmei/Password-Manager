@@ -8,6 +8,7 @@ pub mod password_history;
 pub mod profiles;
 pub mod security;
 pub mod settings;
+pub mod trash_auto_cleanup;
 pub mod ui_prefs;
 pub mod vaults;
 pub mod workspace;

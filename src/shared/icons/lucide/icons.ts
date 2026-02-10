@@ -9,7 +9,7 @@ export {
   // Up arrow = Export (upload / send out of the app)
   Upload as IconExport,
 
-  SquarePen as IconRename,
+  Pencil as IconRename,
   Trash2 as IconDelete,
   Trash2 as IconTrash,
 
