@@ -40,6 +40,14 @@ pub async fn delete_vault(id: String, state: State<'_, Arc<AppState>>) -> Result
 }
 
 #[tauri::command]
+pub async fn set_default_vault(id: String, state: State<'_, Arc<AppState>>) -> Result<bool> {
+    let app = state.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || vaults_service::set_default_vault(id, &app))
+        .await
+        .map_err(|_| ErrorCodeString::new("TASK_JOIN_FAILED"))?
+}
+
+#[tauri::command]
 pub async fn set_active_vault(id: String, state: State<'_, Arc<AppState>>) -> Result<bool> {
     let app = state.inner().clone();
     tauri::async_runtime::spawn_blocking(move || vaults_service::set_active_vault(id, &app))

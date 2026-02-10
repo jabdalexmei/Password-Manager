@@ -20,6 +20,7 @@ use crate::data::profiles::paths::{
 };
 use crate::data::profiles::registry;
 use crate::data::sqlite::migrations;
+use crate::data::sqlite::repo_impl;
 use crate::error::{ErrorCodeString, Result};
 use crate::services::attachments_service;
 use crate::services::settings_service;
@@ -914,10 +915,23 @@ pub fn login_vault(id: &str, password: Option<&str>, state: &Arc<AppState>) -> R
     if let Ok(mut active) = state.active_profile.lock() {
         *active = Some(id.to_string());
     }
-    let active_vault_id =
-        settings_service::resolve_active_vault_id(&storage_paths, id).unwrap_or_else(|_| {
-            settings_service::DEFAULT_VAULT_ID.to_string()
-        });
+    let multiply_vaults_enabled = settings_service::get_settings(&storage_paths, id)
+        .map(|s| s.multiply_vaults_enabled)
+        .unwrap_or(true);
+
+    let active_vault_id = if multiply_vaults_enabled {
+        settings_service::resolve_active_vault_id(&storage_paths, id)
+            .ok()
+            .and_then(|candidate| {
+                repo_impl::get_vault(state, id, &candidate)
+                    .ok()
+                    .map(|_| candidate)
+            })
+            .or_else(|| repo_impl::get_default_vault_id(state, id).ok())
+            .unwrap_or_else(|| "default".to_string())
+    } else {
+        repo_impl::get_default_vault_id(state, id).unwrap_or_else(|_| "default".to_string())
+    };
     if let Ok(mut active) = state.active_vault_id.lock() {
         *active = Some(active_vault_id);
     }

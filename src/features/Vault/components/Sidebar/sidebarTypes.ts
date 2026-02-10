@@ -24,6 +24,7 @@ export type VaultSidebarProps = {
   multiplyVaultsEnabled: boolean;
   onSelectVault: (vaultId: string) => void | Promise<void>;
   onCreateVault: (name: string) => Promise<VaultItem | void | null> | VaultItem | void | null;
+  onSetDefaultVault: (id: string) => boolean | void | Promise<boolean | void>;
   onRenameVault: (id: string, name: string) => boolean | void | Promise<boolean | void>;
   onDeleteVault: (id: string) => boolean | void | Promise<boolean | void>;
   selectedCategory: VaultCategory;
