@@ -1,65 +1,14 @@
---- a/src/features/Vault/components/Details/Details.tsx
-+++ b/src/features/Vault/components/Details/Details.tsx
-@@ -509,20 +509,6 @@
-                 </>
-               )}
+--- a/src/shared/lib/tauri.ts
++++ b/src/shared/lib/tauri.ts
+@@ -142,9 +142,9 @@
+ }
  
--              {canTogglePreviewFieldFolderOnly && (
--                <>
--                  <div className="vault-actionmenu-separator" />
--                  <button
--                    className="vault-actionmenu-item"
--                    type="button"
--                    onClick={() => togglePreviewFieldFolderOnlyForCurrentFolder(previewMenu.field)}
--                  >
--                    {isFieldInFolderOnlyPreviewForCurrentFolder(previewMenu.field)
--                      ? t('previewMenu.hideFolderOnly')
--                      : t('previewMenu.showFolderOnly')}
--                  </button>
--                </>
--              )}
-             </div>
-           </div>
+ export function setDataCardPreviewFieldsFolderOnlyByFolder(
+-  fields_by_folder: DataCardPreviewFieldsFolderOnlyByFolderDto,
++  fieldsByFolder: DataCardPreviewFieldsFolderOnlyByFolderDto,
+ ): Promise<boolean> {
+-  return invoke('set_datacard_preview_fields_folder_only_by_folder', { fields_by_folder });
++  return invoke('set_datacard_preview_fields_folder_only_by_folder', { fieldsByFolder });
+ }
  
-@@ -815,20 +801,6 @@
-                 </span>
-               )}
- 
--              {canTogglePreviewFieldFolderOnly && (
--                <>
--                  <div className="vault-actionmenu-separator" />
--                  <button
--                    className="vault-actionmenu-item"
--                    type="button"
--                    onClick={() => togglePreviewFieldFolderOnlyForCurrentFolder(previewMenu.field)}
--                  >
--                    {isFieldInFolderOnlyPreviewForCurrentFolder(previewMenu.field)
--                      ? t('previewMenu.hideFolderOnly')
--                      : t('previewMenu.showFolderOnly')}
--                  </button>
--                </>
--              )}
-             </div>
- 
-             {totpData && (
-@@ -1007,20 +979,6 @@
-                 </div>
-               )}
- 
--              {canTogglePreviewFieldFolderOnly && (
--                <>
--                  <div className="vault-actionmenu-separator" />
--                  <button
--                    className="vault-actionmenu-item"
--                    type="button"
--                    onClick={() => togglePreviewFieldFolderOnlyForCurrentFolder(previewMenu.field)}
--                  >
--                    {isFieldInFolderOnlyPreviewForCurrentFolder(previewMenu.field)
--                      ? t('previewMenu.hideFolderOnly')
--                      : t('previewMenu.showFolderOnly')}
--                  </button>
--                </>
--              )}
-             </div>
-           ))}
-         </div>
+ export type BankCardPreviewFieldsDto = {
