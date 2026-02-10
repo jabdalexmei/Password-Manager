@@ -1,0 +1,26 @@
+--- /mnt/data/orig_pm/Password-Manager-Make-it-default/src/features/Vault/components/DataCards/DataCards.tsx	2026-02-09 20:50:40.000000000 +0000
++++ /mnt/data/project/Password-Manager-Make-it-default/src/features/Vault/components/DataCards/DataCards.tsx	2026-02-10 09:11:03.800419192 +0000
+@@ -1172,10 +1172,12 @@
+                 >
+                 <div className="datacard-top">
+                   <div className="datacard-title">{displayTitleText}</div>
+-                  {(card.hasTotp || isFavorite) && (
++                  {(card.hasTotp || card.hasSeedPhrase || card.hasAttachments || isFavorite) && (
+                     <div className="datacard-badges">
+                       {isFavorite && <span className="pill datacard-favorite">{t('label.favorite')}</span>}
+                       {card.hasTotp && <span className="pill">{t('twoFactor.pill')}</span>}
++                      {card.hasSeedPhrase && <span className="pill">{t('seedPhrase.title')}</span>}
++                      {card.hasAttachments && <span className="pill">{t('attachments.pill')}</span>}
+                     </div>
+                   )}
+                 </div>
+--- /mnt/data/orig_pm/Password-Manager-Make-it-default/src/i18n/locales/en/DataCards.json	2026-02-09 20:50:40.000000000 +0000
++++ /mnt/data/project/Password-Manager-Make-it-default/src/i18n/locales/en/DataCards.json	2026-02-10 09:11:35.535537747 +0000
+@@ -69,6 +69,7 @@
+   "attachments.add": "Add file",
+   "attachments.selected": "Selected files",
+   "attachments.remove": "Remove",
++  "attachments.pill": "Attachments",
+   "toast.attachmentUploadError": "Some files failed to upload",
+   "customFields.add": "Add field",
+   "customFields.editFields": "Edit fields",

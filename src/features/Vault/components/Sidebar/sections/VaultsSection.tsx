@@ -10,6 +10,7 @@ type VaultsSectionProps = {
   multiplyVaultsEnabled: boolean;
   onSelectVault: (vaultId: string) => void | Promise<void>;
   onCreateVault: (name: string) => Promise<VaultItem | void | null> | VaultItem | void | null;
+  onSetDefaultVault: (id: string) => boolean | void | Promise<boolean | void>;
   onRenameVault: (id: string, name: string) => boolean | void | Promise<boolean | void>;
   onDeleteVault: (id: string) => boolean | void | Promise<boolean | void>;
   openMenu: SidebarMenu;
@@ -22,6 +23,7 @@ export function VaultsSection({
   multiplyVaultsEnabled,
   onSelectVault,
   onCreateVault,
+  onSetDefaultVault,
   onRenameVault,
   onDeleteVault,
   openMenu,
@@ -135,6 +137,12 @@ export function VaultsSection({
     if (!vault) return;
     setOpenMenu(null);
     setDeleteVaultTarget({ id: vault.id, name: vault.name });
+  };
+
+  const handleSetDefaultVaultFromMenu = async (vaultId: string) => {
+    const ok = await onSetDefaultVault(vaultId);
+    if (ok === false) return;
+    setOpenMenu(null);
   };
 
   const renderCreateVaultDialog = () => {
@@ -274,6 +282,10 @@ export function VaultsSection({
     );
   };
 
+  const menuVault = openMenu && openMenu.type === 'vault'
+    ? (vaults.find((item) => item.id === openMenu.vaultId) ?? null)
+    : null;
+
   return (
     <>
       <div className="vault-sidebar-title">{t('vaults.title')}</div>
@@ -287,7 +299,6 @@ export function VaultsSection({
                 type="button"
                 onClick={() => void onSelectVault(vault.id)}
                 onContextMenu={(event) => {
-                  if (vault.isDefault) return;
                   event.preventDefault();
                   setOpenMenu({ type: 'vault', vaultId: vault.id, x: event.clientX, y: event.clientY });
                 }}
@@ -307,7 +318,7 @@ export function VaultsSection({
       {renderCreateVaultDialog()}
       {renderRenameVaultDialog()}
 
-      {openMenu && openMenu.type === 'vault' && (
+      {openMenu && openMenu.type === 'vault' && menuVault && (
         <div
           className="vault-context-backdrop"
           onClick={() => setOpenMenu(null)}
@@ -319,6 +330,19 @@ export function VaultsSection({
             style={{ top: openMenu.y, left: openMenu.x }}
             onClick={(event) => event.stopPropagation()}
           >
+            {menuVault.isDefault ? (
+              <button type="button" className="vault-context-item" disabled>
+                {t('status.default')}
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="vault-context-item"
+                onClick={() => void handleSetDefaultVaultFromMenu(openMenu.vaultId)}
+              >
+                {t('action.makeDefault')}
+              </button>
+            )}
             <button
               type="button"
               className="vault-context-item"

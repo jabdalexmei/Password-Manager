@@ -40,6 +40,10 @@ export async function deleteVault(id: string): Promise<boolean> {
   return invoke('delete_vault', { id });
 }
 
+export async function setDefaultVault(id: string): Promise<boolean> {
+  return invoke('set_default_vault', { id });
+}
+
 export async function setActiveVault(id: string): Promise<boolean> {
   return invoke('set_active_vault', { id });
 }
@@ -300,6 +304,13 @@ export async function addAttachmentsViaDialog(datacardId: string): Promise<Backe
   return invoke('add_attachments_via_dialog', { datacardId });
 }
 
+export async function addAttachmentsFromPaths(
+  datacardId: string,
+  paths: string[]
+): Promise<BackendAttachmentMeta[]> {
+  return invoke('add_attachments_from_paths', { datacardId, paths });
+}
+
 export async function removeAttachment(attachmentId: string): Promise<void> {
   return invoke('remove_attachment', { attachmentId });
 }
@@ -310,6 +321,13 @@ export async function purgeAttachment(attachmentId: string): Promise<void> {
 
 export async function saveAttachmentViaDialog(attachmentId: string): Promise<boolean> {
   return invoke('save_attachment_via_dialog', { attachmentId });
+}
+
+export async function renameAttachment(
+  attachmentId: string,
+  fileName: string
+): Promise<BackendAttachmentMeta> {
+  return invoke('rename_attachment', { attachmentId, fileName });
 }
 
 export type AttachmentPreviewDto = {

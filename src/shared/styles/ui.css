@@ -273,11 +273,15 @@
 .form-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--spacing-between-form-field-label-text-and-input-field);
 }
 
-.form-field--spacious {
-  gap: 10px;
+.form-field--navigation {
+  gap: var(--spacing-between-navigation-field-label-text-and-input-field);
+}
+
+.form-field--text-and-input-fields {
+  gap: var(--spacing-between-form-field-label-text-and-input-field);
 }
 
 .form-field--row {
