@@ -1,11 +1,45 @@
---- a/src-tauri/src/data/sqlite/repo_impl.rs
-+++ b/src-tauri/src/data/sqlite/repo_impl.rs
-@@ -162,6 +162,8 @@
-         "tags" => "tag".to_string(),
-         "notes" => "note".to_string(),
-         "site" => "url".to_string(),
-+        "recoveryemail" => "recovery_email".to_string(),
-+        "mobilephone" => "mobile_phone".to_string(),
-         _ => key,
-     }
+--- a/src/shared/styles/base.css
++++ b/src/shared/styles/base.css
+@@ -18,6 +18,10 @@
+   --scrollbar-track: var(--color-surface-2);
+   --scrollbar-thumb: var(--color-border);
+   --scrollbar-thumb-hover: color-mix(in srgb, var(--color-surface-1) 90%, var(--color-border) 10%);
++
++  /* Spacing between a form field label text and its input field */
++  --spacing-between-form-field-label-text-and-input-field: 6px;
++  --spacing-between-navigation-field-label-text-and-input-field: 10px;
  }
+ 
+ /* нормальный box-sizing для всего */
+--- a/src/shared/styles/ui.css
++++ b/src/shared/styles/ui.css
+@@ -273,11 +273,15 @@
+ .form-field {
+   display: flex;
+   flex-direction: column;
+-  gap: 6px;
++  gap: var(--spacing-between-form-field-label-text-and-input-field);
+ }
+ 
+-.form-field--spacious {
+-  gap: 10px;
++.form-field--navigation {
++  gap: var(--spacing-between-navigation-field-label-text-and-input-field);
++}
++
++.form-field--text-and-input-fields {
++  gap: var(--spacing-between-form-field-label-text-and-input-field);
+ }
+ 
+ .form-field--row {
+--- a/src/features/Vault/components/Sidebar/sections/FoldersTreeSection.tsx
++++ b/src/features/Vault/components/Sidebar/sections/FoldersTreeSection.tsx
+@@ -206,7 +206,7 @@
+               </div>
+             )}
+ 
+-            <div className="form-field form-field--spacious">
++            <div className="form-field form-field--navigation">
+               <label className="form-label" htmlFor="folder-name">
+                 {t('dialog.newFolder.label')}
+               </label>
