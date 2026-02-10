@@ -1,0 +1,94 @@
+import React from 'react';
+
+type TranslateFn = (key: string, params?: Record<string, string | number>) => string;
+
+type RenderSwitch = (params: {
+  id: string;
+  labelId: string;
+  checked: boolean;
+  onToggle: () => void;
+  disabled?: boolean;
+}) => React.ReactNode;
+
+type FeaturesSectionProps = {
+  busy: boolean;
+  softDeleteEnabled: boolean;
+  trashAutoCleanupEnabled: boolean;
+  setTrashAutoCleanupEnabled: React.Dispatch<React.SetStateAction<boolean>>;
+  trashRetentionDays: string;
+  setTrashRetentionDays: React.Dispatch<React.SetStateAction<string>>;
+  isTrashRetentionInvalid: boolean;
+  parseTrashRetentionDays: (raw: string) => number | null;
+  renderSwitch: RenderSwitch;
+  tVault: TranslateFn;
+};
+
+export function FeaturesSection({
+  busy,
+  softDeleteEnabled,
+  trashAutoCleanupEnabled,
+  setTrashAutoCleanupEnabled,
+  trashRetentionDays,
+  setTrashRetentionDays,
+  isTrashRetentionInvalid,
+  parseTrashRetentionDays,
+  renderSwitch,
+  tVault,
+}: FeaturesSectionProps) {
+  return (
+    <>
+      <h3 id="options-title" className="settings-modal-section-title">
+        {tVault('settingsModal.options.sectionTitle')}
+      </h3>
+
+      <div role="group" aria-labelledby="options-title" className="settings-group">
+        <div className="form-field settings-toggle-row">
+          <span className="form-label settings-subheader" id="trash-auto-cleanup-enabled-label">
+            {tVault('settingsModal.options.automaticTrashCleanup.title')}
+          </span>
+
+          <div className="settings-toggle-row__control">
+            {renderSwitch({
+              id: 'trash-auto-cleanup-enabled-switch',
+              labelId: 'trash-auto-cleanup-enabled-label',
+              checked: trashAutoCleanupEnabled,
+              onToggle: () =>
+                setTrashAutoCleanupEnabled((value) => {
+                  const nextValue = !value;
+                  if (nextValue && parseTrashRetentionDays(trashRetentionDays) === null) {
+                    setTrashRetentionDays('90');
+                  }
+                  return nextValue;
+                }),
+              disabled: busy || !softDeleteEnabled,
+            })}
+          </div>
+        </div>
+
+        <div className="form-field">
+          <label className="form-label" htmlFor="trash-retention-days">
+            {tVault('settingsModal.options.automaticTrashCleanup.daysLabel')}
+          </label>
+          <input
+            id="trash-retention-days"
+            type="number"
+            min={1}
+            max={3650}
+            value={trashRetentionDays}
+            disabled={busy || !trashAutoCleanupEnabled || !softDeleteEnabled}
+            inputMode="numeric"
+            onChange={(event) => setTrashRetentionDays(event.target.value)}
+            className="settings-input"
+          />
+          {isTrashRetentionInvalid && (
+            <div className="form-error">{tVault('settingsModal.options.automaticTrashCleanup.validation')}</div>
+          )}
+        </div>
+
+        {!softDeleteEnabled && (
+          <div className="form-label">{tVault('settingsModal.options.automaticTrashCleanup.disabledBecauseTrashOff')}</div>
+        )}
+      </div>
+    </>
+  );
+}

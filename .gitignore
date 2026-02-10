@@ -1,0 +1,11 @@
+node_modules/
+/dist/
+/src-tauri/target/
+/.turbo/
+/.tauri-lock
+/.next/
+/build/
+
+# patch/merge leftovers
+*.orig
+*.rej
