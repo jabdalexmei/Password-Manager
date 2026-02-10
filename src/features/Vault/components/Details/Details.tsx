@@ -1059,7 +1059,7 @@ export function Details({
                     onClick={() => togglePreviewFieldFolderOnlyForCurrentFolder(previewMenu.field)}
                   >
                     {isFieldInFolderOnlyPreviewForCurrentFolder(previewMenu.field)
-                      ? t('previewMenu.hideFolderOnly')
+                      ? t('previewMenu.hideFolderOnlyAll')
                       : t('previewMenu.showFolderOnly')}
                   </button>
                 </>
