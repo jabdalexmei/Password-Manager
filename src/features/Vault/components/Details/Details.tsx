@@ -509,20 +509,6 @@ export function Details({
                 </>
               )}
 
-              {canTogglePreviewFieldFolderOnly && (
-                <>
-                  <div className="vault-actionmenu-separator" />
-                  <button
-                    className="vault-actionmenu-item"
-                    type="button"
-                    onClick={() => togglePreviewFieldFolderOnlyForCurrentFolder(previewMenu.field)}
-                  >
-                    {isFieldInFolderOnlyPreviewForCurrentFolder(previewMenu.field)
-                      ? t('previewMenu.hideFolderOnly')
-                      : t('previewMenu.showFolderOnly')}
-                  </button>
-                </>
-              )}
             </div>
           </div>
 
@@ -815,20 +801,6 @@ export function Details({
                 </span>
               )}
 
-              {canTogglePreviewFieldFolderOnly && (
-                <>
-                  <div className="vault-actionmenu-separator" />
-                  <button
-                    className="vault-actionmenu-item"
-                    type="button"
-                    onClick={() => togglePreviewFieldFolderOnlyForCurrentFolder(previewMenu.field)}
-                  >
-                    {isFieldInFolderOnlyPreviewForCurrentFolder(previewMenu.field)
-                      ? t('previewMenu.hideFolderOnly')
-                      : t('previewMenu.showFolderOnly')}
-                  </button>
-                </>
-              )}
             </div>
 
             {totpData && (
@@ -1007,20 +979,6 @@ export function Details({
                 </div>
               )}
 
-              {canTogglePreviewFieldFolderOnly && (
-                <>
-                  <div className="vault-actionmenu-separator" />
-                  <button
-                    className="vault-actionmenu-item"
-                    type="button"
-                    onClick={() => togglePreviewFieldFolderOnlyForCurrentFolder(previewMenu.field)}
-                  >
-                    {isFieldInFolderOnlyPreviewForCurrentFolder(previewMenu.field)
-                      ? t('previewMenu.hideFolderOnly')
-                      : t('previewMenu.showFolderOnly')}
-                  </button>
-                </>
-              )}
             </div>
           ))}
         </div>
