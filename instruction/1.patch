@@ -1,74 +1,26 @@
-diff --git a/src-tauri/src/types.rs b/src-tauri/src/types.rs
-index 8c55207..91df544 100644
---- a/src-tauri/src/types.rs
-+++ b/src-tauri/src/types.rs
-@@ -366,7 +366,7 @@ impl Default for UserSettings {
-             clipboard_clear_timeout_seconds: default_clipboard_clear_timeout_seconds(),
-             soft_delete_enabled: true,
-             trash_auto_cleanup_enabled: default_trash_auto_cleanup_enabled(),
--            trash_retention_days: 30,
-+            trash_retention_days: 90,
-             backups_enabled: true,
-             auto_backup_interval_minutes: default_auto_backup_interval_minutes(),
-             backup_max_copies: default_backup_max_copies(),
-diff --git a/src/features/Vault/components/modals/SettingsModal.tsx b/src/features/Vault/components/modals/SettingsModal.tsx
-index 223f2e6..c361ce7 100644
---- a/src/features/Vault/components/modals/SettingsModal.tsx
-+++ b/src/features/Vault/components/modals/SettingsModal.tsx
-@@ -59,7 +59,6 @@ export function SettingsModal({
-   const [maxCopies, setMaxCopies] = useState('10');
-   const [trashAutoCleanupEnabled, setTrashAutoCleanupEnabled] = useState(false);
-   const [trashRetentionDays, setTrashRetentionDays] = useState('');
--  const [trashRetentionDaysLastValid, setTrashRetentionDaysLastValid] = useState<number | null>(null);
-   const [multiplyVaultsEnabled, setMultiplyVaultsEnabled] = useState(false);
-   const [renameProfileOpen, setRenameProfileOpen] = useState(false);
-   const [renameProfileValue, setRenameProfileValue] = useState('');
-@@ -91,7 +90,6 @@ export function SettingsModal({
-     setTrashAutoCleanupEnabled(settings.trash_auto_cleanup_enabled);
-     const retentionDaysRaw = String(settings.trash_retention_days);
-     setTrashRetentionDays(retentionDaysRaw);
--    setTrashRetentionDaysLastValid(parseTrashRetentionDays(retentionDaysRaw));
-     setMultiplyVaultsEnabled(settings.multiply_vaults_enabled);
-   }, [open, settings]);
- 
-@@ -550,21 +548,9 @@ export function SettingsModal({
-                           onToggle: () =>
-                             setTrashAutoCleanupEnabled((value) => {
-                               const nextValue = !value;
--                              if (!nextValue) return nextValue;
--
--                              const parsed = parseTrashRetentionDays(trashRetentionDays);
--                              if (parsed !== null) {
--                                setTrashRetentionDaysLastValid(parsed);
--                                return nextValue;
--                              }
--
--                              if (trashRetentionDaysLastValid !== null) {
--                                setTrashRetentionDays(String(trashRetentionDaysLastValid));
--                                return nextValue;
-+                              if (nextValue && parseTrashRetentionDays(trashRetentionDays) === null) {
-+                                setTrashRetentionDays('90');
-                               }
--
--                              setTrashRetentionDays('90');
--                              setTrashRetentionDaysLastValid(90);
-                               return nextValue;
-                             }),
-                           disabled: busy || !settings?.soft_delete_enabled,
-@@ -584,15 +570,7 @@ export function SettingsModal({
-                         value={trashRetentionDays}
-                         disabled={busy || !trashAutoCleanupEnabled || !settings?.soft_delete_enabled}
-                         inputMode="numeric"
--                        placeholder="90"
--                        onChange={(event) => {
--                          const nextValue = event.target.value;
--                          setTrashRetentionDays(nextValue);
--                          const parsed = parseTrashRetentionDays(nextValue);
--                          if (parsed !== null) {
--                            setTrashRetentionDaysLastValid(parsed);
--                          }
--                        }}
-+                        onChange={(event) => setTrashRetentionDays(event.target.value)}
-                         className="settings-input"
-                       />
-                       {isTrashRetentionInvalid && (
+diff --git a/src/features/Vault/components/Details/Details.tsx b/src/features/Vault/components/Details/Details.tsx
+index f4c6db9..15884b0 100644
+--- a/src/features/Vault/components/Details/Details.tsx
++++ b/src/features/Vault/components/Details/Details.tsx
+@@ -1059,7 +1059,7 @@ export function Details({
+                     onClick={() => togglePreviewFieldFolderOnlyForCurrentFolder(previewMenu.field)}
+                   >
+                     {isFieldInFolderOnlyPreviewForCurrentFolder(previewMenu.field)
+-                      ? t('previewMenu.hideFolderOnly')
++                      ? t('previewMenu.hideFolderOnlyAll')
+                       : t('previewMenu.showFolderOnly')}
+                   </button>
+                 </>
+diff --git a/src/i18n/locales/en/Details.json b/src/i18n/locales/en/Details.json
+index e9711e8..908e301 100644
+--- a/src/i18n/locales/en/Details.json
++++ b/src/i18n/locales/en/Details.json
+@@ -77,7 +77,7 @@
+   "previewMenu.showAll": "Show in preview all",
+   "previewMenu.hideAll": "Hide in preview all",
+   "previewMenu.showFolderOnly": "Show in preview folder only",
+-  "previewMenu.hideFolderOnly": "Hide in preview folder only all",
++  "previewMenu.hideFolderOnlyAll": "Hide in preview folder only all",
+   "previewMenu.maxAll": "Max {{count}} fields (all cards)",
+   "attachments.rename": "Rename",
+   "attachments.renameTitle": "Rename attachment",
