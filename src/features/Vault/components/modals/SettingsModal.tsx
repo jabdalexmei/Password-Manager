@@ -59,7 +59,6 @@ export function SettingsModal({
   const [maxCopies, setMaxCopies] = useState('10');
   const [trashAutoCleanupEnabled, setTrashAutoCleanupEnabled] = useState(false);
   const [trashRetentionDays, setTrashRetentionDays] = useState('');
-  const [trashRetentionDaysLastValid, setTrashRetentionDaysLastValid] = useState<number | null>(null);
   const [multiplyVaultsEnabled, setMultiplyVaultsEnabled] = useState(false);
   const [renameProfileOpen, setRenameProfileOpen] = useState(false);
   const [renameProfileValue, setRenameProfileValue] = useState('');
@@ -91,7 +90,6 @@ export function SettingsModal({
     setTrashAutoCleanupEnabled(settings.trash_auto_cleanup_enabled);
     const retentionDaysRaw = String(settings.trash_retention_days);
     setTrashRetentionDays(retentionDaysRaw);
-    setTrashRetentionDaysLastValid(parseTrashRetentionDays(retentionDaysRaw));
     setMultiplyVaultsEnabled(settings.multiply_vaults_enabled);
   }, [open, settings]);
 
@@ -550,21 +548,9 @@ export function SettingsModal({
                           onToggle: () =>
                             setTrashAutoCleanupEnabled((value) => {
                               const nextValue = !value;
-                              if (!nextValue) return nextValue;
-
-                              const parsed = parseTrashRetentionDays(trashRetentionDays);
-                              if (parsed !== null) {
-                                setTrashRetentionDaysLastValid(parsed);
-                                return nextValue;
+                              if (nextValue && parseTrashRetentionDays(trashRetentionDays) === null) {
+                                setTrashRetentionDays('90');
                               }
-
-                              if (trashRetentionDaysLastValid !== null) {
-                                setTrashRetentionDays(String(trashRetentionDaysLastValid));
-                                return nextValue;
-                              }
-
-                              setTrashRetentionDays('90');
-                              setTrashRetentionDaysLastValid(90);
                               return nextValue;
                             }),
                           disabled: busy || !settings?.soft_delete_enabled,
@@ -584,15 +570,7 @@ export function SettingsModal({
                         value={trashRetentionDays}
                         disabled={busy || !trashAutoCleanupEnabled || !settings?.soft_delete_enabled}
                         inputMode="numeric"
-                        placeholder="90"
-                        onChange={(event) => {
-                          const nextValue = event.target.value;
-                          setTrashRetentionDays(nextValue);
-                          const parsed = parseTrashRetentionDays(nextValue);
-                          if (parsed !== null) {
-                            setTrashRetentionDaysLastValid(parsed);
-                          }
-                        }}
+                        onChange={(event) => setTrashRetentionDays(event.target.value)}
                         className="settings-input"
                       />
                       {isTrashRetentionInvalid && (

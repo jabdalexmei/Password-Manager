@@ -366,7 +366,7 @@ impl Default for UserSettings {
             clipboard_clear_timeout_seconds: default_clipboard_clear_timeout_seconds(),
             soft_delete_enabled: true,
             trash_auto_cleanup_enabled: default_trash_auto_cleanup_enabled(),
-            trash_retention_days: 30,
+            trash_retention_days: 90,
             backups_enabled: true,
             auto_backup_interval_minutes: default_auto_backup_interval_minutes(),
             backup_max_copies: default_backup_max_copies(),
