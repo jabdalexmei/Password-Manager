@@ -1,14 +1,90 @@
---- a/src/shared/lib/tauri.ts
-+++ b/src/shared/lib/tauri.ts
-@@ -142,9 +142,9 @@
- }
+--- a/src/features/Vault/components/modals/SettingsModal.tsx
++++ b/src/features/Vault/components/modals/SettingsModal.tsx
+@@ -58,7 +58,8 @@
+   const [intervalMinutes, setIntervalMinutes] = useState('60');
+   const [maxCopies, setMaxCopies] = useState('10');
+   const [trashAutoCleanupEnabled, setTrashAutoCleanupEnabled] = useState(false);
+-  const [trashRetentionDays, setTrashRetentionDays] = useState('90');
++  const [trashRetentionDays, setTrashRetentionDays] = useState('');
++  const [trashRetentionDaysLastValid, setTrashRetentionDaysLastValid] = useState<number | null>(null);
+   const [multiplyVaultsEnabled, setMultiplyVaultsEnabled] = useState(false);
+   const [renameProfileOpen, setRenameProfileOpen] = useState(false);
+   const [renameProfileValue, setRenameProfileValue] = useState('');
+@@ -88,7 +89,9 @@
+     setIntervalMinutes(String(settings.auto_backup_interval_minutes));
+     setMaxCopies(String(settings.backup_max_copies));
+     setTrashAutoCleanupEnabled(settings.trash_auto_cleanup_enabled);
+-    setTrashRetentionDays(String(settings.trash_retention_days));
++    const retentionDaysRaw = String(settings.trash_retention_days);
++    setTrashRetentionDays(retentionDaysRaw);
++    setTrashRetentionDaysLastValid(parseTrashRetentionDays(retentionDaysRaw));
+     setMultiplyVaultsEnabled(settings.multiply_vaults_enabled);
+   }, [open, settings]);
  
- export function setDataCardPreviewFieldsFolderOnlyByFolder(
--  fields_by_folder: DataCardPreviewFieldsFolderOnlyByFolderDto,
-+  fieldsByFolder: DataCardPreviewFieldsFolderOnlyByFolderDto,
- ): Promise<boolean> {
--  return invoke('set_datacard_preview_fields_folder_only_by_folder', { fields_by_folder });
-+  return invoke('set_datacard_preview_fields_folder_only_by_folder', { fieldsByFolder });
- }
+@@ -351,9 +354,9 @@
  
- export type BankCardPreviewFieldsDto = {
+         <div className="dialog-body settings-modal-body">
+           <div className="settings-layout">
+-            <aside className="settings-sidebar" aria-label={tVault('settingsModal.optionsTitle')}>
+-              <div className="settings-sidebar-title">{tVault('settingsModal.optionsTitle')}</div>
+-              <nav className="settings-sidebar-nav" aria-label={tVault('settingsModal.optionsTitle')}>
++            <aside className="settings-sidebar" aria-label={tVault('settingsModal.featuresTitle')}>
++              <div className="settings-sidebar-title">{tVault('settingsModal.featuresTitle')}</div>
++              <nav className="settings-sidebar-nav" aria-label={tVault('settingsModal.featuresTitle')}>
+                 <button
+                   type="button"
+                   className="settings-nav-item"
+@@ -547,9 +550,21 @@
+                           onToggle: () =>
+                             setTrashAutoCleanupEnabled((value) => {
+                               const nextValue = !value;
+-                              if (nextValue && parseTrashRetentionDays(trashRetentionDays) === null) {
+-                                setTrashRetentionDays('90');
++                              if (!nextValue) return nextValue;
++
++                              const parsed = parseTrashRetentionDays(trashRetentionDays);
++                              if (parsed !== null) {
++                                setTrashRetentionDaysLastValid(parsed);
++                                return nextValue;
++                              }
++
++                              if (trashRetentionDaysLastValid !== null) {
++                                setTrashRetentionDays(String(trashRetentionDaysLastValid));
++                                return nextValue;
+                               }
++
++                              setTrashRetentionDays('90');
++                              setTrashRetentionDaysLastValid(90);
+                               return nextValue;
+                             }),
+                           disabled: busy || !settings?.soft_delete_enabled,
+@@ -570,7 +585,14 @@
+                         disabled={busy || !trashAutoCleanupEnabled || !settings?.soft_delete_enabled}
+                         inputMode="numeric"
+                         placeholder="90"
+-                        onChange={(event) => setTrashRetentionDays(event.target.value)}
++                        onChange={(event) => {
++                          const nextValue = event.target.value;
++                          setTrashRetentionDays(nextValue);
++                          const parsed = parseTrashRetentionDays(nextValue);
++                          if (parsed !== null) {
++                            setTrashRetentionDaysLastValid(parsed);
++                          }
++                        }}
+                         className="settings-input"
+                       />
+                       {isTrashRetentionInvalid && (
+
+--- a/src/i18n/locales/en/Vault.json
++++ b/src/i18n/locales/en/Vault.json
+@@ -49,8 +49,8 @@
+   "settingsModal.multiplyVaults.enabled": "Enable multiple vaults",
+   "backup.auto.success": "Auto-backup created",
+   "settingsModal.profileTitle": "Profile",
+-  "settingsModal.optionsTitle": "Options",
+-  "settingsModal.options.sectionTitle": "Options",
++  "settingsModal.featuresTitle": "Features",
++  "settingsModal.options.sectionTitle": "Features",
+   "settingsModal.options.automaticTrashCleanup.title": "Automatic trash cleanup",
+   "settingsModal.options.automaticTrashCleanup.daysLabel": "Delete items in trash after (days)",
+   "settingsModal.options.automaticTrashCleanup.validation": "Enter a number from 1 to 3650",
