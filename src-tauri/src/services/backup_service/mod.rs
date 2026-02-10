@@ -1,4 +1,4 @@
-use std::fs;
+﻿use std::fs;
 use std::io::{BufReader, BufWriter, Read, Write};
 use std::path::{Component, Path, PathBuf};
 use std::sync::Arc;
@@ -30,127 +30,28 @@ use crate::error::{ErrorCodeString, Result};
 use crate::services::{security_service, settings_service};
 use crate::types::UserSettings;
 
-fn replace_file_windows(src: &Path, dst: &Path) -> std::io::Result<()> {
-    use std::iter;
-    use std::os::windows::ffi::OsStrExt;
-    use windows_sys::Win32::Storage::FileSystem::{
-        MoveFileExW, MOVEFILE_REPLACE_EXISTING, MOVEFILE_WRITE_THROUGH,
-    };
+mod auto;
+#[path = "fs.rs"]
+mod backup_fs;
+mod export;
+mod format;
+mod import;
+mod inspect;
 
-    let src_w: Vec<u16> = src.as_os_str().encode_wide().chain(iter::once(0)).collect();
-    let dst_w: Vec<u16> = dst.as_os_str().encode_wide().chain(iter::once(0)).collect();
+pub use auto::*;
+pub use export::*;
+pub use format::{BackupInspectResult, BackupListItem};
+pub use import::*;
+pub use inspect::*;
 
-    let ok = unsafe {
-        MoveFileExW(
-            src_w.as_ptr(),
-            dst_w.as_ptr(),
-            MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH,
-        )
-    };
-
-    if ok == 0 {
-        Err(std::io::Error::last_os_error())
-    } else {
-        Ok(())
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct BackupListItem {
-    pub id: String,
-    pub created_at_utc: String,
-    pub path: String,
-    pub bytes: i64,
-}
-
-#[derive(Debug, Serialize, Deserialize, Default)]
-struct BackupRegistry {
-    pub last_auto_backup_at_utc: Option<String>,
-    pub backups: Vec<BackupListItem>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct BackupManifest {
-    format_version: i64,
-    created_at_utc: String,
-    app_version: String,
-    profile_id: String,
-    #[serde(default)]
-    profile_name: Option<String>,
-    vault_mode: String,
-    files: Vec<BackupManifestFile>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct BackupInspectResult {
-    pub profile_id: String,
-    pub profile_name: String,
-    pub created_at_utc: String,
-    pub vault_mode: String,
-    pub will_overwrite: bool,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct BackupManifestFile {
-    path: String,
-    sha256: String,
-    bytes: i64,
-}
-
-struct BackupSource {
-    vault_path: PathBuf,
-    attachments_path: PathBuf,
-    config_path: Option<PathBuf>,
-    settings_path: Option<PathBuf>,
-    // Protected-mode files
-    kdf_salt_path: Option<PathBuf>,
-    key_check_path: Option<PathBuf>,
-    vault_key_path: Option<PathBuf>,
-    _temp_dir: Option<tempfile::TempDir>,
-}
-
-struct BackupResult {
-    id: String,
-    created_at_utc: String,
-    path: String,
-    bytes: i64,
-}
-
-fn load_registry(sp: &StoragePaths, profile_id: &str) -> Result<BackupRegistry> {
-    let path = backup_registry_path(sp, profile_id)?;
-    if !path.exists() {
-        return Ok(BackupRegistry::default());
-    }
-    let content =
-        fs::read_to_string(&path).map_err(|_| ErrorCodeString::new("BACKUP_CREATE_FAILED"))?;
-    serde_json::from_str(&content).map_err(|_| ErrorCodeString::new("BACKUP_CREATE_FAILED"))
-}
-
-fn save_registry(sp: &StoragePaths, profile_id: &str, registry: &BackupRegistry) -> Result<()> {
-    let path = backup_registry_path(sp, profile_id)?;
-    let serialized = serde_json::to_string_pretty(registry)
-        .map_err(|_| ErrorCodeString::new("BACKUP_CREATE_FAILED"))?;
-    write_atomic(&path, serialized.as_bytes())
-        .map_err(|_| ErrorCodeString::new("BACKUP_CREATE_FAILED"))
-}
-
-fn update_registry(
-    sp: &StoragePaths,
-    profile_id: &str,
-    update: impl FnOnce(&mut BackupRegistry),
-) -> Result<()> {
-    let mut registry = load_registry(sp, profile_id)?;
-    update(&mut registry);
-    save_registry(sp, profile_id, &registry)
-}
-
-fn now_timestamp() -> String {
-    Utc::now().format("%Y-%m-%d_%H-%M-%S").to_string()
-}
-
-fn now_utc_string() -> String {
-    Utc::now().to_rfc3339_opts(SecondsFormat::Secs, true)
-}
+use backup_fs::{
+    best_effort_fsync_rename_dirs, map_restore_io_error, prepare_empty_dir_for_restore,
+    rename_with_retry, replace_file_windows,
+};
+use format::{
+    load_registry, now_timestamp, now_utc_string, read_backup_manifest_and_name, save_registry,
+    update_registry, BackupManifest, BackupManifestFile, BackupRegistry, BackupResult, BackupSource,
+};
 
 fn validate_zip_entry_rel_path_windows(rel: &Path) -> bool {
     if rel.is_absolute() {
@@ -291,103 +192,6 @@ fn validate_backup_entry_header(
     }
 
     Ok(())
-}
-
-fn best_effort_fsync_rename_dirs(_src: &Path, _dst: &Path) {
-    // Windows-only build: directory fsync is not portable; keep best-effort hook as no-op.
-    let _ = (_src, _dst);
-}
-
-fn rename_platform(src: &Path, dst: &Path) -> std::io::Result<()> {
-    use std::iter;
-    use std::os::windows::ffi::OsStrExt;
-    use windows_sys::Win32::Storage::FileSystem::{MoveFileExW, MOVEFILE_WRITE_THROUGH};
-
-    let src_w: Vec<u16> = src.as_os_str().encode_wide().chain(iter::once(0)).collect();
-    let dst_w: Vec<u16> = dst.as_os_str().encode_wide().chain(iter::once(0)).collect();
-    let ok = unsafe { MoveFileExW(src_w.as_ptr(), dst_w.as_ptr(), MOVEFILE_WRITE_THROUGH) };
-    if ok == 0 {
-        Err(std::io::Error::last_os_error())
-    } else {
-        Ok(())
-    }
-}
-
-fn is_transient_windows_fs_error(e: &std::io::Error) -> bool {
-    // Windows can report file-in-use scenarios either as PermissionDenied or as raw OS errors.
-    // Retrying helps when antivirus/indexer/Explorer briefly holds the file.
-    if e.kind() == std::io::ErrorKind::PermissionDenied {
-        return true;
-    }
-    match e.raw_os_error() {
-        Some(5) | Some(32) | Some(33) => true, // ACCESS_DENIED / SHARING_VIOLATION / LOCK_VIOLATION
-        _ => false,
-    }
-}
-
-fn map_restore_io_error(
-    step: &'static str,
-    a: Option<&Path>,
-    b: Option<&Path>,
-    e: std::io::Error,
-) -> ErrorCodeString {
-    let os = e.raw_os_error();
-    log::error!(
-        "[BACKUP][restore] io_error step={} a={:?} b={:?} kind={:?} os={:?} err={}",
-        step,
-        a,
-        b,
-        e.kind(),
-        os,
-        e
-    );
-
-    if is_transient_windows_fs_error(&e) {
-        return ErrorCodeString::new("BACKUP_RESTORE_FILE_IN_USE");
-    }
-
-    if e.kind() == std::io::ErrorKind::PermissionDenied {
-        return ErrorCodeString::new("BACKUP_RESTORE_ACCESS_DENIED");
-    }
-
-    match os {
-        Some(206) => ErrorCodeString::new("BACKUP_RESTORE_PATH_TOO_LONG"), // ERROR_FILENAME_EXCED_RANGE
-        Some(112) => ErrorCodeString::new("BACKUP_RESTORE_DISK_FULL"),     // ERROR_DISK_FULL
-        _ => ErrorCodeString::new("BACKUP_RESTORE_FAILED"),
-    }
-}
-
-fn prepare_empty_dir_for_restore(path: &Path) -> std::io::Result<()> {
-    if path.exists() {
-        fs::remove_dir_all(path)?;
-    }
-    fs::create_dir_all(path)
-}
-
-fn rename_with_retry(src: &Path, dst: &Path) -> std::io::Result<()> {
-    use std::time::Duration;
-
-    const ATTEMPTS: usize = 200;
-    const SLEEP_MS: u64 = 50;
-
-    let mut last_err: Option<std::io::Error> = None;
-    for _ in 0..ATTEMPTS {
-        match rename_platform(src, dst) {
-            Ok(()) => {
-                best_effort_fsync_rename_dirs(src, dst);
-                return Ok(());
-            }
-            Err(e) => {
-                if is_transient_windows_fs_error(&e) {
-                    last_err = Some(e);
-                    std::thread::sleep(Duration::from_millis(SLEEP_MS));
-                    continue;
-                }
-                return Err(e);
-            }
-        }
-    }
-    Err(last_err.unwrap_or_else(|| std::io::Error::new(std::io::ErrorKind::Other, "rename failed")))
 }
 
 fn ensure_backup_guard(state: &Arc<AppState>) -> Result<std::sync::MutexGuard<'_, ()>> {
@@ -790,104 +594,6 @@ fn create_backup_internal(
     })
 }
 
-pub fn backup_create(
-    state: &Arc<AppState>,
-    destination_path: Option<String>,
-    use_default_path: bool,
-) -> Result<String> {
-    let profile_id = require_unlocked_active_profile_id(state)?;
-    let sp = state.get_storage_paths()?;
-    let settings = settings_service::get_settings(&sp, &profile_id)?;
-    let managed_root = backups_dir(&sp, &profile_id)?;
-
-    let result = create_backup_internal(state, destination_path, use_default_path)?;
-
-    update_registry(&sp, &profile_id, |registry| {
-        registry.backups.push(BackupListItem {
-            id: result.id.clone(),
-            created_at_utc: result.created_at_utc.clone(),
-            path: result.path.clone(),
-            bytes: result.bytes,
-        });
-        prune_registry(registry);
-        apply_max_copies(&settings, &managed_root, registry);
-    })?;
-
-    Ok(result.path)
-}
-
-pub fn backup_list(state: &Arc<AppState>) -> Result<Vec<BackupListItem>> {
-    let profile_id = require_unlocked_active_profile_id(state)?;
-    let sp = state.get_storage_paths()?;
-    let mut registry = load_registry(&sp, &profile_id)?;
-    prune_registry(&mut registry);
-    save_registry(&sp, &profile_id, &registry)?;
-    Ok(registry.backups)
-}
-
-fn read_backup_manifest_and_name(backup_path: &Path) -> Result<(BackupManifest, String)> {
-    if !backup_path.exists() {
-        return Err(ErrorCodeString::new("BACKUP_ARCHIVE_INVALID"));
-    }
-
-    let archive_file =
-        fs::File::open(backup_path).map_err(|_| ErrorCodeString::new("BACKUP_ARCHIVE_INVALID"))?;
-    let mut archive = ZipArchive::new(archive_file)
-        .map_err(|_| ErrorCodeString::new("BACKUP_ARCHIVE_INVALID"))?;
-
-    let mut manifest_contents = String::new();
-    {
-        let mut manifest_file = archive
-            .by_name("manifest.json")
-            .map_err(|_| ErrorCodeString::new("BACKUP_MANIFEST_MISSING"))?;
-        manifest_file
-            .read_to_string(&mut manifest_contents)
-            .map_err(|_| ErrorCodeString::new("BACKUP_MANIFEST_INVALID"))?;
-    }
-
-    let manifest: BackupManifest = serde_json::from_str(&manifest_contents)
-        .map_err(|_| ErrorCodeString::new("BACKUP_MANIFEST_INVALID"))?;
-
-    if manifest.format_version != 1 {
-        return Err(ErrorCodeString::new("BACKUP_UNSUPPORTED_FORMAT"));
-    }
-
-    if !validate_profile_id_component(&manifest.profile_id) {
-        return Err(ErrorCodeString::new("BACKUP_MANIFEST_INVALID"));
-    }
-
-    if let Some(name) = manifest.profile_name.clone() {
-        return Ok((manifest, name));
-    }
-
-    if let Ok(mut cfg_file) = archive.by_name("config.json") {
-        let mut cfg_contents = String::new();
-        if cfg_file.read_to_string(&mut cfg_contents).is_ok() {
-            if let Ok(v) = serde_json::from_str::<serde_json::Value>(&cfg_contents) {
-                if let Some(name) = v.get("name").and_then(|n| n.as_str()) {
-                    return Ok((manifest, name.to_string()));
-                }
-            }
-        }
-    }
-
-    Ok((manifest, "Restored profile".to_string()))
-}
-
-pub fn backup_inspect(state: &Arc<AppState>, backup_path: String) -> Result<BackupInspectResult> {
-    let sp = state.get_storage_paths()?;
-    let backup_path = PathBuf::from(&backup_path);
-    let (manifest, profile_name) = read_backup_manifest_and_name(&backup_path)?;
-    let will_overwrite = registry::get_profile(&sp, &manifest.profile_id)?.is_some();
-
-    Ok(BackupInspectResult {
-        profile_id: manifest.profile_id,
-        profile_name,
-        created_at_utc: manifest.created_at_utc,
-        vault_mode: manifest.vault_mode,
-        will_overwrite,
-    })
-}
 
 fn restore_archive_to_profile(
     _state: &Arc<AppState>,
@@ -1289,111 +995,6 @@ fn restore_archive_to_profile(
     let _ = fs::remove_dir_all(&staging_root);
 
     Ok(true)
-}
-
-pub fn backup_restore_workflow(state: &Arc<AppState>, backup_path: String) -> Result<bool> {
-    let _guard = ensure_backup_guard(state)?;
-    // Persist any in-memory changes before restore to avoid data loss on rollback.
-    security_service::lock_vault(state)?;
-    let sp = state.get_storage_paths()?;
-
-    let backup_path = PathBuf::from(&backup_path);
-    let (manifest, profile_name) = read_backup_manifest_and_name(&backup_path)?;
-
-    if manifest.vault_mode == "protected" {
-        let mut has_kdf_salt = false;
-        let mut has_key_check = false;
-        let mut has_vault_key = false;
-        for f in &manifest.files {
-            if f.path == "kdf_salt.bin" {
-                has_kdf_salt = true;
-            }
-            if f.path == "key_check.bin" {
-                has_key_check = true;
-            }
-            if f.path == "vault_key.bin" {
-                has_vault_key = true;
-            }
-        }
-        if !has_kdf_salt || !has_key_check || !has_vault_key {
-            return Err(ErrorCodeString::new("BACKUP_ARCHIVE_INVALID"));
-        }
-    } else if manifest.vault_mode == "passwordless" {
-        let mut has_vault_key = false;
-        for f in &manifest.files {
-            if f.path == "vault_key.bin" {
-                has_vault_key = true;
-            }
-        }
-        if !has_vault_key {
-            return Err(ErrorCodeString::new("BACKUP_ARCHIVE_INVALID"));
-        }
-    } else {
-        return Err(ErrorCodeString::new("BACKUP_MANIFEST_INVALID"));
-    }
-
-    let exists = registry::get_profile(&sp, &manifest.profile_id)?.is_some();
-    if !exists {
-        let has_password = manifest.vault_mode == "protected";
-        registry::upsert_profile_with_id(&sp, &manifest.profile_id, &profile_name, has_password)?;
-    }
-
-    let restored = restore_archive_to_profile(state, &sp, &manifest.profile_id, &backup_path)?;
-
-    // Keep profiles registry in sync with restored state (name + vault mode).
-    let has_password = manifest.vault_mode == "protected";
-    let _ =
-        registry::upsert_profile_with_id(&sp, &manifest.profile_id, &profile_name, has_password);
-
-    Ok(restored)
-}
-
-pub fn backup_create_if_due_auto(state: &Arc<AppState>) -> Result<Option<String>> {
-    let profile_id = match security_service::require_unlocked_active_profile(state) {
-        Ok(info) => info.profile_id,
-        Err(e) => {
-            // No auto-backup when the vault is locked / no active session.
-            if e.code == "VAULT_LOCKED" {
-                return Ok(None);
-            }
-            return Err(e);
-        }
-    };
-    let sp = state.get_storage_paths()?;
-    let settings = settings_service::get_settings(&sp, &profile_id)?;
-    if !settings.backups_enabled {
-        return Ok(None);
-    }
-    let managed_root = backups_dir(&sp, &profile_id)?;
-
-    let mut registry = load_registry(&sp, &profile_id)?;
-    let last_auto = registry
-        .last_auto_backup_at_utc
-        .as_ref()
-        .and_then(|value| chrono::DateTime::parse_from_rfc3339(value).ok())
-        .map(|value| value.with_timezone(&Utc));
-
-    let now = Utc::now();
-    let interval = chrono::Duration::minutes(settings.auto_backup_interval_minutes);
-    if let Some(last) = last_auto {
-        if now < last + interval {
-            return Ok(None);
-        }
-    }
-
-    let result = create_backup_internal(state, None, true)?;
-    registry.backups.push(BackupListItem {
-        id: result.id.clone(),
-        created_at_utc: result.created_at_utc.clone(),
-        path: result.path.clone(),
-        bytes: result.bytes,
-    });
-    registry.last_auto_backup_at_utc = Some(now_utc_string());
-    prune_registry(&mut registry);
-    apply_max_copies(&settings, &managed_root, &mut registry);
-    save_registry(&sp, &profile_id, &registry)?;
-
-    Ok(Some(result.path))
 }
 
 #[cfg(test)]
