@@ -119,6 +119,47 @@ pub fn list_attachments(app: &AppHandle, datacard_id: String) -> Result<Vec<Atta
     repo_impl::list_attachments_by_datacard(&session.state, &session.profile_id, &datacard_id)
 }
 
+fn validate_file_name(name: &str) -> Result<String> {
+    let trimmed = name.trim();
+    if trimmed.is_empty() {
+        return Err(ErrorCodeString::new("ATTACHMENT_INVALID_FILE_NAME"));
+    }
+    if trimmed.contains('/') || trimmed.contains('\\') || trimmed.contains('\0') {
+        return Err(ErrorCodeString::new("ATTACHMENT_INVALID_FILE_NAME"));
+    }
+    if trimmed.len() > 255 {
+        return Err(ErrorCodeString::new("ATTACHMENT_INVALID_FILE_NAME"));
+    }
+    Ok(trimmed.to_string())
+}
+
+pub fn rename_attachment(
+    app: &AppHandle,
+    attachment_id: String,
+    file_name: String,
+) -> Result<AttachmentMeta> {
+    let session = require_logged_in(app)?;
+    let meta = repo_impl::get_attachment(&session.state, &session.profile_id, &attachment_id)?
+        .ok_or_else(|| ErrorCodeString::new("ATTACHMENT_NOT_FOUND"))?;
+    if meta.deleted_at.is_some() {
+        return Err(ErrorCodeString::new("ATTACHMENT_NOT_FOUND"));
+    }
+
+    let cleaned = validate_file_name(&file_name)?;
+    let now = Utc::now().to_rfc3339();
+    repo_impl::rename_attachment(
+        &session.state,
+        &session.profile_id,
+        &attachment_id,
+        &cleaned,
+        &now,
+    )?;
+    security_service::request_persist_active_vault(session.state.clone());
+
+    repo_impl::get_attachment(&session.state, &session.profile_id, &attachment_id)?
+        .ok_or_else(|| ErrorCodeString::new("ATTACHMENT_NOT_FOUND"))
+}
+
 pub fn remove_attachment(app: &AppHandle, attachment_id: String) -> Result<()> {
     let session = require_logged_in(app)?;
     let now = Utc::now().to_rfc3339();
@@ -151,8 +192,7 @@ pub fn save_attachment_to_path(
         return Err(ErrorCodeString::new("ATTACHMENT_NOT_FOUND"));
     }
 
-    let stored_path =
-        attachment_file_path(&session.storage_paths, &session.profile_id, &meta.id)?;
+    let stored_path = attachment_file_path(&session.storage_paths, &session.profile_id, &meta.id)?;
     let bytes =
         fs::read(&stored_path).map_err(|_| ErrorCodeString::new("ATTACHMENT_READ_FAILED"))?;
     let output_bytes = if bytes.starts_with(&cipher::PM_ENC_MAGIC) {
@@ -181,8 +221,7 @@ pub fn get_attachment_preview(
         return Err(ErrorCodeString::new("ATTACHMENT_TOO_LARGE_FOR_PREVIEW"));
     }
 
-    let stored_path =
-        attachment_file_path(&session.storage_paths, &session.profile_id, &meta.id)?;
+    let stored_path = attachment_file_path(&session.storage_paths, &session.profile_id, &meta.id)?;
     let bytes =
         fs::read(&stored_path).map_err(|_| ErrorCodeString::new("ATTACHMENT_READ_FAILED"))?;
 

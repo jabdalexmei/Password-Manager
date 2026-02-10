@@ -38,7 +38,11 @@ fn set_dir_private(path: &Path) -> std::io::Result<()> {
 
     let icacls = std::env::var_os("SystemRoot")
         .map(|root| PathBuf::from(root).join("System32").join("icacls.exe"))
-        .unwrap_or_else(|| PathBuf::from(r"C:\Windows").join("System32").join("icacls.exe"));
+        .unwrap_or_else(|| {
+            PathBuf::from(r"C:\Windows")
+                .join("System32")
+                .join("icacls.exe")
+        });
 
     if !icacls.exists() {
         return Err(std::io::Error::new(
@@ -113,7 +117,6 @@ fn set_dir_private(_path: &Path) -> std::io::Result<()> {
     Ok(())
 }
 
-
 pub fn profiles_root(sp: &StoragePaths) -> Result<PathBuf> {
     Ok(sp.profiles_root()?.to_path_buf())
 }
@@ -179,19 +182,15 @@ pub fn profile_config_path(sp: &StoragePaths, id: &str) -> Result<PathBuf> {
 pub fn ensure_profile_dirs(sp: &StoragePaths, profile_id: &str, has_password: bool) -> Result<()> {
     let root = profile_dir(sp, profile_id)?;
 
-    fs::create_dir_all(&root)
-        .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
+    fs::create_dir_all(&root).map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
     if has_password {
-        set_dir_private(&root)
-            .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
+        set_dir_private(&root).map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
     }
     for sub in ["attachments", "backups", "tmp"] {
         let dir = root.join(sub);
-        fs::create_dir_all(&dir)
-            .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
+        fs::create_dir_all(&dir).map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
         if has_password {
-            set_dir_private(&dir)
-                .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
+            set_dir_private(&dir).map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
         }
     }
     Ok(())

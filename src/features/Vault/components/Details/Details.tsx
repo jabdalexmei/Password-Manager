@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { CustomField, DataCard, Folder } from '../../types/ui';
 import { useTranslation } from '../../../../shared/lib/i18n';
 import { useDetails } from './useDetails';
@@ -12,8 +12,10 @@ import {
   IconImport,
   IconPreview,
   IconPreviewOff,
+  IconRename,
 } from '@/shared/icons/lucide/icons';
 import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../../../../shared/ui/dialog';
 import {
   loadPreviewFields,
   onPreviewFieldsChanged,
@@ -21,12 +23,19 @@ import {
   type DataCardPreviewField,
 } from '../../lib/datacardPreviewFields';
 import {
+  loadPreviewFieldsFolderOnlyByFolder,
+  onPreviewFieldsFolderOnlyByFolderChanged,
+  savePreviewFieldsFolderOnlyByFolder,
+  type DataCardPreviewFieldsFolderOnlyByFolder,
+} from '../../lib/datacardPreviewFieldsFolderOnlyByFolder';
+import {
   loadCoreHiddenFields,
   onCoreHiddenFieldsChanged,
   saveCoreHiddenFields,
   type DataCardCoreField,
 } from '../../lib/datacardCoreHiddenFields';
 import { setDataCardPreviewFieldsForCard } from '../../api/vaultApi';
+import { getCurrentWebview } from '@tauri-apps/api/webview';
 
 const LazyAttachmentPreviewModal = React.lazy(() =>
   import('../modals/AttachmentPreviewModal').then((m) => ({ default: m.default })),
@@ -41,6 +50,7 @@ const LazySeedPhraseViewModal = React.lazy(() =>
 export type DetailsProps = {
   card: DataCard | null;
   folders: Folder[];
+  activeFolderId?: string | null;
   onEdit: (card: DataCard) => void;
   onDelete: (id: string) => void;
   onRestore: (id: string) => void;
@@ -65,6 +75,7 @@ const toCustomPreviewField = (key: string): DataCardCustomPreviewField => `${CUS
 export function Details({
   card,
   folders,
+  activeFolderId,
   onEdit,
   onDelete,
   onRestore,
@@ -92,6 +103,85 @@ export function Details({
     clipboardClearTimeoutSeconds,
   });
 
+  const attachmentsDropRef = useRef<HTMLDivElement | null>(null);
+  const [isAttachmentsDragOver, setIsAttachmentsDragOver] = useState(false);
+
+  const addAttachmentsFromDrop = detailActions.onAddAttachmentsFromPaths;
+  const addAttachmentsFromDropRef = useRef(addAttachmentsFromDrop);
+  useEffect(() => {
+    addAttachmentsFromDropRef.current = addAttachmentsFromDrop;
+  }, [addAttachmentsFromDrop]);
+
+  const pendingDropPathsRef = useRef<Set<string>>(new Set());
+  const dropFlushTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    setIsAttachmentsDragOver(false);
+    if (!card?.id || isTrashMode) return;
+
+    let disposed = false;
+
+    const clearDropFlushTimer = () => {
+      if (dropFlushTimerRef.current !== null) {
+        window.clearTimeout(dropFlushTimerRef.current);
+        dropFlushTimerRef.current = null;
+      }
+      pendingDropPathsRef.current.clear();
+    };
+
+    clearDropFlushTimer();
+
+    const isInsideDropZone = (position: { x: number; y: number } | null | undefined) => {
+      const el = attachmentsDropRef.current;
+      if (!el || !position) return false;
+      const rect = el.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const x = position.x / dpr;
+      const y = position.y / dpr;
+      return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+    };
+
+    const scheduleAddFromDrop = (paths: string[]) => {
+      for (const p of paths) pendingDropPathsRef.current.add(p);
+      if (dropFlushTimerRef.current !== null) return;
+
+      dropFlushTimerRef.current = window.setTimeout(() => {
+        dropFlushTimerRef.current = null;
+        const uniquePaths = Array.from(pendingDropPathsRef.current);
+        pendingDropPathsRef.current.clear();
+        if (disposed || uniquePaths.length === 0) return;
+        void addAttachmentsFromDropRef.current(uniquePaths);
+      }, 25);
+    };
+
+    const unlistenPromise = getCurrentWebview().onDragDropEvent((event) => {
+      if (disposed) return;
+
+      const payload: any = event.payload as any;
+      if (payload?.type === 'over') {
+        setIsAttachmentsDragOver(isInsideDropZone(payload.position));
+        return;
+      }
+      if (payload?.type === 'drop') {
+        const inside = isInsideDropZone(payload.position);
+        setIsAttachmentsDragOver(false);
+        if (inside) {
+          scheduleAddFromDrop((payload.paths ?? []) as string[]);
+        }
+        return;
+      }
+      setIsAttachmentsDragOver(false);
+    });
+
+    unlistenPromise.catch((err) => console.error(err));
+
+    return () => {
+      disposed = true;
+      clearDropFlushTimer();
+      void unlistenPromise.then((unlisten) => unlisten()).catch(() => undefined);
+    };
+  }, [card?.id, isTrashMode]);
+
   const folderName = useMemo(() => {
     if (!card) return '';
     return card.folderId ? folders.find((f) => f.id === card.folderId)?.name ?? '' : '';
@@ -100,11 +190,17 @@ export function Details({
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [purgeConfirmOpen, setPurgeConfirmOpen] = useState(false);
   const [attachmentToDelete, setAttachmentToDelete] = useState<string | null>(null);
+  const [renameAttachmentOpen, setRenameAttachmentOpen] = useState(false);
+  const [renameAttachmentId, setRenameAttachmentId] = useState<string | null>(null);
+  const [renameAttachmentValue, setRenameAttachmentValue] = useState('');
+  const [isRenamingAttachment, setIsRenamingAttachment] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [seedPhraseViewOpen, setSeedPhraseViewOpen] = useState(false);
   const [revealedCustomFields, setRevealedCustomFields] = useState<Record<string, boolean>>({});
   const [totpNow, setTotpNow] = useState(() => Date.now());
   const [previewFields, setPreviewFields] = useState<DataCardPreviewField[]>([]);
+  const [previewFieldsFolderOnlyByFolder, setPreviewFieldsFolderOnlyByFolder] =
+    useState<DataCardPreviewFieldsFolderOnlyByFolder>({});
   const [coreHiddenFields, setCoreHiddenFields] = useState<DataCardCoreField[]>([]);
   const [previewMenu, setPreviewMenu] = useState<{
     x: number;
@@ -155,6 +251,18 @@ export function Details({
   }, []);
 
   useEffect(() => onPreviewFieldsChanged(setPreviewFields), []);
+
+  useEffect(() => {
+    let isMounted = true;
+    loadPreviewFieldsFolderOnlyByFolder().then((fieldsByFolder) => {
+      if (isMounted) setPreviewFieldsFolderOnlyByFolder(fieldsByFolder);
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => onPreviewFieldsFolderOnlyByFolderChanged(setPreviewFieldsFolderOnlyByFolder), []);
 
   useEffect(() => {
     let isMounted = true;
@@ -256,6 +364,43 @@ export function Details({
       return;
     }
     await savePreviewFields([...previewFields, field]);
+    setPreviewMenu(null);
+  };
+
+
+  const activeFolderIdForPreviewMenu = activeFolderId ?? null;
+
+  const canTogglePreviewFieldFolderOnly =
+    Boolean(activeFolderIdForPreviewMenu) &&
+    Boolean(card?.folderId) &&
+    card?.folderId === activeFolderIdForPreviewMenu;
+
+  const isFieldInFolderOnlyPreviewForCurrentFolder = (field: DataCardCardPreviewField) => {
+    const folderId = activeFolderIdForPreviewMenu;
+    if (!folderId) return false;
+    const fields = previewFieldsFolderOnlyByFolder[folderId] ?? [];
+    return fields.includes(field);
+  };
+
+  const togglePreviewFieldFolderOnlyForCurrentFolder = async (field: DataCardCardPreviewField) => {
+    const folderId = activeFolderIdForPreviewMenu;
+    if (!folderId) return;
+    if (!card) return;
+    if (card.folderId !== folderId) return;
+
+    const current = previewFieldsFolderOnlyByFolder[folderId] ?? [];
+    const isSelected = current.includes(field);
+
+    const nextForFolder = isSelected ? current.filter((f) => f !== field) : [...current, field];
+    const nextAll: DataCardPreviewFieldsFolderOnlyByFolder = { ...previewFieldsFolderOnlyByFolder };
+
+    if (nextForFolder.length === 0) {
+      delete nextAll[folderId];
+    } else {
+      nextAll[folderId] = nextForFolder;
+    }
+
+    await savePreviewFieldsFolderOnlyByFolder(nextAll);
     setPreviewMenu(null);
   };
 
@@ -363,6 +508,7 @@ export function Details({
                   </button>
                 </>
               )}
+
             </div>
           </div>
 
@@ -404,6 +550,83 @@ export function Details({
           }}
           onCancel={() => setAttachmentToDelete(null)}
         />
+
+        <Dialog
+          open={renameAttachmentOpen}
+          onOpenChange={(nextOpen) => {
+            if (isRenamingAttachment) return;
+            if (!nextOpen) {
+              setRenameAttachmentOpen(false);
+              setRenameAttachmentId(null);
+            }
+          }}
+        >
+          <DialogContent aria-labelledby="rename-attachment-title">
+            <DialogHeader>
+              <DialogTitle id="rename-attachment-title">{t('attachments.renameTitle')}</DialogTitle>
+            </DialogHeader>
+
+            <div className="dialog-body" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div className="form-field">
+                <label className="form-label" htmlFor="rename-attachment-input">
+                  {t('attachments.renameLabel')}
+                </label>
+                <input
+                  id="rename-attachment-input"
+                  type="text"
+                  value={renameAttachmentValue}
+                  disabled={isRenamingAttachment}
+                  onChange={(e) => setRenameAttachmentValue(e.target.value)}
+                  autoComplete="off"
+                  className="input"
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="dialog-footer--split">
+              <div className="dialog-footer-left">
+                <button
+                  className="btn btn-secondary"
+                  type="button"
+                  onClick={() => {
+                    setRenameAttachmentOpen(false);
+                    setRenameAttachmentId(null);
+                  }}
+                  disabled={isRenamingAttachment}
+                >
+                  {tCommon('action.cancel')}
+                </button>
+              </div>
+
+              <div className="dialog-footer-right">
+                <button
+                  className="btn btn-primary"
+                  type="button"
+                  onClick={async () => {
+                    if (!renameAttachmentId) return;
+                    setIsRenamingAttachment(true);
+                    const ok = await detailActions.onRenameAttachment(
+                      renameAttachmentId,
+                      renameAttachmentValue
+                    );
+                    setIsRenamingAttachment(false);
+                    if (ok) {
+                      setRenameAttachmentOpen(false);
+                      setRenameAttachmentId(null);
+                    }
+                  }}
+                  disabled={
+                    isRenamingAttachment ||
+                    !renameAttachmentId ||
+                    !renameAttachmentValue.trim()
+                  }
+                >
+                  {t('attachments.renameConfirm')}
+                </button>
+              </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
       {hasTitle && (
         <div className="detail-field">
@@ -577,6 +800,7 @@ export function Details({
                   {t('totp.expiresIn', { seconds: totpData.remaining })}
                 </span>
               )}
+
             </div>
 
             {totpData && (
@@ -696,7 +920,10 @@ export function Details({
             </button>
           )}
         </div>
-        <div className="attachments-body">
+        <div
+          ref={attachmentsDropRef}
+          className={`attachments-body${isAttachmentsDragOver ? ' drag-over' : ''}`}
+        >
           {detailActions.attachments.length === 0 && (
             <div className="muted">{t('attachments.hint')}</div>
           )}
@@ -721,6 +948,19 @@ export function Details({
                   <button
                     className="icon-button"
                     type="button"
+                    onClick={() => {
+                      setRenameAttachmentId(attachment.id);
+                      setRenameAttachmentValue(attachment.fileName);
+                      setRenameAttachmentOpen(true);
+                    }}
+                    aria-label={t('attachments.rename')}
+                    title={t('attachments.rename')}
+                  >
+                    <IconRename />
+                  </button>
+                  <button
+                    className="icon-button"
+                    type="button"
                     onClick={() =>
                       detailActions.onDownloadAttachment(attachment.id, attachment.fileName)
                     }
@@ -738,6 +978,7 @@ export function Details({
                   </button>
                 </div>
               )}
+
             </div>
           ))}
         </div>
@@ -805,6 +1046,21 @@ export function Details({
                     {isFieldInGlobalPreview(previewMenu.field)
                       ? t('previewMenu.hideAll')
                       : t('previewMenu.showAll')}
+                  </button>
+                </>
+              )}
+
+              {canTogglePreviewFieldFolderOnly && (
+                <>
+                  <div className="vault-actionmenu-separator" />
+                  <button
+                    className="vault-actionmenu-item"
+                    type="button"
+                    onClick={() => togglePreviewFieldFolderOnlyForCurrentFolder(previewMenu.field)}
+                  >
+                    {isFieldInFolderOnlyPreviewForCurrentFolder(previewMenu.field)
+                      ? t('previewMenu.hideFolderOnlyAll')
+                      : t('previewMenu.showFolderOnly')}
                   </button>
                 </>
               )}

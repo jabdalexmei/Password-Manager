@@ -333,6 +333,8 @@ pub struct UserSettings {
     pub clipboard_clear_timeout_seconds: i64,
 
     pub soft_delete_enabled: bool,
+    #[serde(default = "default_trash_auto_cleanup_enabled")]
+    pub trash_auto_cleanup_enabled: bool,
     pub trash_retention_days: i64,
 
     pub backups_enabled: bool,
@@ -363,7 +365,8 @@ impl Default for UserSettings {
             clipboard_auto_clear_enabled: default_clipboard_auto_clear_enabled(),
             clipboard_clear_timeout_seconds: default_clipboard_clear_timeout_seconds(),
             soft_delete_enabled: true,
-            trash_retention_days: 30,
+            trash_auto_cleanup_enabled: default_trash_auto_cleanup_enabled(),
+            trash_retention_days: 90,
             backups_enabled: true,
             auto_backup_interval_minutes: default_auto_backup_interval_minutes(),
             backup_max_copies: default_backup_max_copies(),
@@ -405,8 +408,19 @@ fn default_multiply_vaults_enabled() -> bool {
     false
 }
 
+fn default_trash_auto_cleanup_enabled() -> bool {
+    false
+}
+
 fn default_active_vault_id() -> String {
     "default".to_string()
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct TrashCleanupResult {
+    pub enabled: bool,
+    pub purged_datacards: usize,
+    pub purged_bank_cards: usize,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

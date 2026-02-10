@@ -69,6 +69,7 @@
   "attachments.add": "Add file",
   "attachments.selected": "Selected files",
   "attachments.remove": "Remove",
+  "attachments.pill": "Attachments",
   "toast.attachmentUploadError": "Some files failed to upload",
   "customFields.add": "Add field",
   "customFields.editFields": "Edit fields",

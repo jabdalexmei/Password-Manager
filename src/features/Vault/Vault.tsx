@@ -1,4 +1,4 @@
-import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useVault, type SelectedNav } from './hooks/useVault';
 import { VaultHeader } from './components/Header/VaultHeader';
 import { Search } from './components/Search/Search';
@@ -18,6 +18,7 @@ import {
   backupPickFile,
   backupDiscardPick,
   createBackupIfDueAuto,
+  runTrashAutoCleanupIfEnabled,
   restoreBackupWorkflowFromPick,
 } from './api/vaultApi';
 import { BackendUserSettings } from './types/backend';
@@ -82,6 +83,7 @@ export default function Vault({
     name: string;
     cardsCount: number;
   } | null>(null);
+  const trashCleanupBootRunKeyRef = useRef<string | null>(null);
 
   const dataCardsViewModel = useDataCards({
     cards: vault.visibleCards,
@@ -98,6 +100,7 @@ export default function Vault({
     onToggleArchive: vault.toggleArchive,
     onCreateCard: vault.createCard,
     onUploadAttachments: vault.uploadAttachments,
+    onAttachmentPresenceChange: vault.setCardHasAttachments,
     onUpdateCard: vault.updateCard,
     onDeleteCard: vault.deleteCard,
     onRestoreCard: vault.restoreCard,
@@ -240,15 +243,43 @@ export default function Vault({
 
   const handleOpenSettings = () => setSettingsModalOpen(true);
 
+  const runTrashCleanupAndRefresh = useCallback(
+    async (opts?: { forceRefresh?: boolean }) => {
+      try {
+        const result = await runTrashAutoCleanupIfEnabled();
+        const shouldRefresh =
+          opts?.forceRefresh ||
+          result.purged_datacards > 0 ||
+          result.purged_bank_cards > 0;
+        if (shouldRefresh) {
+          await Promise.all([vault.refreshTrash(), bankCards.refreshTrash()]);
+        }
+      } catch (err) {
+        const code = (err as any)?.code ?? (err as any)?.error ?? 'UNKNOWN';
+        showToast(`${tCommon('error.operationFailed')} (${code})`, 'error');
+      }
+    },
+    [bankCards.refreshTrash, showToast, tCommon, vault.refreshTrash]
+  );
+
   const handleSaveSettings = async (nextSettings: BackendUserSettings) => {
     setIsSavingSettings(true);
     const saved = await vault.updateSettings(nextSettings);
     if (saved) {
       bankCards.setSettings(nextSettings);
+      await runTrashCleanupAndRefresh({ forceRefresh: true });
       setSettingsModalOpen(false);
     }
     setIsSavingSettings(false);
   };
+
+  useEffect(() => {
+    if (!vault.settings) return;
+    const runKey = `${profileId}:${vault.activeVaultId}`;
+    if (trashCleanupBootRunKeyRef.current === runKey) return;
+    trashCleanupBootRunKeyRef.current = runKey;
+    void runTrashCleanupAndRefresh();
+  }, [profileId, runTrashCleanupAndRefresh, vault.activeVaultId, vault.settings]);
 
   useEffect(() => {
     if (!vault.settings?.backups_enabled) return;
@@ -452,6 +483,7 @@ export default function Vault({
             multiplyVaultsEnabled={Boolean(vault.settings?.multiply_vaults_enabled)}
             onSelectVault={(vaultId) => void handleSelectVault(vaultId)}
             onCreateVault={handleCreateVault}
+            onSetDefaultVault={vault.setDefaultVault}
             onRenameVault={vault.renameVault}
             onDeleteVault={vault.deleteVault}
             selectedCategory={selectedCategory}
@@ -551,6 +583,7 @@ export default function Vault({
                 profileId={profileId}
                 viewModel={dataCardsViewModel}
                 sectionTitle={tFolders('category.dataCards')}
+                activeFolderId={vault.selectedFolderId}
                 clipboardAutoClearEnabled={vault.settings?.clipboard_auto_clear_enabled}
                 clipboardClearTimeoutSeconds={vault.settings?.clipboard_clear_timeout_seconds}
                 fillHeight={false}
@@ -573,6 +606,7 @@ export default function Vault({
               profileId={profileId}
               viewModel={dataCardsViewModel}
               sectionTitle={tFolders('category.dataCards')}
+              activeFolderId={vault.selectedFolderId}
               clipboardAutoClearEnabled={vault.settings?.clipboard_auto_clear_enabled}
               clipboardClearTimeoutSeconds={vault.settings?.clipboard_clear_timeout_seconds}
             />
@@ -604,6 +638,7 @@ export default function Vault({
               <LazyDetails
                 card={vault.selectedCard}
                 folders={foldersForCards}
+                activeFolderId={vault.selectedFolderId}
                 onAttachmentPresenceChange={vault.setCardHasAttachments}
                 onEdit={(card) => dataCardsViewModel.openEditModal(card)}
                 onDelete={vault.deleteCard}

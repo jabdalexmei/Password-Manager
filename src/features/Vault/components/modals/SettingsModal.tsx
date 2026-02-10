@@ -25,7 +25,14 @@ export type SettingsModalProps = {
   onProfileUpdated?: (profile: ProfileMeta) => void;
 };
 
-type SettingsSection = 'profile' | 'security' | 'vaults' | 'backups';
+type SettingsSection = 'profile' | 'security' | 'options' | 'vaults' | 'backups';
+
+const parseTrashRetentionDays = (raw: string): number | null => {
+  const value = Number(raw);
+  if (!Number.isInteger(value)) return null;
+  if (value < 1 || value > 3650) return null;
+  return value;
+};
 
 export function SettingsModal({
   open,
@@ -50,6 +57,8 @@ export function SettingsModal({
   const [autoBackupEnabled, setAutoBackupEnabled] = useState(false);
   const [intervalMinutes, setIntervalMinutes] = useState('60');
   const [maxCopies, setMaxCopies] = useState('10');
+  const [trashAutoCleanupEnabled, setTrashAutoCleanupEnabled] = useState(false);
+  const [trashRetentionDays, setTrashRetentionDays] = useState('');
   const [multiplyVaultsEnabled, setMultiplyVaultsEnabled] = useState(false);
   const [renameProfileOpen, setRenameProfileOpen] = useState(false);
   const [renameProfileValue, setRenameProfileValue] = useState('');
@@ -78,6 +87,9 @@ export function SettingsModal({
     setAutoBackupEnabled(settings.backups_enabled);
     setIntervalMinutes(String(settings.auto_backup_interval_minutes));
     setMaxCopies(String(settings.backup_max_copies));
+    setTrashAutoCleanupEnabled(settings.trash_auto_cleanup_enabled);
+    const retentionDaysRaw = String(settings.trash_retention_days);
+    setTrashRetentionDays(retentionDaysRaw);
     setMultiplyVaultsEnabled(settings.multiply_vaults_enabled);
   }, [open, settings]);
 
@@ -109,12 +121,15 @@ export function SettingsModal({
   }, [profileHasPassword]);
 
   const busy = isSaving;
+  const isTrashRetentionInvalid =
+    trashAutoCleanupEnabled && parseTrashRetentionDays(trashRetentionDays) === null;
 
   const canSave = useMemo(() => {
     const lockTimeout = Number(autoLockTimeoutSeconds);
     const clipTimeout = Number(clipboardClearTimeoutSeconds);
     const interval = Number(intervalMinutes);
     const max = Number(maxCopies);
+    const retentionDays = parseTrashRetentionDays(trashRetentionDays);
     if (
       !Number.isFinite(lockTimeout) ||
       !Number.isFinite(clipTimeout) ||
@@ -126,6 +141,7 @@ export function SettingsModal({
     if (autoLockEnabled && (lockTimeout < 30 || lockTimeout > 86400)) return false;
     if (clipTimeout < 1 || clipTimeout > 600) return false;
     if (autoBackupEnabled && (interval < 5 || interval > 1440)) return false;
+    if (trashAutoCleanupEnabled && retentionDays === null) return false;
     if (max < 1 || max > 500) return false;
     return true;
   }, [
@@ -135,6 +151,8 @@ export function SettingsModal({
     clipboardClearTimeoutSeconds,
     intervalMinutes,
     maxCopies,
+    trashAutoCleanupEnabled,
+    trashRetentionDays,
   ]);
 
   const canSaveRename = useMemo(() => {
@@ -257,12 +275,14 @@ export function SettingsModal({
     const clipTimeout = Number(clipboardClearTimeoutSeconds);
     const interval = Number(intervalMinutes);
     const max = Number(maxCopies);
+    const retentionDays = parseTrashRetentionDays(trashRetentionDays);
 
     if (!Number.isFinite(lockTimeout)) return;
     if (autoLockEnabled && (lockTimeout < 30 || lockTimeout > 86400)) return;
     if (!Number.isFinite(clipTimeout) || clipTimeout < 1 || clipTimeout > 600) return;
     if (!Number.isFinite(interval) || !Number.isFinite(max)) return;
     if (autoBackupEnabled && (interval < 5 || interval > 1440)) return;
+    if (trashAutoCleanupEnabled && retentionDays === null) return;
     if (max < 1 || max > 500) return;
 
     const nextSettings: BackendUserSettings = {
@@ -271,6 +291,11 @@ export function SettingsModal({
       auto_lock_timeout: lockTimeout,
       clipboard_auto_clear_enabled: clipboardAutoClearEnabled,
       clipboard_clear_timeout_seconds: clipTimeout,
+      trash_auto_cleanup_enabled: trashAutoCleanupEnabled,
+      trash_retention_days:
+        trashAutoCleanupEnabled && retentionDays !== null
+          ? retentionDays
+          : settings.trash_retention_days,
       backups_enabled: autoBackupEnabled,
       auto_backup_interval_minutes: interval,
       backup_max_copies: max,
@@ -327,9 +352,9 @@ export function SettingsModal({
 
         <div className="dialog-body settings-modal-body">
           <div className="settings-layout">
-            <aside className="settings-sidebar" aria-label={tVault('settingsModal.optionsTitle')}>
-              <div className="settings-sidebar-title">{tVault('settingsModal.optionsTitle')}</div>
-              <nav className="settings-sidebar-nav" aria-label={tVault('settingsModal.optionsTitle')}>
+            <aside className="settings-sidebar" aria-label={tVault('settingsModal.featuresTitle')}>
+              <div className="settings-sidebar-title">{tVault('settingsModal.featuresTitle')}</div>
+              <nav className="settings-sidebar-nav" aria-label={tVault('settingsModal.featuresTitle')}>
                 <button
                   type="button"
                   className="settings-nav-item"
@@ -345,6 +370,14 @@ export function SettingsModal({
                   onClick={() => setActiveSection('security')}
                 >
                   {tVault('settingsModal.securityTitle')}
+                </button>
+                <button
+                  type="button"
+                  className="settings-nav-item"
+                  data-active={activeSection === 'options' ? 'true' : 'false'}
+                  onClick={() => setActiveSection('options')}
+                >
+                  {tVault('settingsModal.options.sectionTitle')}
                 </button>
                 <button
                   type="button"
@@ -491,6 +524,67 @@ export function SettingsModal({
                         className="settings-input"
                       />
                     </div>
+                  </div>
+                </>
+              )}
+
+              {activeSection === 'options' && (
+                <>
+                  <h3 id="options-title" className="settings-modal-section-title">
+                    {tVault('settingsModal.options.sectionTitle')}
+                  </h3>
+
+                  <div role="group" aria-labelledby="options-title" className="settings-group">
+                    <div className="form-field settings-toggle-row">
+                      <span className="form-label settings-subheader" id="trash-auto-cleanup-enabled-label">
+                        {tVault('settingsModal.options.automaticTrashCleanup.title')}
+                      </span>
+
+                      <div className="settings-toggle-row__control">
+                        {renderSwitch({
+                          id: 'trash-auto-cleanup-enabled-switch',
+                          labelId: 'trash-auto-cleanup-enabled-label',
+                          checked: trashAutoCleanupEnabled,
+                          onToggle: () =>
+                            setTrashAutoCleanupEnabled((value) => {
+                              const nextValue = !value;
+                              if (nextValue && parseTrashRetentionDays(trashRetentionDays) === null) {
+                                setTrashRetentionDays('90');
+                              }
+                              return nextValue;
+                            }),
+                          disabled: busy || !settings?.soft_delete_enabled,
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="form-field">
+                      <label className="form-label" htmlFor="trash-retention-days">
+                        {tVault('settingsModal.options.automaticTrashCleanup.daysLabel')}
+                      </label>
+                      <input
+                        id="trash-retention-days"
+                        type="number"
+                        min={1}
+                        max={3650}
+                        value={trashRetentionDays}
+                        disabled={busy || !trashAutoCleanupEnabled || !settings?.soft_delete_enabled}
+                        inputMode="numeric"
+                        onChange={(event) => setTrashRetentionDays(event.target.value)}
+                        className="settings-input"
+                      />
+                      {isTrashRetentionInvalid && (
+                        <div className="form-error">
+                          {tVault('settingsModal.options.automaticTrashCleanup.validation')}
+                        </div>
+                      )}
+                    </div>
+
+                    {!settings?.soft_delete_enabled && (
+                      <div className="form-label">
+                        {tVault('settingsModal.options.automaticTrashCleanup.disabledBecauseTrashOff')}
+                      </div>
+                    )}
                   </div>
                 </>
               )}
