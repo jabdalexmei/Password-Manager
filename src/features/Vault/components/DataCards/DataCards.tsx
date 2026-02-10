@@ -27,6 +27,11 @@ import {
   type DataCardPreviewField,
 } from '../../lib/datacardPreviewFields';
 import {
+  loadPreviewFieldsFolderOnlyByFolder,
+  onPreviewFieldsFolderOnlyByFolderChanged,
+  type DataCardPreviewFieldsFolderOnlyByFolder,
+} from '../../lib/datacardPreviewFieldsFolderOnlyByFolder';
+import {
   loadCoreHiddenFields,
   onCoreHiddenFieldsChanged,
   type DataCardCoreField,
@@ -62,6 +67,7 @@ export type DataCardsProps = {
   sectionTitle: string;
   clipboardAutoClearEnabled?: boolean;
   clipboardClearTimeoutSeconds?: number;
+  activeFolderId?: string | null;
   /**
    * When true, the panel stretches to fill the center column height.
    * This is desired for single-panel views (Category-only), so the list can scroll
@@ -87,6 +93,7 @@ export function DataCards({
   sectionTitle,
   clipboardAutoClearEnabled,
   clipboardClearTimeoutSeconds,
+  activeFolderId,
   fillHeight = true,
   showTrashActions = true,
   suppressEmptyState = false,
@@ -124,6 +131,8 @@ export function DataCards({
   const [cardMenu, setCardMenu] = useState<{ id: string; x: number; y: number } | null>(null);
   const [previewFields, setPreviewFields] = useState<DataCardPreviewField[]>([]);
   const [coreHiddenFields, setCoreHiddenFields] = useState<DataCardCoreField[]>([]);
+  const [previewFieldsFolderOnlyByFolder, setPreviewFieldsFolderOnlyByFolder] =
+    useState<DataCardPreviewFieldsFolderOnlyByFolder>({});
   const [isCustomFieldModalOpen, setIsCustomFieldModalOpen] = useState(false);
   const [customFieldName, setCustomFieldName] = useState('');
   const [customFieldModalError, setCustomFieldModalError] = useState<string | null>(null);
@@ -171,6 +180,18 @@ export function DataCards({
 
   useEffect(() => {
     let isMounted = true;
+    loadPreviewFieldsFolderOnlyByFolder().then((fieldsByFolder) => {
+      if (isMounted) setPreviewFieldsFolderOnlyByFolder(fieldsByFolder);
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => onPreviewFieldsFolderOnlyByFolderChanged(setPreviewFieldsFolderOnlyByFolder), []);
+
+  useEffect(() => {
+    let isMounted = true;
     loadCoreHiddenFields().then((fields) => {
       if (isMounted) setCoreHiddenFields(fields);
     });
@@ -180,6 +201,33 @@ export function DataCards({
   }, []);
 
   useEffect(() => onCoreHiddenFieldsChanged(setCoreHiddenFields), []);
+
+  const folderOnlyFieldsForActiveFolder = useMemo(() => {
+    const folderId = activeFolderId ?? null;
+    if (!folderId) return new Set<string>();
+    const fields = previewFieldsFolderOnlyByFolder[folderId] ?? [];
+    return new Set(fields);
+  }, [activeFolderId, previewFieldsFolderOnlyByFolder]);
+
+  const allFolderOnlyFields = useMemo(() => {
+    const out = new Set<string>();
+    for (const fields of Object.values(previewFieldsFolderOnlyByFolder)) {
+      for (const field of fields) out.add(field);
+    }
+    return out;
+  }, [previewFieldsFolderOnlyByFolder]);
+
+  const folderOnlyFieldsHiddenInActiveFolder = useMemo(() => {
+    const folderId = activeFolderId ?? null;
+    if (!folderId) return allFolderOnlyFields;
+
+    const out = new Set<string>();
+    for (const field of allFolderOnlyFields) {
+      if (folderOnlyFieldsForActiveFolder.has(field)) continue;
+      out.add(field);
+    }
+    return out;
+  }, [activeFolderId, allFolderOnlyFields, folderOnlyFieldsForActiveFolder]);
 
   const cards = useMemo(() => sortDataCardSummaries(rawCards, sortMode), [rawCards, sortMode]);
 
@@ -1086,7 +1134,6 @@ export function DataCards({
               value === 'folder' ||
               value === 'tags';
 
-            const mergedPreviewFields: DataCardPreviewField[] = [];
             const perCardRaw = Array.isArray(card.previewFields) ? card.previewFields : [];
 
             const CUSTOM_PREVIEW_PREFIX = 'custom:' as const;
@@ -1095,16 +1142,44 @@ export function DataCards({
             ): value is `${typeof CUSTOM_PREVIEW_PREFIX}${string}` =>
               value.startsWith(CUSTOM_PREVIEW_PREFIX) && value.length > CUSTOM_PREVIEW_PREFIX.length;
 
-            // Built-in per-card preview fields (can also be enabled globally)
+            const mergeToken = (token: string, target: string[]) => {
+              const trimmed = token.trim();
+              if (!trimmed) return;
+              if (target.includes(trimmed)) return;
+              target.push(trimmed);
+            };
+
+            const mergedPreviewFieldTokens: string[] = [];
             for (const item of perCardRaw) {
+              mergeToken(item, mergedPreviewFieldTokens);
+            }
+            for (const item of previewFields) {
+              mergeToken(item, mergedPreviewFieldTokens);
+            }
+
+            const folderIdForPreview = activeFolderId ?? null;
+            if (folderIdForPreview && card.folderId === folderIdForPreview) {
+              const folderOnly = previewFieldsFolderOnlyByFolder[folderIdForPreview] ?? [];
+              for (const item of folderOnly) {
+                mergeToken(item, mergedPreviewFieldTokens);
+              }
+            }
+
+            const filteredPreviewFieldTokens = mergedPreviewFieldTokens.filter((token) => {
+              const folderId = activeFolderId ?? null;
+              if (!folderId) {
+                return !allFolderOnlyFields.has(token);
+              }
+              return !folderOnlyFieldsHiddenInActiveFolder.has(token);
+            });
+
+            const mergedPreviewFields: DataCardPreviewField[] = [];
+            for (const item of filteredPreviewFieldTokens) {
               if (!isAllowedPreviewField(item)) continue;
               if (mergedPreviewFields.includes(item)) continue;
               mergedPreviewFields.push(item);
             }
-            for (const item of previewFields) {
-              if (mergedPreviewFields.includes(item)) continue;
-              mergedPreviewFields.push(item);
-            }
+
             const previewFieldOrder: DataCardPreviewField[] = [
               'recovery_email',
               'username',
@@ -1114,9 +1189,8 @@ export function DataCards({
               'tags',
             ];
 
-            // Custom preview fields are per-card only (no global "all" toggle)
             const perCardCustomKeys = new Set(
-              perCardRaw
+              filteredPreviewFieldTokens
                 .filter(isCustomPreviewField)
                 .map((token) => token.slice(CUSTOM_PREVIEW_PREFIX.length))
                 .filter((key) => key.trim().length > 0),
@@ -1172,9 +1246,11 @@ export function DataCards({
                 >
                 <div className="datacard-top">
                   <div className="datacard-title">{displayTitleText}</div>
-                  {(card.hasTotp || isFavorite) && (
+                  {(card.hasTotp || card.hasSeedPhrase || card.hasAttachments || isFavorite) && (
                     <div className="datacard-badges">
                       {isFavorite && <span className="pill datacard-favorite">{t('label.favorite')}</span>}
+                      {card.hasAttachments && <span className="pill">{t('attachments.pill')}</span>}
+                      {card.hasSeedPhrase && <span className="pill">{t('seedPhrase.title')}</span>}
                       {card.hasTotp && <span className="pill">{t('twoFactor.pill')}</span>}
                     </div>
                   )}

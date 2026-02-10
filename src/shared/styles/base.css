@@ -18,6 +18,10 @@
   --scrollbar-track: var(--color-surface-2);
   --scrollbar-thumb: var(--color-border);
   --scrollbar-thumb-hover: color-mix(in srgb, var(--color-surface-1) 90%, var(--color-border) 10%);
+
+  /* Spacing between a form field label text and its input field */
+  --spacing-between-form-field-label-text-and-input-field: 6px;
+  --spacing-between-navigation-field-label-text-and-input-field: 10px;
 }
 
 /* нормальный box-sizing для всего */

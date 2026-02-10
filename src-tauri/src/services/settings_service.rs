@@ -4,6 +4,7 @@ use std::sync::Arc;
 use crate::app_state::AppState;
 use crate::data::fs::atomic_write::write_atomic;
 use crate::data::profiles::paths::user_settings_path;
+use crate::data::sqlite::repo_impl;
 use crate::data::storage_paths::StoragePaths;
 use crate::error::{ErrorCodeString, Result};
 use crate::services::security_service;
@@ -77,11 +78,7 @@ pub fn update_settings(
     mut new_settings: UserSettings,
     profile_id: &str,
 ) -> Result<bool> {
-    if !new_settings.multiply_vaults_enabled {
-        new_settings.active_vault_id = DEFAULT_VAULT_ID.to_string();
-    } else {
-        new_settings.active_vault_id = normalize_active_vault_id(&new_settings.active_vault_id);
-    }
+    new_settings.active_vault_id = normalize_active_vault_id(&new_settings.active_vault_id);
 
     validate_settings(&new_settings)?;
     let path = user_settings_path(sp, profile_id)?;
@@ -94,9 +91,6 @@ pub fn update_settings(
 
 pub fn resolve_active_vault_id(sp: &StoragePaths, profile_id: &str) -> Result<String> {
     let settings = get_settings(sp, profile_id)?;
-    if !settings.multiply_vaults_enabled {
-        return Ok(DEFAULT_VAULT_ID.to_string());
-    }
     Ok(normalize_active_vault_id(&settings.active_vault_id))
 }
 
@@ -104,7 +98,7 @@ pub fn update_settings_command(state: &Arc<AppState>, mut settings: UserSettings
     let profile_id = security_service::require_unlocked_active_profile(state)?.profile_id;
     let storage_paths = state.get_storage_paths()?;
     if !settings.multiply_vaults_enabled {
-        settings.active_vault_id = DEFAULT_VAULT_ID.to_string();
+        settings.active_vault_id = repo_impl::get_default_vault_id(state, &profile_id)?;
     } else {
         settings.active_vault_id = normalize_active_vault_id(&settings.active_vault_id);
     }

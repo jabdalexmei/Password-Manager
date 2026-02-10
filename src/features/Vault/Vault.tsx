@@ -98,6 +98,7 @@ export default function Vault({
     onToggleArchive: vault.toggleArchive,
     onCreateCard: vault.createCard,
     onUploadAttachments: vault.uploadAttachments,
+    onAttachmentPresenceChange: vault.setCardHasAttachments,
     onUpdateCard: vault.updateCard,
     onDeleteCard: vault.deleteCard,
     onRestoreCard: vault.restoreCard,
@@ -452,6 +453,7 @@ export default function Vault({
             multiplyVaultsEnabled={Boolean(vault.settings?.multiply_vaults_enabled)}
             onSelectVault={(vaultId) => void handleSelectVault(vaultId)}
             onCreateVault={handleCreateVault}
+            onSetDefaultVault={vault.setDefaultVault}
             onRenameVault={vault.renameVault}
             onDeleteVault={vault.deleteVault}
             selectedCategory={selectedCategory}
@@ -551,6 +553,7 @@ export default function Vault({
                 profileId={profileId}
                 viewModel={dataCardsViewModel}
                 sectionTitle={tFolders('category.dataCards')}
+                activeFolderId={vault.selectedFolderId}
                 clipboardAutoClearEnabled={vault.settings?.clipboard_auto_clear_enabled}
                 clipboardClearTimeoutSeconds={vault.settings?.clipboard_clear_timeout_seconds}
                 fillHeight={false}
@@ -573,6 +576,7 @@ export default function Vault({
               profileId={profileId}
               viewModel={dataCardsViewModel}
               sectionTitle={tFolders('category.dataCards')}
+              activeFolderId={vault.selectedFolderId}
               clipboardAutoClearEnabled={vault.settings?.clipboard_auto_clear_enabled}
               clipboardClearTimeoutSeconds={vault.settings?.clipboard_clear_timeout_seconds}
             />
@@ -604,6 +608,7 @@ export default function Vault({
               <LazyDetails
                 card={vault.selectedCard}
                 folders={foldersForCards}
+                activeFolderId={vault.selectedFolderId}
                 onAttachmentPresenceChange={vault.setCardHasAttachments}
                 onEdit={(card) => dataCardsViewModel.openEditModal(card)}
                 onDelete={vault.deleteCard}

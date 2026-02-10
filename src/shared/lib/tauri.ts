@@ -79,8 +79,8 @@ export function workspaceSelect(id: string): Promise<boolean> {
   return invoke('workspace_select', { id });
 }
 
-export function workspaceCreateViaDialog(): Promise<boolean> {
-  return invoke('workspace_create_via_dialog');
+export function workspaceCreateViaDialog(dialogTitle?: string): Promise<boolean> {
+  return invoke('workspace_create_via_dialog', { dialogTitle: dialogTitle ?? null });
 }
 
 export function workspaceCreateDefault(): Promise<boolean> {
@@ -132,6 +132,19 @@ export function getDataCardPreviewFields(): Promise<string[]> {
 
 export function setDataCardPreviewFields(fields: string[]): Promise<boolean> {
   return invoke('set_datacard_preview_fields', { fields });
+}
+
+
+export type DataCardPreviewFieldsFolderOnlyByFolderDto = Record<string, string[]>;
+
+export function getDataCardPreviewFieldsFolderOnlyByFolder(): Promise<DataCardPreviewFieldsFolderOnlyByFolderDto> {
+  return invoke('get_datacard_preview_fields_folder_only_by_folder');
+}
+
+export function setDataCardPreviewFieldsFolderOnlyByFolder(
+  fieldsByFolder: DataCardPreviewFieldsFolderOnlyByFolderDto,
+): Promise<boolean> {
+  return invoke('set_datacard_preview_fields_folder_only_by_folder', { fieldsByFolder });
 }
 
 export type BankCardPreviewFieldsDto = {
