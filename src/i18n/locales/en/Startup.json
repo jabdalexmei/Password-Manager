@@ -1,0 +1,16 @@
+{
+  "title": "Select profile",
+  "subtitle": "Choose an existing profile or create a new one to continue.",
+  "noProfiles": "No profiles",
+  "create": "Create new profile",
+  "back": "Back",
+  "delete": "Delete",
+  "open": "Choose",
+  "cancel": "Cancel",
+  "confirmDeleteTitle": "Delete profile",
+  "confirmDelete": "Are you sure you want to delete this profile?",
+  "passwordless": "Passwordless",
+  "requiresPassword": "Password protected",
+  "footnote": "Password Manager keeps your vault secure.",
+  "label.profileId": "ID: {{id}}"
+}
