@@ -1172,10 +1172,12 @@ export function DataCards({
                 >
                 <div className="datacard-top">
                   <div className="datacard-title">{displayTitleText}</div>
-                  {(card.hasTotp || isFavorite) && (
+                  {(card.hasTotp || card.hasSeedPhrase || card.hasAttachments || isFavorite) && (
                     <div className="datacard-badges">
                       {isFavorite && <span className="pill datacard-favorite">{t('label.favorite')}</span>}
                       {card.hasTotp && <span className="pill">{t('twoFactor.pill')}</span>}
+                      {card.hasSeedPhrase && <span className="pill">{t('seedPhrase.title')}</span>}
+                      {card.hasAttachments && <span className="pill">{t('attachments.pill')}</span>}
                     </div>
                   )}
                 </div>
