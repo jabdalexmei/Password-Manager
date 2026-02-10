@@ -58,7 +58,8 @@ export function SettingsModal({
   const [intervalMinutes, setIntervalMinutes] = useState('60');
   const [maxCopies, setMaxCopies] = useState('10');
   const [trashAutoCleanupEnabled, setTrashAutoCleanupEnabled] = useState(false);
-  const [trashRetentionDays, setTrashRetentionDays] = useState('90');
+  const [trashRetentionDays, setTrashRetentionDays] = useState('');
+  const [trashRetentionDaysLastValid, setTrashRetentionDaysLastValid] = useState<number | null>(null);
   const [multiplyVaultsEnabled, setMultiplyVaultsEnabled] = useState(false);
   const [renameProfileOpen, setRenameProfileOpen] = useState(false);
   const [renameProfileValue, setRenameProfileValue] = useState('');
@@ -88,7 +89,9 @@ export function SettingsModal({
     setIntervalMinutes(String(settings.auto_backup_interval_minutes));
     setMaxCopies(String(settings.backup_max_copies));
     setTrashAutoCleanupEnabled(settings.trash_auto_cleanup_enabled);
-    setTrashRetentionDays(String(settings.trash_retention_days));
+    const retentionDaysRaw = String(settings.trash_retention_days);
+    setTrashRetentionDays(retentionDaysRaw);
+    setTrashRetentionDaysLastValid(parseTrashRetentionDays(retentionDaysRaw));
     setMultiplyVaultsEnabled(settings.multiply_vaults_enabled);
   }, [open, settings]);
 
@@ -351,9 +354,9 @@ export function SettingsModal({
 
         <div className="dialog-body settings-modal-body">
           <div className="settings-layout">
-            <aside className="settings-sidebar" aria-label={tVault('settingsModal.optionsTitle')}>
-              <div className="settings-sidebar-title">{tVault('settingsModal.optionsTitle')}</div>
-              <nav className="settings-sidebar-nav" aria-label={tVault('settingsModal.optionsTitle')}>
+            <aside className="settings-sidebar" aria-label={tVault('settingsModal.featuresTitle')}>
+              <div className="settings-sidebar-title">{tVault('settingsModal.featuresTitle')}</div>
+              <nav className="settings-sidebar-nav" aria-label={tVault('settingsModal.featuresTitle')}>
                 <button
                   type="button"
                   className="settings-nav-item"
@@ -547,9 +550,21 @@ export function SettingsModal({
                           onToggle: () =>
                             setTrashAutoCleanupEnabled((value) => {
                               const nextValue = !value;
-                              if (nextValue && parseTrashRetentionDays(trashRetentionDays) === null) {
-                                setTrashRetentionDays('90');
+                              if (!nextValue) return nextValue;
+
+                              const parsed = parseTrashRetentionDays(trashRetentionDays);
+                              if (parsed !== null) {
+                                setTrashRetentionDaysLastValid(parsed);
+                                return nextValue;
                               }
+
+                              if (trashRetentionDaysLastValid !== null) {
+                                setTrashRetentionDays(String(trashRetentionDaysLastValid));
+                                return nextValue;
+                              }
+
+                              setTrashRetentionDays('90');
+                              setTrashRetentionDaysLastValid(90);
                               return nextValue;
                             }),
                           disabled: busy || !settings?.soft_delete_enabled,
@@ -570,7 +585,14 @@ export function SettingsModal({
                         disabled={busy || !trashAutoCleanupEnabled || !settings?.soft_delete_enabled}
                         inputMode="numeric"
                         placeholder="90"
-                        onChange={(event) => setTrashRetentionDays(event.target.value)}
+                        onChange={(event) => {
+                          const nextValue = event.target.value;
+                          setTrashRetentionDays(nextValue);
+                          const parsed = parseTrashRetentionDays(nextValue);
+                          if (parsed !== null) {
+                            setTrashRetentionDaysLastValid(parsed);
+                          }
+                        }}
                         className="settings-input"
                       />
                       {isTrashRetentionInvalid && (
