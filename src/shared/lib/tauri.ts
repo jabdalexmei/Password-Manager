@@ -142,9 +142,9 @@ export function getDataCardPreviewFieldsFolderOnlyByFolder(): Promise<DataCardPr
 }
 
 export function setDataCardPreviewFieldsFolderOnlyByFolder(
-  fields_by_folder: DataCardPreviewFieldsFolderOnlyByFolderDto,
+  fieldsByFolder: DataCardPreviewFieldsFolderOnlyByFolderDto,
 ): Promise<boolean> {
-  return invoke('set_datacard_preview_fields_folder_only_by_folder', { fields_by_folder });
+  return invoke('set_datacard_preview_fields_folder_only_by_folder', { fieldsByFolder });
 }
 
 export type BankCardPreviewFieldsDto = {
