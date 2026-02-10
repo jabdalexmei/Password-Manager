@@ -202,6 +202,8 @@ fn main() {
             update_settings,
             get_datacard_preview_fields,
             set_datacard_preview_fields,
+            get_datacard_preview_fields_folder_only_by_folder,
+            set_datacard_preview_fields_folder_only_by_folder,
             set_datacard_preview_fields_for_card,
             get_bankcard_preview_fields,
             set_bankcard_preview_fields,

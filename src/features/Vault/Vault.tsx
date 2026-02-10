@@ -553,6 +553,7 @@ export default function Vault({
                 profileId={profileId}
                 viewModel={dataCardsViewModel}
                 sectionTitle={tFolders('category.dataCards')}
+                activeFolderId={vault.selectedFolderId}
                 clipboardAutoClearEnabled={vault.settings?.clipboard_auto_clear_enabled}
                 clipboardClearTimeoutSeconds={vault.settings?.clipboard_clear_timeout_seconds}
                 fillHeight={false}
@@ -575,6 +576,7 @@ export default function Vault({
               profileId={profileId}
               viewModel={dataCardsViewModel}
               sectionTitle={tFolders('category.dataCards')}
+              activeFolderId={vault.selectedFolderId}
               clipboardAutoClearEnabled={vault.settings?.clipboard_auto_clear_enabled}
               clipboardClearTimeoutSeconds={vault.settings?.clipboard_clear_timeout_seconds}
             />
@@ -606,6 +608,7 @@ export default function Vault({
               <LazyDetails
                 card={vault.selectedCard}
                 folders={foldersForCards}
+                activeFolderId={vault.selectedFolderId}
                 onAttachmentPresenceChange={vault.setCardHasAttachments}
                 onEdit={(card) => dataCardsViewModel.openEditModal(card)}
                 onDelete={vault.deleteCard}

@@ -23,6 +23,12 @@ import {
   type DataCardPreviewField,
 } from '../../lib/datacardPreviewFields';
 import {
+  loadPreviewFieldsFolderOnlyByFolder,
+  onPreviewFieldsFolderOnlyByFolderChanged,
+  savePreviewFieldsFolderOnlyByFolder,
+  type DataCardPreviewFieldsFolderOnlyByFolder,
+} from '../../lib/datacardPreviewFieldsFolderOnlyByFolder';
+import {
   loadCoreHiddenFields,
   onCoreHiddenFieldsChanged,
   saveCoreHiddenFields,
@@ -44,6 +50,7 @@ const LazySeedPhraseViewModal = React.lazy(() =>
 export type DetailsProps = {
   card: DataCard | null;
   folders: Folder[];
+  activeFolderId?: string | null;
   onEdit: (card: DataCard) => void;
   onDelete: (id: string) => void;
   onRestore: (id: string) => void;
@@ -68,6 +75,7 @@ const toCustomPreviewField = (key: string): DataCardCustomPreviewField => `${CUS
 export function Details({
   card,
   folders,
+  activeFolderId,
   onEdit,
   onDelete,
   onRestore,
@@ -191,6 +199,8 @@ export function Details({
   const [revealedCustomFields, setRevealedCustomFields] = useState<Record<string, boolean>>({});
   const [totpNow, setTotpNow] = useState(() => Date.now());
   const [previewFields, setPreviewFields] = useState<DataCardPreviewField[]>([]);
+  const [previewFieldsFolderOnlyByFolder, setPreviewFieldsFolderOnlyByFolder] =
+    useState<DataCardPreviewFieldsFolderOnlyByFolder>({});
   const [coreHiddenFields, setCoreHiddenFields] = useState<DataCardCoreField[]>([]);
   const [previewMenu, setPreviewMenu] = useState<{
     x: number;
@@ -241,6 +251,18 @@ export function Details({
   }, []);
 
   useEffect(() => onPreviewFieldsChanged(setPreviewFields), []);
+
+  useEffect(() => {
+    let isMounted = true;
+    loadPreviewFieldsFolderOnlyByFolder().then((fieldsByFolder) => {
+      if (isMounted) setPreviewFieldsFolderOnlyByFolder(fieldsByFolder);
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => onPreviewFieldsFolderOnlyByFolderChanged(setPreviewFieldsFolderOnlyByFolder), []);
 
   useEffect(() => {
     let isMounted = true;
@@ -345,6 +367,43 @@ export function Details({
     setPreviewMenu(null);
   };
 
+
+  const activeFolderIdForPreviewMenu = activeFolderId ?? null;
+
+  const canTogglePreviewFieldFolderOnly =
+    Boolean(activeFolderIdForPreviewMenu) &&
+    Boolean(card?.folderId) &&
+    card?.folderId === activeFolderIdForPreviewMenu;
+
+  const isFieldInFolderOnlyPreviewForCurrentFolder = (field: DataCardCardPreviewField) => {
+    const folderId = activeFolderIdForPreviewMenu;
+    if (!folderId) return false;
+    const fields = previewFieldsFolderOnlyByFolder[folderId] ?? [];
+    return fields.includes(field);
+  };
+
+  const togglePreviewFieldFolderOnlyForCurrentFolder = async (field: DataCardCardPreviewField) => {
+    const folderId = activeFolderIdForPreviewMenu;
+    if (!folderId) return;
+    if (!card) return;
+    if (card.folderId !== folderId) return;
+
+    const current = previewFieldsFolderOnlyByFolder[folderId] ?? [];
+    const isSelected = current.includes(field);
+
+    const nextForFolder = isSelected ? current.filter((f) => f !== field) : [...current, field];
+    const nextAll: DataCardPreviewFieldsFolderOnlyByFolder = { ...previewFieldsFolderOnlyByFolder };
+
+    if (nextForFolder.length === 0) {
+      delete nextAll[folderId];
+    } else {
+      nextAll[folderId] = nextForFolder;
+    }
+
+    await savePreviewFieldsFolderOnlyByFolder(nextAll);
+    setPreviewMenu(null);
+  };
+
   const isCoreFieldHidden = (field: DataCardCoreField) => coreHiddenFields.includes(field);
 
   const toggleCoreFieldHidden = async (field: DataCardCoreField) => {
@@ -446,6 +505,21 @@ export function Details({
                   </button>
                   <button className="btn btn-danger" type="button" onClick={() => setPurgeConfirmOpen(true)}>
                     {t('action.purge')}
+                  </button>
+                </>
+              )}
+
+              {canTogglePreviewFieldFolderOnly && (
+                <>
+                  <div className="vault-actionmenu-separator" />
+                  <button
+                    className="vault-actionmenu-item"
+                    type="button"
+                    onClick={() => togglePreviewFieldFolderOnlyForCurrentFolder(previewMenu.field)}
+                  >
+                    {isFieldInFolderOnlyPreviewForCurrentFolder(previewMenu.field)
+                      ? t('previewMenu.hideFolderOnly')
+                      : t('previewMenu.showFolderOnly')}
                   </button>
                 </>
               )}
@@ -740,6 +814,21 @@ export function Details({
                   {t('totp.expiresIn', { seconds: totpData.remaining })}
                 </span>
               )}
+
+              {canTogglePreviewFieldFolderOnly && (
+                <>
+                  <div className="vault-actionmenu-separator" />
+                  <button
+                    className="vault-actionmenu-item"
+                    type="button"
+                    onClick={() => togglePreviewFieldFolderOnlyForCurrentFolder(previewMenu.field)}
+                  >
+                    {isFieldInFolderOnlyPreviewForCurrentFolder(previewMenu.field)
+                      ? t('previewMenu.hideFolderOnly')
+                      : t('previewMenu.showFolderOnly')}
+                  </button>
+                </>
+              )}
             </div>
 
             {totpData && (
@@ -917,6 +1006,21 @@ export function Details({
                   </button>
                 </div>
               )}
+
+              {canTogglePreviewFieldFolderOnly && (
+                <>
+                  <div className="vault-actionmenu-separator" />
+                  <button
+                    className="vault-actionmenu-item"
+                    type="button"
+                    onClick={() => togglePreviewFieldFolderOnlyForCurrentFolder(previewMenu.field)}
+                  >
+                    {isFieldInFolderOnlyPreviewForCurrentFolder(previewMenu.field)
+                      ? t('previewMenu.hideFolderOnly')
+                      : t('previewMenu.showFolderOnly')}
+                  </button>
+                </>
+              )}
             </div>
           ))}
         </div>
@@ -984,6 +1088,21 @@ export function Details({
                     {isFieldInGlobalPreview(previewMenu.field)
                       ? t('previewMenu.hideAll')
                       : t('previewMenu.showAll')}
+                  </button>
+                </>
+              )}
+
+              {canTogglePreviewFieldFolderOnly && (
+                <>
+                  <div className="vault-actionmenu-separator" />
+                  <button
+                    className="vault-actionmenu-item"
+                    type="button"
+                    onClick={() => togglePreviewFieldFolderOnlyForCurrentFolder(previewMenu.field)}
+                  >
+                    {isFieldInFolderOnlyPreviewForCurrentFolder(previewMenu.field)
+                      ? t('previewMenu.hideFolderOnly')
+                      : t('previewMenu.showFolderOnly')}
                   </button>
                 </>
               )}

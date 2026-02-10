@@ -134,6 +134,19 @@ export function setDataCardPreviewFields(fields: string[]): Promise<boolean> {
   return invoke('set_datacard_preview_fields', { fields });
 }
 
+
+export type DataCardPreviewFieldsFolderOnlyByFolderDto = Record<string, string[]>;
+
+export function getDataCardPreviewFieldsFolderOnlyByFolder(): Promise<DataCardPreviewFieldsFolderOnlyByFolderDto> {
+  return invoke('get_datacard_preview_fields_folder_only_by_folder');
+}
+
+export function setDataCardPreviewFieldsFolderOnlyByFolder(
+  fields_by_folder: DataCardPreviewFieldsFolderOnlyByFolderDto,
+): Promise<boolean> {
+  return invoke('set_datacard_preview_fields_folder_only_by_folder', { fields_by_folder });
+}
+
 export type BankCardPreviewFieldsDto = {
   fields: string[];
   card_number_mode: string | null;

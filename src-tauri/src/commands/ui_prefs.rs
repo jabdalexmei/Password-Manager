@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::sync::Arc;
 
 use tauri::State;
@@ -24,6 +25,32 @@ pub async fn set_datacard_preview_fields(
     tauri::async_runtime::spawn_blocking(move || ui_prefs_service::set_datacard_preview_fields(fields, &app))
         .await
         .map_err(|_| ErrorCodeString::new("TASK_JOIN_FAILED"))?
+}
+
+
+#[tauri::command]
+pub async fn get_datacard_preview_fields_folder_only_by_folder(
+    state: State<'_, Arc<AppState>>,
+) -> Result<BTreeMap<String, Vec<String>>> {
+    let app = state.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        ui_prefs_service::get_datacard_preview_fields_folder_only_by_folder(&app)
+    })
+    .await
+    .map_err(|_| ErrorCodeString::new("TASK_JOIN_FAILED"))?
+}
+
+#[tauri::command]
+pub async fn set_datacard_preview_fields_folder_only_by_folder(
+    fields_by_folder: BTreeMap<String, Vec<String>>,
+    state: State<'_, Arc<AppState>>,
+) -> Result<bool> {
+    let app = state.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        ui_prefs_service::set_datacard_preview_fields_folder_only_by_folder(fields_by_folder, &app)
+    })
+    .await
+    .map_err(|_| ErrorCodeString::new("TASK_JOIN_FAILED"))?
 }
 
 #[tauri::command]
