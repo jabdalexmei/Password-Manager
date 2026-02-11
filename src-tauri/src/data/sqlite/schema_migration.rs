@@ -66,6 +66,18 @@ pub fn schema_migrate(conn: &Connection) -> Result<()> {
         return schema_initialization::schema_initialization(conn);
     }
 
+    if version == 2 || version == 3 {
+        conn.execute_batch(&format!(
+            "PRAGMA user_version = {};",
+            schema_initialization::SCHEMA_VERSION
+        ))
+        .map_err(|e| {
+            log_sqlite_err("schema_migrate.stamp_user_version", &e);
+            ErrorCodeString::new("DB_QUERY_FAILED")
+        })?;
+        return Ok(());
+    }
+
     log::warn!("[DB][schema_migrate] unsupported schema version={version}");
     Err(ErrorCodeString::new("DB_MIGRATION_FAILED"))
 }
