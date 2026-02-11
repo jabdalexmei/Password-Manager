@@ -1,0 +1,603 @@
+diff -ruN -u a/src-tauri/src/data/sqlite/init.rs b/src-tauri/src/data/sqlite/init.rs
+--- a/src-tauri/src/data/sqlite/init.rs	2026-02-11 17:15:39.000000000 +0000
++++ b/src-tauri/src/data/sqlite/init.rs	2026-02-11 18:57:55.102574297 +0000
+@@ -6,7 +6,7 @@
+ use crate::error::{ErrorCodeString, Result};
+ use rusqlite::DatabaseName;
+ 
+-use super::migrations;
++use super::schema_initialization;
+ 
+ pub fn init_database_protected_encrypted(
+     sp: &StoragePaths,
+@@ -17,7 +17,7 @@
+         .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
+ 
+     let conn = Connection::open_in_memory().map_err(|_| ErrorCodeString::new("DB_OPEN_FAILED"))?;
+-    migrations::migrate_to_latest(&conn)?;
++    schema_initialization::schema_initialization(&conn)?;
+ 
+     let bytes = conn
+         .serialize(DatabaseName::Main)
+diff -ruN -u a/src-tauri/src/data/sqlite/migrations.rs b/src-tauri/src/data/sqlite/migrations.rs
+--- a/src-tauri/src/data/sqlite/migrations.rs	2026-02-11 17:15:39.000000000 +0000
++++ b/src-tauri/src/data/sqlite/migrations.rs	1970-01-01 00:00:00.000000000 +0000
+@@ -1,360 +0,0 @@
+-use rusqlite::Connection;
+-use rusqlite::Error as RusqliteError;
+-use rusqlite::OptionalExtension;
+-
+-use crate::error::{ErrorCodeString, Result};
+-
+-const CURRENT_SCHEMA_VERSION: i32 = 3;
+-const IDX_VAULTS_SINGLE_DEFAULT: &str = "idx_vaults_single_default";
+-
+-fn log_sqlite_err(ctx: &str, err: &RusqliteError) {
+-    match err {
+-        RusqliteError::SqliteFailure(e, msg) => {
+-            log::error!(
+-                "[DB][sqlite_error] ctx={} code={:?} extended_code={} msg={}",
+-                ctx,
+-                e.code,
+-                e.extended_code,
+-                msg.as_deref().unwrap_or("")
+-            );
+-        }
+-        other => {
+-            log::error!("[DB][sqlite_error] ctx={} err={other:?}", ctx);
+-        }
+-    }
+-}
+-
+-fn has_table(conn: &Connection, name: &str) -> Result<bool> {
+-    let sql = "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?1 LIMIT 1";
+-    let exists: Option<i32> = conn
+-        .query_row(sql, [name], |row| row.get(0))
+-        .optional()
+-        .map_err(|e| {
+-            log_sqlite_err(&format!("has_table.query_row name={name} sql={sql}"), &e);
+-            ErrorCodeString::new("DB_QUERY_FAILED")
+-        })?;
+-    Ok(exists.is_some())
+-}
+-
+-fn has_index(conn: &Connection, name: &str) -> Result<bool> {
+-    let sql = "SELECT 1 FROM sqlite_master WHERE type='index' AND name=?1 LIMIT 1";
+-    let exists: Option<i32> = conn
+-        .query_row(sql, [name], |row| row.get(0))
+-        .optional()
+-        .map_err(|e| {
+-            log_sqlite_err(&format!("has_index.query_row name={name} sql={sql}"), &e);
+-            ErrorCodeString::new("DB_QUERY_FAILED")
+-        })?;
+-    Ok(exists.is_some())
+-}
+-
+-fn has_column(conn: &Connection, table: &str, column: &str) -> Result<bool> {
+-    let sql = format!("PRAGMA table_info({table})");
+-    let mut stmt = conn.prepare(&sql).map_err(|e| {
+-        log_sqlite_err(&format!("has_column.prepare table={table} sql={sql}"), &e);
+-        ErrorCodeString::new("DB_QUERY_FAILED")
+-    })?;
+-
+-    let rows = stmt
+-        .query_map([], |row| row.get::<_, String>(1))
+-        .map_err(|e| {
+-            log_sqlite_err(&format!("has_column.query_map table={table} sql={sql}"), &e);
+-            ErrorCodeString::new("DB_QUERY_FAILED")
+-        })?
+-        .collect::<rusqlite::Result<Vec<_>>>()
+-        .map_err(|e| {
+-            log_sqlite_err(&format!("has_column.collect table={table} sql={sql}"), &e);
+-            ErrorCodeString::new("DB_QUERY_FAILED")
+-        })?;
+-
+-    Ok(rows.iter().any(|name| name == column))
+-}
+-
+-fn migrate_v1_to_v2(conn: &Connection) -> Result<()> {
+-    if !has_column(conn, "folders", "vault_id")? {
+-        conn.execute(
+-            "ALTER TABLE folders ADD COLUMN vault_id TEXT NOT NULL DEFAULT 'default';",
+-            [],
+-        )
+-        .map_err(|e| {
+-            log_sqlite_err("migrate_v1_to_v2.alter_folders_vault_id", &e);
+-            ErrorCodeString::new("DB_MIGRATION_FAILED")
+-        })?;
+-    }
+-
+-    if !has_column(conn, "datacards", "vault_id")? {
+-        conn.execute(
+-            "ALTER TABLE datacards ADD COLUMN vault_id TEXT NOT NULL DEFAULT 'default';",
+-            [],
+-        )
+-        .map_err(|e| {
+-            log_sqlite_err("migrate_v1_to_v2.alter_datacards_vault_id", &e);
+-            ErrorCodeString::new("DB_MIGRATION_FAILED")
+-        })?;
+-    }
+-
+-    if !has_column(conn, "bank_cards", "vault_id")? {
+-        conn.execute(
+-            "ALTER TABLE bank_cards ADD COLUMN vault_id TEXT NOT NULL DEFAULT 'default';",
+-            [],
+-        )
+-        .map_err(|e| {
+-            log_sqlite_err("migrate_v1_to_v2.alter_bank_cards_vault_id", &e);
+-            ErrorCodeString::new("DB_MIGRATION_FAILED")
+-        })?;
+-    }
+-
+-    conn.execute(
+-        "UPDATE folders SET vault_id = 'default' WHERE vault_id IS NULL OR TRIM(vault_id) = '';",
+-        [],
+-    )
+-    .map_err(|e| {
+-        log_sqlite_err("migrate_v1_to_v2.backfill_folders_vault_id", &e);
+-        ErrorCodeString::new("DB_MIGRATION_FAILED")
+-    })?;
+-
+-    conn.execute(
+-        "UPDATE datacards SET vault_id = 'default' WHERE vault_id IS NULL OR TRIM(vault_id) = '';",
+-        [],
+-    )
+-    .map_err(|e| {
+-        log_sqlite_err("migrate_v1_to_v2.backfill_datacards_vault_id", &e);
+-        ErrorCodeString::new("DB_MIGRATION_FAILED")
+-    })?;
+-
+-    conn.execute(
+-        "UPDATE bank_cards SET vault_id = 'default' WHERE vault_id IS NULL OR TRIM(vault_id) = '';",
+-        [],
+-    )
+-    .map_err(|e| {
+-        log_sqlite_err("migrate_v1_to_v2.backfill_bank_cards_vault_id", &e);
+-        ErrorCodeString::new("DB_MIGRATION_FAILED")
+-    })?;
+-
+-    conn.execute_batch(
+-        r#"
+-CREATE TABLE IF NOT EXISTS vaults (
+-  id         TEXT PRIMARY KEY,
+-  name       TEXT NOT NULL,
+-  is_default INTEGER NOT NULL DEFAULT 0,
+-  created_at TEXT NOT NULL,
+-  updated_at TEXT NOT NULL
+-);
+-CREATE UNIQUE INDEX IF NOT EXISTS idx_vaults_unique_name ON vaults(name);
+-INSERT OR IGNORE INTO vaults (id, name, is_default, created_at, updated_at)
+-VALUES ('default', 'Default vault', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+-DROP INDEX IF EXISTS idx_folders_unique_name;
+-CREATE UNIQUE INDEX IF NOT EXISTS idx_folders_unique_name
+-ON folders(vault_id, parent_id, name)
+-WHERE deleted_at IS NULL;
+-CREATE INDEX IF NOT EXISTS idx_folders_vault ON folders(vault_id);
+-CREATE INDEX IF NOT EXISTS idx_datacards_vault ON datacards(vault_id);
+-CREATE INDEX IF NOT EXISTS idx_bank_cards_vault ON bank_cards(vault_id);
+-"#,
+-    )
+-    .map_err(|e| {
+-        log_sqlite_err("migrate_v1_to_v2.execute_batch", &e);
+-        ErrorCodeString::new("DB_MIGRATION_FAILED")
+-    })?;
+-
+-    Ok(())
+-}
+-
+-fn migrate_v2_to_v3(conn: &Connection) -> Result<()> {
+-    conn.execute_batch(
+-        r#"
+-INSERT OR IGNORE INTO vaults (id, name, is_default, created_at, updated_at)
+-VALUES ('default', 'Default vault', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+-
+--- Deterministic default selection rule used for normalization:
+--- 1) Prefer historical id='default' when present.
+--- 2) Otherwise choose the lexicographically earliest by (created_at, id).
+-WITH chosen AS (
+-  SELECT id
+-  FROM vaults
+-  ORDER BY
+-    CASE WHEN id = 'default' THEN 0 ELSE 1 END,
+-    created_at ASC,
+-    id ASC
+-  LIMIT 1
+-)
+-UPDATE vaults
+-SET is_default = CASE
+-  WHEN id = (SELECT id FROM chosen) THEN 1
+-  ELSE 0
+-END;
+-"#,
+-    )
+-    .map_err(|e| {
+-        log_sqlite_err("migrate_v2_to_v3.normalize_default", &e);
+-        ErrorCodeString::new("DB_MIGRATION_FAILED")
+-    })?;
+-
+-    if !has_index(conn, IDX_VAULTS_SINGLE_DEFAULT)? {
+-        conn.execute(
+-            "CREATE UNIQUE INDEX idx_vaults_single_default ON vaults(is_default) WHERE is_default = 1;",
+-            [],
+-        )
+-        .map_err(|e| {
+-            log_sqlite_err("migrate_v2_to_v3.create_idx_vaults_single_default", &e);
+-            ErrorCodeString::new("DB_MIGRATION_FAILED")
+-        })?;
+-    }
+-
+-    Ok(())
+-}
+-
+-pub fn migrate_to_latest(conn: &Connection) -> Result<()> {
+-    conn.execute_batch("PRAGMA foreign_keys = ON;")
+-        .map_err(|e| {
+-            log_sqlite_err("migrate_to_latest.execute_batch PRAGMA foreign_keys=ON", &e);
+-            ErrorCodeString::new("DB_QUERY_FAILED")
+-        })?;
+-
+-    let mut version: i32 = conn
+-        .query_row("PRAGMA user_version;", [], |row| row.get(0))
+-        .map_err(|e| {
+-            log_sqlite_err("migrate_to_latest.query_row PRAGMA user_version", &e);
+-            ErrorCodeString::new("DB_QUERY_FAILED")
+-        })?;
+-
+-    if version == CURRENT_SCHEMA_VERSION {
+-        log::debug!("[DB][migrate] up_to_date version={version}");
+-        return Ok(());
+-    }
+-
+-    // Fresh DB: create schema and stamp it with the baseline version.
+-    if version == 0 {
+-        log::info!("[DB][migrate] init schema user_version={CURRENT_SCHEMA_VERSION}");
+-        conn.execute_batch(include_str!("schema.sql"))
+-            .map_err(|_| ErrorCodeString::new("DB_MIGRATION_FAILED"))?;
+-        conn.execute_batch(&format!("PRAGMA user_version = {CURRENT_SCHEMA_VERSION};"))
+-            .map_err(|_| ErrorCodeString::new("DB_MIGRATION_FAILED"))?;
+-        return Ok(());
+-    }
+-
+-    if version == 1 {
+-        log::info!("[DB][migrate] migrate from=1 to=2");
+-        migrate_v1_to_v2(conn)?;
+-        conn.execute_batch("PRAGMA user_version = 2;")
+-            .map_err(|_| ErrorCodeString::new("DB_MIGRATION_FAILED"))?;
+-        version = 2;
+-    }
+-
+-    if version == 2 {
+-        log::info!("[DB][migrate] migrate from=2 to=3");
+-        migrate_v2_to_v3(conn)?;
+-        conn.execute_batch("PRAGMA user_version = 3;")
+-            .map_err(|_| ErrorCodeString::new("DB_MIGRATION_FAILED"))?;
+-        version = 3;
+-    }
+-
+-    if version == CURRENT_SCHEMA_VERSION {
+-        log::debug!("[DB][migrate] up_to_date version={version}");
+-        return Ok(());
+-    }
+-
+-    log::warn!("[DB][migrate] unsupported schema version={version}");
+-    Err(ErrorCodeString::new("DB_MIGRATION_FAILED"))
+-}
+-
+-pub fn validate_core_schema(conn: &Connection) -> Result<()> {
+-    let required = ["vaults", "folders", "datacards", "bank_cards"];
+-    for table in required {
+-        if !has_table(conn, table)? {
+-            return Err(ErrorCodeString::new("DB_SCHEMA_MISSING"));
+-        }
+-    }
+-    Ok(())
+-}
+-
+-#[cfg(test)]
+-mod tests {
+-    use super::*;
+-
+-    fn create_vaults_table(conn: &Connection) {
+-        conn.execute_batch(
+-            r#"
+-CREATE TABLE vaults (
+-  id         TEXT PRIMARY KEY,
+-  name       TEXT NOT NULL,
+-  is_default INTEGER NOT NULL DEFAULT 0,
+-  created_at TEXT NOT NULL,
+-  updated_at TEXT NOT NULL
+-);
+-"#,
+-        )
+-        .unwrap();
+-    }
+-
+-    #[test]
+-    fn migrate_v2_to_v3_prefers_legacy_default_id() {
+-        let conn = Connection::open_in_memory().unwrap();
+-        create_vaults_table(&conn);
+-
+-        conn.execute(
+-            "INSERT INTO vaults (id, name, is_default, created_at, updated_at) VALUES (?1, ?2, 1, ?3, ?4)",
+-            ("custom", "Custom", "2026-01-02T00:00:00Z", "2026-01-02T00:00:00Z"),
+-        )
+-        .unwrap();
+-        conn.execute(
+-            "INSERT INTO vaults (id, name, is_default, created_at, updated_at) VALUES (?1, ?2, 1, ?3, ?4)",
+-            ("default", "Default vault", "2026-01-03T00:00:00Z", "2026-01-03T00:00:00Z"),
+-        )
+-        .unwrap();
+-
+-        migrate_v2_to_v3(&conn).unwrap();
+-
+-        let default_id: String = conn
+-            .query_row("SELECT id FROM vaults WHERE is_default = 1", [], |row| {
+-                row.get(0)
+-            })
+-            .unwrap();
+-        let defaults_count: i64 = conn
+-            .query_row(
+-                "SELECT COUNT(*) FROM vaults WHERE is_default = 1",
+-                [],
+-                |row| row.get(0),
+-            )
+-            .unwrap();
+-
+-        assert_eq!(default_id, "default");
+-        assert_eq!(defaults_count, 1);
+-        assert!(has_index(&conn, IDX_VAULTS_SINGLE_DEFAULT).unwrap());
+-    }
+-
+-    #[test]
+-    fn migrate_v2_to_v3_assigns_default_when_missing() {
+-        let conn = Connection::open_in_memory().unwrap();
+-        create_vaults_table(&conn);
+-
+-        conn.execute(
+-            "INSERT INTO vaults (id, name, is_default, created_at, updated_at) VALUES (?1, ?2, 0, ?3, ?4)",
+-            ("vault-b", "Vault B", "2026-01-02T00:00:00Z", "2026-01-02T00:00:00Z"),
+-        )
+-        .unwrap();
+-        conn.execute(
+-            "INSERT INTO vaults (id, name, is_default, created_at, updated_at) VALUES (?1, ?2, 0, ?3, ?4)",
+-            ("vault-a", "Vault A", "2026-01-01T00:00:00Z", "2026-01-01T00:00:00Z"),
+-        )
+-        .unwrap();
+-
+-        migrate_v2_to_v3(&conn).unwrap();
+-
+-        let default_id: String = conn
+-            .query_row("SELECT id FROM vaults WHERE is_default = 1", [], |row| {
+-                row.get(0)
+-            })
+-            .unwrap();
+-        let defaults_count: i64 = conn
+-            .query_row(
+-                "SELECT COUNT(*) FROM vaults WHERE is_default = 1",
+-                [],
+-                |row| row.get(0),
+-            )
+-            .unwrap();
+-
+-        assert_eq!(default_id, "default");
+-        assert_eq!(defaults_count, 1);
+-    }
+-}
+diff -ruN -u a/src-tauri/src/data/sqlite/schema_initialization.rs b/src-tauri/src/data/sqlite/schema_initialization.rs
+--- a/src-tauri/src/data/sqlite/schema_initialization.rs	1970-01-01 00:00:00.000000000 +0000
++++ b/src-tauri/src/data/sqlite/schema_initialization.rs	2026-02-11 18:58:22.270858622 +0000
+@@ -0,0 +1,45 @@
++use rusqlite::Connection;
++use rusqlite::Error as RusqliteError;
++
++use crate::error::{ErrorCodeString, Result};
++
++pub const SCHEMA_VERSION: i32 = 1;
++
++fn log_sqlite_err(ctx: &str, err: &RusqliteError) {
++    match err {
++        RusqliteError::SqliteFailure(e, msg) => {
++            log::error!(
++                "[DB][sqlite_error] ctx={} code={:?} extended_code={} msg={}",
++                ctx,
++                e.code,
++                e.extended_code,
++                msg.as_deref().unwrap_or("")
++            );
++        }
++        other => {
++            log::error!("[DB][sqlite_error] ctx={} err={other:?}", ctx);
++        }
++    }
++}
++
++pub fn schema_initialization(conn: &Connection) -> Result<()> {
++    conn.execute_batch("PRAGMA foreign_keys = ON;")
++        .map_err(|e| {
++            log_sqlite_err("schema_initialization.foreign_keys_on", &e);
++            ErrorCodeString::new("DB_QUERY_FAILED")
++        })?;
++
++    conn.execute_batch(include_str!("schema.sql"))
++        .map_err(|e| {
++            log_sqlite_err("schema_initialization.apply_schema", &e);
++            ErrorCodeString::new("DB_MIGRATION_FAILED")
++        })?;
++
++    conn.execute_batch(&format!("PRAGMA user_version = {SCHEMA_VERSION};"))
++        .map_err(|e| {
++            log_sqlite_err("schema_initialization.stamp_user_version", &e);
++            ErrorCodeString::new("DB_MIGRATION_FAILED")
++        })?;
++
++    Ok(())
++}
+diff -ruN -u a/src-tauri/src/data/sqlite/schema_migration.rs b/src-tauri/src/data/sqlite/schema_migration.rs
+--- a/src-tauri/src/data/sqlite/schema_migration.rs	1970-01-01 00:00:00.000000000 +0000
++++ b/src-tauri/src/data/sqlite/schema_migration.rs	2026-02-11 18:59:14.301977272 +0000
+@@ -0,0 +1,71 @@
++use rusqlite::Connection;
++use rusqlite::Error as RusqliteError;
++use rusqlite::OptionalExtension;
++
++use crate::data::sqlite::schema_initialization;
++use crate::error::{ErrorCodeString, Result};
++
++fn log_sqlite_err(ctx: &str, err: &RusqliteError) {
++    match err {
++        RusqliteError::SqliteFailure(e, msg) => {
++            log::error!(
++                "[DB][sqlite_error] ctx={} code={:?} extended_code={} msg={}",
++                ctx,
++                e.code,
++                e.extended_code,
++                msg.as_deref().unwrap_or("")
++            );
++        }
++        other => {
++            log::error!("[DB][sqlite_error] ctx={} err={other:?}", ctx);
++        }
++    }
++}
++
++fn has_any_user_table(conn: &Connection) -> Result<bool> {
++    let sql = "SELECT 1 FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' LIMIT 1";
++    let exists: Option<i32> = conn
++        .query_row(sql, [], |row| row.get(0))
++        .optional()
++        .map_err(|e| {
++            log_sqlite_err(&format!("has_any_user_table.query_row sql={sql}"), &e);
++            ErrorCodeString::new("DB_QUERY_FAILED")
++        })?;
++    Ok(exists.is_some())
++}
++
++pub fn schema_migrate(conn: &Connection) -> Result<()> {
++    conn.execute_batch("PRAGMA foreign_keys = ON;")
++        .map_err(|e| {
++            log_sqlite_err("schema_migrate.foreign_keys_on", &e);
++            ErrorCodeString::new("DB_QUERY_FAILED")
++        })?;
++
++    let version: i32 = conn
++        .query_row("PRAGMA user_version;", [], |row| row.get(0))
++        .map_err(|e| {
++            log_sqlite_err("schema_migrate.query_row PRAGMA user_version", &e);
++            ErrorCodeString::new("DB_QUERY_FAILED")
++        })?;
++
++    if version == schema_initialization::SCHEMA_VERSION {
++        log::debug!("[DB][schema_migrate] up_to_date version={version}");
++        return Ok(());
++    }
++
++    if version == 0 {
++        if has_any_user_table(conn)? {
++            log::warn!("[DB][schema_migrate] user_version=0 but schema exists");
++            return Err(ErrorCodeString::new("DB_MIGRATION_FAILED"));
++        }
++
++        log::info!(
++            "[DB][schema_migrate] initialization schema user_version={}",
++            schema_initialization::SCHEMA_VERSION
++        );
++        return schema_initialization::schema_initialization(conn);
++    }
++
++    log::warn!("[DB][schema_migrate] unsupported schema version={version}");
++    Err(ErrorCodeString::new("DB_MIGRATION_FAILED"))
++}
+diff -ruN -u a/src-tauri/src/data/sqlite/schema_validation.rs b/src-tauri/src/data/sqlite/schema_validation.rs
+--- a/src-tauri/src/data/sqlite/schema_validation.rs	1970-01-01 00:00:00.000000000 +0000
++++ b/src-tauri/src/data/sqlite/schema_validation.rs	2026-02-11 18:58:41.970000779 +0000
+@@ -0,0 +1,44 @@
++use rusqlite::Connection;
++use rusqlite::Error as RusqliteError;
++use rusqlite::OptionalExtension;
++
++use crate::error::{ErrorCodeString, Result};
++
++fn log_sqlite_err(ctx: &str, err: &RusqliteError) {
++    match err {
++        RusqliteError::SqliteFailure(e, msg) => {
++            log::error!(
++                "[DB][sqlite_error] ctx={} code={:?} extended_code={} msg={}",
++                ctx,
++                e.code,
++                e.extended_code,
++                msg.as_deref().unwrap_or("")
++            );
++        }
++        other => {
++            log::error!("[DB][sqlite_error] ctx={} err={other:?}", ctx);
++        }
++    }
++}
++
++fn has_table(conn: &Connection, name: &str) -> Result<bool> {
++    let sql = "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?1 LIMIT 1";
++    let exists: Option<i32> = conn
++        .query_row(sql, [name], |row| row.get(0))
++        .optional()
++        .map_err(|e| {
++            log_sqlite_err(&format!("has_table.query_row name={name} sql={sql}"), &e);
++            ErrorCodeString::new("DB_QUERY_FAILED")
++        })?;
++    Ok(exists.is_some())
++}
++
++pub fn schema_validate(conn: &Connection) -> Result<()> {
++    let required = ["vaults", "folders", "datacards", "bank_cards"];
++    for table in required {
++        if !has_table(conn, table)? {
++            return Err(ErrorCodeString::new("DB_SCHEMA_MISSING"));
++        }
++    }
++    Ok(())
++}
+diff -ruN -u a/src-tauri/src/main.rs b/src-tauri/src/main.rs
+--- a/src-tauri/src/main.rs	2026-02-11 17:15:39.000000000 +0000
++++ b/src-tauri/src/main.rs	2026-02-11 18:57:47.087881520 +0000
+@@ -29,7 +29,9 @@
+     pub mod sqlite {
+         pub mod diagnostics;
+         pub mod init;
+-        pub mod migrations;
++        pub mod schema_initialization;
++        pub mod schema_migration;
++        pub mod schema_validation;
+         pub mod repo_impl;
+     }
+ }
+diff -ruN -u a/src-tauri/src/services/security_service/mod.rs b/src-tauri/src/services/security_service/mod.rs
+--- a/src-tauri/src/services/security_service/mod.rs	2026-02-11 17:15:39.000000000 +0000
++++ b/src-tauri/src/services/security_service/mod.rs	2026-02-11 18:58:02.984274065 +0000
+@@ -19,7 +19,8 @@
+     ensure_profile_dirs, kdf_salt_path, key_check_path, profile_dir, vault_db_path, vault_key_path,
+ };
+ use crate::data::profiles::registry;
+-use crate::data::sqlite::migrations;
++use crate::data::sqlite::schema_migration;
++use crate::data::sqlite::schema_validation;
+ use crate::data::sqlite::repo_impl;
+ use crate::error::{ErrorCodeString, Result};
+ use crate::services::attachments_service;
+@@ -88,15 +89,15 @@
+             ErrorCodeString::new("VAULT_CORRUPTED")
+         })?;
+ 
+-    if let Err(e) = migrations::migrate_to_latest(&conn) {
++    if let Err(e) = schema_migration::schema_migrate(&conn) {
+         log::error!(
+-            "[SECURITY][login] profile_id={} step=migrate_to_latest failed code={}",
++            "[SECURITY][login] profile_id={} step=schema_migrate failed code={}",
+             profile_id,
+             e.code
+         );
+         return Err(e);
+     }
+-    migrations::validate_core_schema(&conn).map_err(|_| ErrorCodeString::new("VAULT_CORRUPTED"))?;
++    schema_validation::schema_validate(&conn).map_err(|_| ErrorCodeString::new("VAULT_CORRUPTED"))?;
+ 
+     best_effort_force_journal_mode_memory(&conn, profile_id, "unlock_after_deserialize");
+ 
