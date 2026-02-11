@@ -1,0 +1,103 @@
+:root {
+  --font-body: system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+
+  --color-bg: #0b1222;
+  --color-surface-1: #0b1222;
+  --color-surface-2: #0f172a;
+  --color-surface-3: #111827;
+  --color-surface: var(--color-surface-3);
+  --color-border: #1f2937;
+
+  /* Button overrides (optional) */
+  --btn-secondary-bg: #1f2937;
+  --btn-secondary-border: #374151;
+  --btn-secondary-text: var(--color-text);
+
+  --color-input-bg: var(--color-surface-2);
+
+
+  --color-text: #e5e7eb;
+  --color-text-muted: #9ca3c7;
+
+  --color-primary: #2563eb;        /* blue-600 */
+  --color-primary-strong: #1d4ed8; /* blue-700 */
+
+  --color-danger: #ef4444;
+  --color-danger-strong: #dc2626;
+
+  --color-success: #22c55e;
+
+  --radius-sm: 10px;
+  --radius-pill: 999px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+
+  --shadow-card: 0 18px 45px rgba(15, 23, 42, 0.8);
+  /* Common "on" colors */
+  --color-on-primary: #fff;
+
+  /* App background gradient (used by body) */
+  --bg-app: linear-gradient(
+    135deg,
+    var(--color-bg) 0%,
+    var(--color-surface-2) 60%,
+    var(--color-surface-2) 100%
+  );
+
+  /* Screen background gradients */
+  --bg-startup-screen: radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.12), transparent 35%),
+    radial-gradient(circle at 80% 10%, rgba(37, 99, 235, 0.08), transparent 30%),
+    linear-gradient(135deg, rgba(37, 99, 235, 0.06), rgba(37, 99, 235, 0.02));
+
+  --bg-profile-create-screen: radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.10), transparent 35%),
+    radial-gradient(circle at 80% 10%, rgba(37, 99, 235, 0.06), transparent 30%),
+    linear-gradient(135deg, rgba(37, 99, 235, 0.04), rgba(37, 99, 235, 0.02));
+
+  --bg-login-screen: radial-gradient(circle at 10% 0%, rgba(37, 99, 235, 0.10), transparent 35%),
+    radial-gradient(circle at 90% 0%, rgba(37, 99, 235, 0.05), transparent 30%),
+    linear-gradient(135deg, rgba(37, 99, 235, 0.04), rgba(15, 23, 42, 0.9));
+
+  /* Overlays / translucent surfaces */
+  --overlay-dialog-backdrop: rgba(0, 0, 0, 0.45);
+  --surface-tint-02: rgba(255, 255, 255, 0.02);
+  --surface-tint-08: rgba(255, 255, 255, 0.08);
+
+  /* Semantic translucent backgrounds */
+  --primary-soft-bg: rgba(37, 99, 235, 0.08);
+  --success-soft-bg: rgba(34, 197, 94, 0.12);
+  --danger-soft-bg: rgba(239, 68, 68, 0.12);
+
+  /* Vault hover borders (keep exact existing look) */
+  --focus-border: rgba(59, 130, 246, 0.45);
+  --focus-border-strong: rgba(59, 130, 246, 0.55);
+
+  /* Danger subtle styles (keep exact existing look) */
+  --danger-border-weak: rgba(239, 68, 68, 0.4);
+  --danger-hover-bg: rgba(239, 68, 68, 0.08);
+
+  /* Shadows */
+  --shadow-lg: var(--shadow-card);
+  --shadow-popover: 0 12px 30px rgba(0, 0, 0, 0.45);
+
+  /* ==========================================================================
+     Unified semantic design tokens (single source of truth)
+     --------------------------------------------------------------------------
+     Screens should use these tokens; legacy variables remain as aliases.
+     ========================================================================== */
+  --bg-screen: var(--bg-startup-screen);
+
+  --surface-page: var(--color-surface);
+  --surface-container: var(--color-surface-2);
+  --surface-block: var(--surface-tint-02);
+
+  --input-surface: var(--surface-block);
+
+  --border-subtle: var(--surface-tint-08);
+
+  --focus-ring: 2px solid var(--color-primary);
+  --focus-ring-offset: 2px;
+
+  /* Backwards-compatible aliases */
+  --color-border: var(--border-subtle);
+  --color-input-bg: var(--input-surface);
+}

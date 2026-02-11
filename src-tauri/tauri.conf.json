@@ -1,0 +1,51 @@
+{
+  "productName": "Password Manager",
+  "version": "0.1.0",
+  "identifier": "PasswordManager",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:5173",
+    "removeUnusedCommands": true
+  },
+  "app": {
+    "security": {
+      "freezePrototype": false,
+      "csp": {
+        "default-src": "'self' customprotocol: asset:",
+        "base-uri": "'none'",
+        "object-src": "'none'",
+        "frame-ancestors": "'none'",
+        "frame-src": "'none'",
+        "child-src": "'none'",
+        "worker-src": "'self' asset: customprotocol: blob:",
+        "form-action": "'none'",
+        "navigate-to": "'self'",
+        "connect-src": "ipc: http://ipc.localhost",
+        "img-src": "'self' asset: http://asset.localhost blob: data:",
+        "style-src": "'self' 'unsafe-inline'",
+        "font-src": "'self' data:"
+      }
+    },
+    "windows": [
+      {
+        "label": "main",
+        "title": "Password Manager",
+        "width": 1200,
+        "height": 900
+      }
+    ]
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis"
+    ],
+    "windows": {
+      "webviewInstallMode": {
+        "type": "offlineInstaller"
+      }
+    }
+  }
+}
