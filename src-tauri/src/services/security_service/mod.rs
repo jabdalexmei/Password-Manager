@@ -19,7 +19,8 @@ use crate::data::profiles::paths::{
     ensure_profile_dirs, kdf_salt_path, key_check_path, profile_dir, vault_db_path, vault_key_path,
 };
 use crate::data::profiles::registry;
-use crate::data::sqlite::migrations;
+use crate::data::sqlite::schema_migration;
+use crate::data::sqlite::schema_validation;
 use crate::data::sqlite::repo_impl;
 use crate::error::{ErrorCodeString, Result};
 use crate::services::attachments_service;
@@ -88,15 +89,15 @@ fn open_vault_session_with_master_key(
             ErrorCodeString::new("VAULT_CORRUPTED")
         })?;
 
-    if let Err(e) = migrations::migrate_to_latest(&conn) {
+    if let Err(e) = schema_migration::schema_migrate(&conn) {
         log::error!(
-            "[SECURITY][login] profile_id={} step=migrate_to_latest failed code={}",
+            "[SECURITY][login] profile_id={} step=schema_migrate failed code={}",
             profile_id,
             e.code
         );
         return Err(e);
     }
-    migrations::validate_core_schema(&conn).map_err(|_| ErrorCodeString::new("VAULT_CORRUPTED"))?;
+    schema_validation::schema_validate(&conn).map_err(|_| ErrorCodeString::new("VAULT_CORRUPTED"))?;
 
     best_effort_force_journal_mode_memory(&conn, profile_id, "unlock_after_deserialize");
 

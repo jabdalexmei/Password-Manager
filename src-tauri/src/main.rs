@@ -29,7 +29,9 @@ mod data {
     pub mod sqlite {
         pub mod diagnostics;
         pub mod init;
-        pub mod migrations;
+        pub mod schema_initialization;
+        pub mod schema_migration;
+        pub mod schema_validation;
         pub mod repo_impl;
     }
 }
