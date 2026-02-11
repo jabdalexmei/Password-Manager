@@ -1,0 +1,225 @@
+﻿/* ==========================================================================
+   Forms & inputs
+   --------------------------------------------------------------------------
+   - Generic form layout, label styles, inputs/textarea, focus rings, errors.
+   - These are shared by many dialogs/forms.
+   ========================================================================== */
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-between-form-field-label-text-and-input-field);
+}
+
+.form-field--navigation {
+  gap: var(--spacing-between-navigation-field-label-text-and-input-field);
+}
+
+.form-field--text-and-input-fields {
+  gap: var(--spacing-between-form-field-label-text-and-input-field);
+}
+
+.form-field--row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* ==========================================================================
+   File picker (custom file input button + filename)
+   --------------------------------------------------------------------------
+   - Use visually-hidden technique (NOT display:none) so <label for="...">
+     remains keyboard accessible and works consistently.
+   ========================================================================== */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.file-picker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.file-picker__btn[aria-disabled='true'] {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.file-picker__btn {
+  flex: 0 0 auto;
+  min-width: 120px;
+  white-space: nowrap;
+  min-height: 42px;
+}
+
+.file-picker__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-picker__status {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 16px;
+  min-height: 16px; /* reserve space to prevent layout shift when status text appears */
+}
+
+.form-label {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--color-text-muted);
+}
+
+/* Settings modal: make selected "toggle titles" look like headers (white, not muted) */
+.form-label.settings-subheader {
+  color: var(--color-text);
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 16px;
+}
+
+/* Inputs - shared base for <input>, <select>, <textarea> in forms */
+.input,
+.textarea,
+.form-field input,
+.form-field select,
+.form-field textarea,
+.form-textarea {
+  width: 100%;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent; /* reduce â€œborder noiseâ€ globally */
+  background: var(--input-surface);
+  color: var(--color-text);
+  padding: 10px 12px;
+}
+
+/* ==========================================================================
+   WebView2/Chromium "Saved info" autofill highlight override (dark theme)
+   --------------------------------------------------------------------------
+   Chromium may apply a white background for autofill/suggestions and sometimes
+   uses internal pseudo-classes. Force our surface via inset box-shadow.
+   ========================================================================== */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus,
+input:-internal-autofill-selected,
+textarea:-internal-autofill-selected,
+select:-internal-autofill-selected,
+input:-internal-autofill-previewed,
+textarea:-internal-autofill-previewed,
+select:-internal-autofill-previewed {
+  -webkit-text-fill-color: var(--color-text) !important;
+  caret-color: var(--color-text) !important;
+  background-color: var(--input-surface) !important;
+  -webkit-box-shadow: 0 0 0 1000px var(--input-surface) inset !important;
+  box-shadow: 0 0 0 1000px var(--input-surface) inset !important;
+}
+
+/* Modern standard selector (supported widely since 2023) */
+input:autofill,
+textarea:autofill,
+select:autofill {
+  box-shadow: 0 0 0 1000px var(--input-surface) inset !important;
+  caret-color: var(--color-text) !important;
+}
+
+/* Textareas - minimum height + allow resize */
+.textarea,
+.form-field textarea,
+.form-textarea {
+  min-height: 84px;
+  resize: vertical;
+}
+
+/* Focus styles - consistent accessible outline on keyboard focus */
+.input:focus-visible,
+.textarea:focus-visible,
+.form-field input:focus-visible,
+.form-field select:focus-visible,
+.form-field textarea:focus-visible,
+.form-textarea:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+  border-color: transparent;
+}
+
+/* Notes textarea - larger than default */
+.textarea-notes {
+  min-height: 110px;
+  resize: vertical;
+}
+
+/* Form validation/error text */
+.form-error {
+  color: var(--color-danger);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+/* Input with action buttons (copy/generate/etc.) */
+.input-with-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.input-with-actions .input {
+  flex: 1;
+}
+
+.input-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Selected profile info block (summary panel) */
+.profile-selected {
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--surface-block);
+  padding: 12px;
+}
+
+/* Small uppercase label style (section headings inside panels) */
+.profile-label {
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+

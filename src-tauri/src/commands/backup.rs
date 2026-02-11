@@ -9,10 +9,10 @@ use uuid::Uuid;
 use crate::app_state::AppState;
 use crate::error::{ErrorCodeString, Result};
 use crate::services::backup_service::{
-    backup_create as backup_create_service, backup_create_if_due_auto as backup_create_if_due_auto_service,
+    backup_create as backup_create_service,
+    backup_create_if_due_auto as backup_create_if_due_auto_service,
     backup_inspect as backup_inspect_service, backup_list as backup_list_service,
-    backup_restore_workflow as backup_restore_workflow_service,
-    BackupListItem,
+    backup_restore_workflow as backup_restore_workflow_service, BackupListItem,
 };
 use crate::types::BackupPickPayload;
 
@@ -119,7 +119,7 @@ pub async fn backup_pick_file(
         let mut dialog = app
             .dialog()
             .file()
-            .set_title("Select backup archive (.pmbackup.zip)");
+            .set_title("Step 2 of 2: Select backup archive (.pmbackup.zip)");
 
         if let Ok(sp) = st.get_storage_paths() {
             if let Ok(profiles_root) = sp.profiles_root() {

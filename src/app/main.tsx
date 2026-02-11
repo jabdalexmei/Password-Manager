@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import '../shared/styles/app.css';
-import '../shared/lib/i18n';
+import { I18nProvider } from '../shared/lib/i18n';
 
 /*
  * The original implementation here attached a global scroll listener that
@@ -23,6 +23,8 @@ import '../shared/lib/i18n';
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    <App />
+    <I18nProvider>
+      <App />
+    </I18nProvider>
   </React.StrictMode>
 );

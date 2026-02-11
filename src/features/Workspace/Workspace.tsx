@@ -119,7 +119,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
   const handleRestoreFromBackup = useCallback(async () => {
     setBusy(true);
     try {
-      const ok = await workspaceCreateViaDialog();
+      const ok = await workspaceCreateViaDialog('Step 1 of 2: Select destination folder for restored profile');
       if (!ok) return;
       await refresh();
 
