@@ -216,7 +216,13 @@ export function useBankCards(
       try {
         await updateSettings(nextSettings);
         setSettings(nextSettings);
-        document.documentElement.dataset.theme = nextSettings.theme === 'darkTheme' ? 'darkTheme' : 'blueTheme';
+        const themeToApply = nextSettings.theme === 'darkTheme' ? 'darkTheme' : 'blueTheme';
+        document.documentElement.dataset.theme = themeToApply;
+        try {
+          window.localStorage.setItem('uiTheme', themeToApply);
+        } catch {
+          // Ignore storage errors in restricted environments.
+        }
         return true;
       } catch (err) {
         handleError(err);
@@ -267,7 +273,13 @@ export function useBankCards(
     refreshTrash();
     getSettings()
       .then((nextSettings) => {
-        document.documentElement.dataset.theme = nextSettings.theme === 'darkTheme' ? 'darkTheme' : 'blueTheme';
+        const themeToApply = nextSettings.theme === 'darkTheme' ? 'darkTheme' : 'blueTheme';
+        document.documentElement.dataset.theme = themeToApply;
+        try {
+          window.localStorage.setItem('uiTheme', themeToApply);
+        } catch {
+          // Ignore storage errors in restricted environments.
+        }
         setSettings(nextSettings);
       })
       .catch(handleError);
