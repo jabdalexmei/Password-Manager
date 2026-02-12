@@ -57,6 +57,7 @@
   "toast.attachmentLoadError": "Unable to load attachments",
   "dialog.passwordHistoryTitle": "Password history",
   "dialog.clearHistoryConfirm": "Clear password history?",
+  "dialog.deleteHistoryEntryConfirm": "Delete this password from history?",
   "label.passwordHistoryEmpty": "No password history yet",
   "label.seedPhrase": "Seed phrase",
   "action.open": "Open",

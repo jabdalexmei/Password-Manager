@@ -1,4 +1,4 @@
-﻿{
+{
   "empty.selectPrompt": "Выберите карточку для просмотра деталей",
   "label.created": "Создано",
   "label.updated": "Обновлено",
@@ -57,6 +57,7 @@
   "toast.attachmentLoadError": "Не удалось загрузить вложения",
   "dialog.passwordHistoryTitle": "История паролей",
   "dialog.clearHistoryConfirm": "Очистить историю паролей?",
+  "dialog.deleteHistoryEntryConfirm": "Удалить этот пароль из истории?",
   "label.passwordHistoryEmpty": "История паролей пуста",
   "label.seedPhrase": "Seed-фраза",
   "action.open": "Открыть",

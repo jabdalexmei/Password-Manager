@@ -52,3 +52,20 @@ pub async fn clear_datacard_password_history(
 
     Ok(())
 }
+
+
+#[tauri::command]
+pub async fn delete_datacard_password_history_entry(
+    app: tauri::AppHandle,
+    entry_id: String,
+) -> Result<()> {
+    let app_state = app.state::<Arc<AppState>>().inner().clone();
+
+    tauri::async_runtime::spawn_blocking(move || {
+        password_history_service::delete_history_entry(&app_state, &entry_id)
+    })
+    .await
+    .map_err(|_| ErrorCodeString::new("TASK_JOIN_FAILED"))??;
+
+    Ok(())
+}
