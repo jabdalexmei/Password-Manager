@@ -1,6 +1,6 @@
 ﻿{
   "label.dataCardsTitle": "Карточки данных",
-  "label.addDataCard": "Новая карточка",
+  "label.createDataCard": "Создать карточку",
   "label.empty": "Пусто",
   "label.noMeta": "Нет мета-данных",
   "label.untitled": "Без названия",
@@ -40,8 +40,6 @@
   "action.create": "Создать",
   "action.cancel": "Отмена",
   "action.ok": "OK",
-  "action.more": "Ещё",
-  "trash.actions": "Действия",
   "trash.restoreAll": "Восстановить всё",
   "trash.removeAll": "Удалить всё",
   "action.save": "Сохранить",

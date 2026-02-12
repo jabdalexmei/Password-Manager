@@ -49,10 +49,21 @@ export function VaultsSection({
 
   const getVaultDisplayName = (vault: VaultItem) => {
     const normalizedName = vault.name.trim().toLowerCase();
-    if (vault.id === 'default' && normalizedName === 'default vault') {
-      return t('vaults.systemDefaultName');
+    const localizedSystemDefaultName = t('vaults.systemDefaultName');
+
+    const baseName =
+      vault.id === 'default' && normalizedName === 'default vault'
+        ? localizedSystemDefaultName
+        : vault.name;
+
+    const isSystemDefaultName =
+      baseName.trim().toLowerCase() === localizedSystemDefaultName.trim().toLowerCase();
+
+    if (vault.isDefault && !isSystemDefaultName) {
+      return `${baseName} ${t('vault.defaultSuffix')}`;
     }
-    return vault.name;
+
+    return baseName;
   };
 
   useEffect(() => {

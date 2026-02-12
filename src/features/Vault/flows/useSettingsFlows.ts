@@ -28,6 +28,7 @@ export function useSettingsFlows({
         setSettingsModalOpen(false);
       }
       setIsSavingSettings(false);
+      return saved;
     },
     [onSetBankCardsSettings, onUpdateVaultSettings, runTrashCleanupAndRefresh]
   );

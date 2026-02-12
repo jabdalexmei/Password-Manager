@@ -10,6 +10,7 @@
   "sort.createdDesc": "Создано (сначала новые)",
   "sort.createdAsc": "Создано (сначала старые)",
   "label.empty": "Пусто",
+  "common.moreActions": "Дополнительные действия",
   "label.loading": "Загрузка...",
   "aria.dismissToast": "Закрыть",
   "error.backupProfileMismatch": "Эта резервная копия относится к другому профилю.",

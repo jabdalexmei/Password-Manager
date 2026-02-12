@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from '../../../../../shared/lib/i18n';
 
 type TranslateFn = (key: string, params?: Record<string, string | number>) => string;
 
@@ -37,13 +38,15 @@ export function DataCardDialogActionMenu({
   onToggleEditFields,
   t,
 }: DataCardDialogActionMenuProps) {
+  const { t: tCommon } = useTranslation('Common');
+
   return (
     <>
       <button
         type="button"
         className="btn btn-icon dialog-actionbar"
-        aria-label={t('action.more')}
-        title={t('action.more')}
+        aria-label={tCommon('common.moreActions')}
+        title={tCommon('common.moreActions')}
         onClick={() => {
           const isSameDialog = customFieldTargetDialogId === dialogId;
           setCustomFieldTargetDialogId(dialogId);

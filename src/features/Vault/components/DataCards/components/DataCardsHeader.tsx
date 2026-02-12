@@ -1,5 +1,6 @@
 import React from 'react';
 import { IconMoreHorizontal } from '@/shared/icons/lucide/icons';
+import { useTranslation } from '../../../../../shared/lib/i18n';
 import { VaultSortControl } from '../../shared/VaultSortControl';
 import type { VaultSortMode } from '../../../lib/vaultSort';
 
@@ -32,6 +33,8 @@ export function DataCardsHeader({
   onPurgeAll,
   t,
 }: DataCardsHeaderProps) {
+  const { t: tCommon } = useTranslation('Common');
+
   return (
     <div className="datacards-header">
       <div className="vault-section-header">{sectionTitle}</div>
@@ -44,7 +47,7 @@ export function DataCardsHeader({
             <button
               className="btn btn-icon vault-actionbar"
               type="button"
-              aria-label={t('trash.actions')}
+              aria-label={tCommon('common.moreActions')}
               aria-haspopup="menu"
               aria-expanded={isTrashActionsOpen}
               onClick={() => setIsTrashActionsOpen((prev) => !prev)}

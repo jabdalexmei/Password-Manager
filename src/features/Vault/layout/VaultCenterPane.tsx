@@ -61,7 +61,7 @@ export function VaultCenterPane({
                 <button
                   className="btn btn-icon vault-actionbar"
                   type="button"
-                  aria-label={tDataCards('trash.actions')}
+                  aria-label={tCommon('common.moreActions')}
                   aria-haspopup="menu"
                   aria-expanded={isGlobalTrashActionsOpen}
                   disabled={isGlobalTrashBulkSubmitting || isNavigationEmpty}

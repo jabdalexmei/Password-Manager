@@ -10,6 +10,7 @@
   "sort.createdDesc": "Created time (new to old)",
   "sort.createdAsc": "Created time (old to new)",
   "label.empty": "Empty",
+  "common.moreActions": "More actions",
   "label.loading": "Loading…",
   "aria.dismissToast": "Dismiss",
   "error.backupProfileMismatch": "This backup belongs to a different profile.",

@@ -78,7 +78,7 @@ export function VaultSidebarPane({
               aria-controls="vault-addcard-menu"
               onClick={() => setIsAddCardMenuOpen((prev) => !prev)}
             >
-              {tVault('action.addCard')}
+              {tVault('action.createCard')}
             </button>
 
             {isAddCardMenuOpen && (
@@ -111,7 +111,7 @@ export function VaultSidebarPane({
           </div>
         ) : selectedCategory === 'data_cards' ? (
           <button className="btn btn-primary" type="button" onClick={dataCardsViewModel.openCreateModal}>
-            {tDataCards('label.addDataCard')}
+            {tDataCards('label.createDataCard')}
           </button>
         ) : (
           <button className="btn btn-primary" type="button" onClick={bankCardsViewModel.openCreateModal}>
@@ -119,7 +119,7 @@ export function VaultSidebarPane({
           </button>
         )}
         <button className="btn btn-secondary" type="button" onClick={() => folderDialogs.openCreateFolder()}>
-          {tFolders('action.addFolder')}
+          {tFolders('action.createFolder')}
         </button>
       </div>
 

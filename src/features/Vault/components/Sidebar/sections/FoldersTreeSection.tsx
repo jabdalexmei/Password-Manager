@@ -398,7 +398,7 @@ export function FoldersTreeSection({
               className="vault-context-item"
               onClick={() => handleCreateSubfolderFromMenu(openMenu.folderId)}
             >
-              {t('action.addSubfolder')}
+              {t('action.createSubfolder')}
             </button>
             <button type="button" className="vault-context-item" onClick={() => openRenameDialog(openMenu.folderId)}>
               {t('action.renameFolder')}

@@ -1,6 +1,6 @@
 {
   "label.dataCardsTitle": "Data cards",
-  "label.addDataCard": "Add data card",
+  "label.createDataCard": "Create data card",
   "label.empty": "Empty",
   "label.noMeta": "No meta",
   "label.untitled": "Untitled",
@@ -40,8 +40,6 @@
   "action.create": "Create",
   "action.cancel": "Cancel",
   "action.ok": "OK",
-  "action.more": "More",
-  "trash.actions": "Actions",
   "trash.restoreAll": "Restore all data",
   "trash.removeAll": "Remove all data",
   "action.save": "Save",

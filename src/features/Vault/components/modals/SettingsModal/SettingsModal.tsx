@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { BackendUserSettings } from '../../../types/backend';
-import { Language, coerceLanguage, useI18n, useTranslation } from '../../../../../shared/lib/i18n';
+import { Language, useI18n, useTranslation } from '../../../../../shared/lib/i18n';
 import { useToaster } from '../../../../../shared/components/Toaster';
 import {
   changeProfilePassword,
@@ -29,7 +29,7 @@ export type SettingsModalProps = {
   settings: BackendUserSettings | null;
   isSaving: boolean;
   onCancel: () => void;
-  onSave: (nextSettings: BackendUserSettings) => void;
+  onSave: (nextSettings: BackendUserSettings) => Promise<boolean>;
   profileId: string;
   profileName: string;
   profileHasPassword: boolean;
@@ -65,6 +65,8 @@ export function SettingsModal({
   const [trashRetentionDays, setTrashRetentionDays] = useState('');
   const [multiplyVaultsEnabled, setMultiplyVaultsEnabled] = useState(false);
   const [theme, setTheme] = useState<AppTheme>('blueTheme');
+  const [didTouchTheme, setDidTouchTheme] = useState(false);
+  const [draftLanguage, setDraftLanguage] = useState<Language>('en');
   const [renameProfileOpen, setRenameProfileOpen] = useState(false);
   const [renameProfileValue, setRenameProfileValue] = useState('');
   const [isRenamingProfile, setIsRenamingProfile] = useState(false);
@@ -97,11 +99,13 @@ export function SettingsModal({
   useEffect(() => {
     if (!open) return;
     setActiveSection('general');
-  }, [open]);
+    setDraftLanguage(language);
+  }, [language, open]);
 
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
+    setDidTouchTheme(false);
 
     getAppTheme()
       .then((nextTheme) => {
@@ -261,7 +265,7 @@ export function SettingsModal({
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!settings) return;
 
     const lockTimeout = Number(autoLockTimeoutSeconds);
@@ -277,7 +281,7 @@ export function SettingsModal({
     if (max < 1 || max > 500) return;
     if (trashAutoCleanupEnabled && retentionDays === null) return;
 
-    onSave({
+    const saved = await onSave({
       ...settings,
       auto_lock_enabled: autoLockEnabled,
       auto_lock_timeout: Math.round(lockTimeout),
@@ -292,6 +296,23 @@ export function SettingsModal({
       backup_max_copies: Math.round(max),
       multiply_vaults_enabled: multiplyVaultsEnabled,
     });
+
+    if (!saved) return;
+
+    if (language !== draftLanguage) {
+      setLanguage(draftLanguage);
+    }
+
+    if (!didTouchTheme) return;
+
+    try {
+      await setAppTheme(theme);
+      applyTheme(theme);
+      cacheTheme(theme);
+    } catch (error) {
+      const code = (error as any)?.code ?? (error as any)?.error ?? 'UNKNOWN';
+      showToast(`${tCommon('error.operationFailed')} (${code})`, 'error');
+    }
   };
 
   const onSwitchKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, onToggle: () => void) => {
@@ -335,23 +356,17 @@ export function SettingsModal({
 
   const handleLanguageChange = useCallback(
     (nextLanguage: Language) => {
-      setLanguage(coerceLanguage(nextLanguage));
+      setDraftLanguage(nextLanguage);
     },
-    [setLanguage],
+    [],
   );
 
   const handleThemeChange = useCallback(
     (nextTheme: AppTheme) => {
       setTheme(nextTheme);
-      applyTheme(nextTheme);
-      cacheTheme(nextTheme);
-
-      void setAppTheme(nextTheme).catch((error) => {
-        const code = (error as any)?.code ?? (error as any)?.error ?? 'UNKNOWN';
-        showToast(`${tCommon('error.operationFailed')} (${code})`, 'error');
-      });
+      setDidTouchTheme(true);
     },
-    [showToast, tCommon],
+    [],
   );
 
   return (
@@ -367,7 +382,7 @@ export function SettingsModal({
 
             <section className="settings-content">
               {activeSection === 'general' && (
-                <GeneralSection language={language} onLanguageChange={handleLanguageChange} tVault={tVault} disabled={busy} />
+                <GeneralSection language={draftLanguage} onLanguageChange={handleLanguageChange} tVault={tVault} disabled={busy} />
               )}
 
               {activeSection === 'appearance' && (
@@ -478,7 +493,14 @@ export function SettingsModal({
           </div>
 
           <div className="dialog-footer-right">
-            <button className="btn btn-primary" type="button" onClick={handleSave} disabled={busy || !settings || !canSave}>
+            <button
+              className="btn btn-primary"
+              type="button"
+              onClick={() => {
+                void handleSave();
+              }}
+              disabled={busy || !settings || !canSave}
+            >
               {tVault('backup.settings.save')}
             </button>
           </div>

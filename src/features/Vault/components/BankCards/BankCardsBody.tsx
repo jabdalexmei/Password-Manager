@@ -96,7 +96,7 @@ export function BankCardsBody({
             {tBankCards('label.addBankCard')}
           </button>
           <button className="btn btn-secondary" type="button" onClick={() => folderDialogs.openCreateFolder()}>
-            {tFolders('action.addFolder')}
+            {tFolders('action.createFolder')}
           </button>
         </div>
 
