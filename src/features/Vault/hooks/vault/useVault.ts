@@ -185,6 +185,7 @@ export function useVault(profileId: string, onLocked: () => void) {
     getSettings()
       .then((nextSettings) => {
         const normalizedActiveVaultId = nextSettings.active_vault_id || DEFAULT_ACTIVE_VAULT_ID;
+        document.documentElement.dataset.theme = nextSettings.theme === 'darkTheme' ? 'darkTheme' : 'blueTheme';
         setSettings({ ...nextSettings, active_vault_id: normalizedActiveVaultId });
         setActiveVaultId(normalizedActiveVaultId);
       })

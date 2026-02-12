@@ -45,6 +45,7 @@ export function useVaultSettings({
         }
 
         setSettings({ ...appliedSettings, active_vault_id: normalizedActiveVaultId });
+        document.documentElement.dataset.theme = appliedSettings.theme === 'darkTheme' ? 'darkTheme' : 'blueTheme';
         await refreshVaults();
         return true;
       } catch (err) {
