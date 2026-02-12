@@ -50,7 +50,6 @@ export const CustomFieldModal: React.FC<CustomFieldModalProps> = ({
               id="customfield-name"
               className="input"
               value={name}
-              placeholder={t('customFields.namePlaceholder')}
               onChange={(event) => onChangeName(event.target.value)}
             />
             {error && <div className="form-error">{error}</div>}

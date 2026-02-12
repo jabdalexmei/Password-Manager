@@ -75,7 +75,6 @@
   "customFields.editFields": "Edit fields",
   "customFields.modalTitle": "Add custom field",
   "customFields.nameLabel": "Field name",
-  "customFields.namePlaceholder": "e.g. API key",
   "customFields.rename": "Rename field",
   "customFields.delete": "Delete field",
   "customFields.renameTitle": "Rename field",

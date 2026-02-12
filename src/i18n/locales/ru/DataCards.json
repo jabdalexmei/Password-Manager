@@ -75,7 +75,6 @@
   "customFields.editFields": "Изменить поля",
   "customFields.modalTitle": "Добавить пользовательское поле",
   "customFields.nameLabel": "Название поля",
-  "customFields.namePlaceholder": "например, API key",
   "customFields.rename": "Переименовать поле",
   "customFields.delete": "Удалить поле",
   "customFields.renameTitle": "Переименовать поле",
