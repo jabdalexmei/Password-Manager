@@ -1,18 +1,30 @@
---- a/src-tauri/src/data/sqlite/schema_migration.rs
-+++ b/src-tauri/src/data/sqlite/schema_migration.rs
-@@ -66,6 +66,15 @@
-         return schema_initialization::schema_initialization(conn);
-     }
- 
-+    if version == 2 || version == 3 {
-+        conn.execute_batch(&format!("PRAGMA user_version = {};", schema_initialization::SCHEMA_VERSION))
-+            .map_err(|e| {
-+                log_sqlite_err("schema_migrate.stamp_user_version", &e);
-+                ErrorCodeString::new("DB_QUERY_FAILED")
-+            })?;
-+        return Ok(());
-+    }
-+
-     log::warn!("[DB][schema_migrate] unsupported schema version={version}");
-     Err(ErrorCodeString::new("DB_MIGRATION_FAILED"))
- }
+--- a/src/features/Vault/components/modals/CustomFieldModal.tsx
++++ b/src/features/Vault/components/modals/CustomFieldModal.tsx
+@@ -50,7 +50,6 @@
+               id="customfield-name"
+               className="input"
+               value={name}
+-              placeholder={t('customFields.namePlaceholder')}
+               onChange={(event) => onChangeName(event.target.value)}
+             />
+             {error && <div className="form-error">{error}</div>}
+--- a/src/i18n/locales/en/DataCards.json
++++ b/src/i18n/locales/en/DataCards.json
+@@ -75,7 +75,6 @@
+   "customFields.editFields": "Edit fields",
+   "customFields.modalTitle": "Add custom field",
+   "customFields.nameLabel": "Field name",
+-  "customFields.namePlaceholder": "e.g. API key",
+   "customFields.rename": "Rename field",
+   "customFields.delete": "Delete field",
+   "customFields.renameTitle": "Rename field",
+--- a/src/i18n/locales/ru/DataCards.json
++++ b/src/i18n/locales/ru/DataCards.json
+@@ -75,7 +75,6 @@
+   "customFields.editFields": "Изменить поля",
+   "customFields.modalTitle": "Добавить пользовательское поле",
+   "customFields.nameLabel": "Название поля",
+-  "customFields.namePlaceholder": "например, API key",
+   "customFields.rename": "Переименовать поле",
+   "customFields.delete": "Удалить поле",
+   "customFields.renameTitle": "Переименовать поле",
