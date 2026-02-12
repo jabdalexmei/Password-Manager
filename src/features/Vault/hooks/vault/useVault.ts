@@ -51,7 +51,7 @@ export function useVault(profileId: string, onLocked: () => void) {
     setError,
   } = useVaultState({ profileId });
 
-  const { searchInput, setSearchInput, debouncedSearchQuery, searchMatchIds } = useVaultSearch();
+  const { searchInput, setSearchInput, debouncedSearchQuery, searchMatchIds } = useVaultSearch(activeVaultId);
 
   const isTrashMode = selectedNav === 'deleted';
   const selectedFolderId = typeof selectedNav === 'object' ? selectedNav.folderId : null;

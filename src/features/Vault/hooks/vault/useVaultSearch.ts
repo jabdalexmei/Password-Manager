@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { searchDataCards } from '../../api/vaultApi';
 import { useDebouncedValue } from '../useDebouncedValue';
 
-export function useVaultSearch() {
+export function useVaultSearch(activeVaultId: string) {
   const [searchInput, setSearchInput] = useState('');
   const debouncedSearchQuery = useDebouncedValue(searchInput, 200);
   const [searchMatchIds, setSearchMatchIds] = useState<Set<string> | null>(null);
@@ -29,7 +29,7 @@ export function useVaultSearch() {
     return () => {
       cancelled = true;
     };
-  }, [debouncedSearchQuery]);
+  }, [activeVaultId, debouncedSearchQuery]);
 
   return {
     searchInput,
