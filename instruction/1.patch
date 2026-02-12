@@ -1,55 +1,105 @@
---- a/src/features/Vault/layout/VaultDetailsPane.tsx
-+++ b/src/features/Vault/layout/VaultDetailsPane.tsx
-@@ -70,7 +70,13 @@
- 
-   return (
-     <div className="vault-panel-wrapper">
--      <div className="vault-section-header">{tVault('information.title')}</div>
-+      <div className="datacards-header">
-+        <div className="vault-section-header">{tVault('information.title')}</div>
+diff --git a/src/app/bootstrap.ts b/src/app/bootstrap.ts
+new file mode 100644
+index 0000000..4cddb38
+--- /dev/null
++++ b/src/app/bootstrap.ts
+@@ -0,0 +1,15 @@
++const THEME_STORAGE_KEY = 'uiTheme';
 +
-+        <div className="datacards-header__right">
-+          <div className="datacards-header__spacer" aria-hidden="true" />
-+        </div>
-+      </div>
-       <div className="vault-empty">{tDetails('empty.selectPrompt')}</div>
-     </div>
-   );
---- a/src/features/Vault/components/Details/Details.tsx
-+++ b/src/features/Vault/components/Details/Details.tsx
-@@ -131,7 +131,15 @@
-     }));
-   };
- 
--  const informationTitle = <div className="vault-section-header">{tVault('information.title')}</div>;
-+  const informationTitle = (
-+    <div className="datacards-header">
-+      <div className="vault-section-header">{tVault('information.title')}</div>
++const isSupportedTheme = (value: unknown): value is 'blueTheme' | 'darkTheme' =>
++  value === 'blueTheme' || value === 'darkTheme';
 +
-+      <div className="datacards-header__right">
-+        <div className="datacards-header__spacer" aria-hidden="true" />
-+      </div>
-+    </div>
-+  );
- 
-   if (!card) {
-     return (
---- a/src/features/Vault/components/BankCards/BankCardDetails.tsx
-+++ b/src/features/Vault/components/BankCards/BankCardDetails.tsx
-@@ -133,7 +133,15 @@
-     };
-   }, []);
- 
--  const informationTitle = <div className="vault-section-header">{tVault('information.title')}</div>;
-+  const informationTitle = (
-+    <div className="datacards-header">
-+      <div className="vault-section-header">{tVault('information.title')}</div>
++try {
++  const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
++  if (isSupportedTheme(storedTheme)) {
++    document.documentElement.dataset.theme = storedTheme;
++  }
++} catch {
++  // Ignore storage errors in restricted environments.
++}
 +
-+      <div className="datacards-header__right">
-+        <div className="datacards-header__spacer" aria-hidden="true" />
-+      </div>
-+    </div>
-+  );
++void import('./main');
+diff --git a/src/features/Vault/hooks/useBankCards.ts b/src/features/Vault/hooks/useBankCards.ts
+index 577e1fa..608e1b0 100644
+--- a/src/features/Vault/hooks/useBankCards.ts
++++ b/src/features/Vault/hooks/useBankCards.ts
+@@ -216,7 +216,13 @@ export function useBankCards(
+       try {
+         await updateSettings(nextSettings);
+         setSettings(nextSettings);
+-        document.documentElement.dataset.theme = nextSettings.theme === 'darkTheme' ? 'darkTheme' : 'blueTheme';
++        const themeToApply = nextSettings.theme === 'darkTheme' ? 'darkTheme' : 'blueTheme';
++        document.documentElement.dataset.theme = themeToApply;
++        try {
++          window.localStorage.setItem('uiTheme', themeToApply);
++        } catch {
++          // Ignore storage errors in restricted environments.
++        }
+         return true;
+       } catch (err) {
+         handleError(err);
+@@ -267,7 +273,13 @@ export function useBankCards(
+     refreshTrash();
+     getSettings()
+       .then((nextSettings) => {
+-        document.documentElement.dataset.theme = nextSettings.theme === 'darkTheme' ? 'darkTheme' : 'blueTheme';
++        const themeToApply = nextSettings.theme === 'darkTheme' ? 'darkTheme' : 'blueTheme';
++        document.documentElement.dataset.theme = themeToApply;
++        try {
++          window.localStorage.setItem('uiTheme', themeToApply);
++        } catch {
++          // Ignore storage errors in restricted environments.
++        }
+         setSettings(nextSettings);
+       })
+       .catch(handleError);
+diff --git a/src/features/Vault/hooks/vault/useVault.ts b/src/features/Vault/hooks/vault/useVault.ts
+index 8d31eee..d1685af 100644
+--- a/src/features/Vault/hooks/vault/useVault.ts
++++ b/src/features/Vault/hooks/vault/useVault.ts
+@@ -185,7 +185,13 @@ export function useVault(profileId: string, onLocked: () => void) {
+     getSettings()
+       .then((nextSettings) => {
+         const normalizedActiveVaultId = nextSettings.active_vault_id || DEFAULT_ACTIVE_VAULT_ID;
+-        document.documentElement.dataset.theme = nextSettings.theme === 'darkTheme' ? 'darkTheme' : 'blueTheme';
++        const themeToApply = nextSettings.theme === 'darkTheme' ? 'darkTheme' : 'blueTheme';
++        document.documentElement.dataset.theme = themeToApply;
++        try {
++          window.localStorage.setItem('uiTheme', themeToApply);
++        } catch {
++          // Ignore storage errors in restricted environments.
++        }
+         setSettings({ ...nextSettings, active_vault_id: normalizedActiveVaultId });
+         setActiveVaultId(normalizedActiveVaultId);
+       })
+diff --git a/src/features/Vault/hooks/vault/useVaultSettings.ts b/src/features/Vault/hooks/vault/useVaultSettings.ts
+index afe1b38..5c3ddd1 100644
+--- a/src/features/Vault/hooks/vault/useVaultSettings.ts
++++ b/src/features/Vault/hooks/vault/useVaultSettings.ts
+@@ -45,7 +45,13 @@ export function useVaultSettings({
+         }
  
-   if (!card) {
-     return (
+         setSettings({ ...appliedSettings, active_vault_id: normalizedActiveVaultId });
+-        document.documentElement.dataset.theme = appliedSettings.theme === 'darkTheme' ? 'darkTheme' : 'blueTheme';
++        const themeToApply = appliedSettings.theme === 'darkTheme' ? 'darkTheme' : 'blueTheme';
++        document.documentElement.dataset.theme = themeToApply;
++        try {
++          window.localStorage.setItem('uiTheme', themeToApply);
++        } catch {
++          // Ignore storage errors in restricted environments.
++        }
+         await refreshVaults();
+         return true;
+       } catch (err) {
+diff --git a/src/index.html b/src/index.html
+index 8e5e4fd..d2212a4 100644
+--- a/src/index.html
++++ b/src/index.html
+@@ -7,6 +7,6 @@
+   </head>
+   <body>
+     <div id="root"></div>
+-    <script type="module" src="/app/main.tsx"></script>
++    <script type="module" src="/app/bootstrap.ts"></script>
+   </body>
+ </html>
