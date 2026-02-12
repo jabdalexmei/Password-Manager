@@ -199,6 +199,7 @@ fn main() {
             restore_all_deleted_datacards,
             purge_all_deleted_datacards,
             get_datacard_password_history,
+            delete_datacard_password_history_entry,
             clear_datacard_password_history,
             get_settings,
             update_settings,

@@ -262,6 +262,10 @@ export async function clearPasswordHistory(datacardId: string): Promise<void> {
   await invoke('clear_datacard_password_history', { datacardId });
 }
 
+export async function deletePasswordHistoryEntry(entryId: string): Promise<void> {
+  await invoke('delete_datacard_password_history_entry', { entryId });
+}
+
 export async function listAttachments(datacardId: string): Promise<BackendAttachmentMeta[]> {
   return invoke('list_attachments', { datacardId });
 }
