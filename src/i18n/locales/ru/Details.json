@@ -46,6 +46,7 @@
   "attachments.previewUnsupported": "Предпросмотр не поддерживается. Используйте скачивание.",
   "attachments.previewTooLarge": "Вложение слишком большое для предпросмотра",
   "attachments.loadingPreview": "Загрузка предпросмотра...",
+  "attachments.pdfPreviewTitle": "Предпросмотр PDF",
   "attachments.downloadSuccess": "Файл сохранён",
   "attachments.downloadError": "Не удалось скачать вложение",
   "attachments.deleteTitle": "Удалить вложение?",

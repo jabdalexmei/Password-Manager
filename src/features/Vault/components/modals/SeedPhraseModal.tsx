@@ -26,6 +26,7 @@ export const SeedPhraseModal: React.FC<SeedPhraseModalProps> = ({
   onSave,
 }) => {
   const { t } = useTranslation('DataCards');
+  const { t: tCommon } = useTranslation('Common');
   const existingWords = useMemo(() => (existingPhrase ? splitWords(existingPhrase) : []), [existingPhrase]);
 
   const [wordCount, setWordCount] = useState<WordCount>(12);
@@ -124,7 +125,12 @@ export const SeedPhraseModal: React.FC<SeedPhraseModalProps> = ({
       }}
     >
       <div className="dialog seedphrase-dialog" role="dialog" aria-modal="true" aria-labelledby="seedphrase-title">
-        <button className="dialog-close dialog-close--topright" type="button" aria-label="Close" onClick={onCancel}>
+        <button
+          className="dialog-close dialog-close--topright"
+          type="button"
+          aria-label={tCommon('action.close')}
+          onClick={onCancel}
+        >
           {'\u00D7'}
         </button>
         <div className="dialog-header">

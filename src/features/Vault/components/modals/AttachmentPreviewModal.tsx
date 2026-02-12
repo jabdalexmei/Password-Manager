@@ -66,7 +66,7 @@ export default function AttachmentPreviewModal({
           {loading && <div className="muted">{t('attachments.loadingPreview')}</div>}
           {!loading && isImage && <img className="attachment-preview-image" src={objectUrl} alt={fileName} />}
           {!loading && isPdf && (
-            <iframe className="attachment-preview-pdf" src={objectUrl} title={fileName || 'PDF Preview'} />
+            <iframe className="attachment-preview-pdf" src={objectUrl} title={fileName || t('attachments.pdfPreviewTitle')} />
           )}
           {!loading && isText && textContent && <pre className="attachment-preview-text">{textContent}</pre>}
           {!loading && !isImage && !isPdf && !isText && (

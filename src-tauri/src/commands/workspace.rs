@@ -236,11 +236,11 @@ pub async fn workspace_create_via_dialog(
 ) -> Result<bool> {
     let app_state = state.inner().clone();
     tauri::async_runtime::spawn_blocking(move || {
-        let selection = app
-            .dialog()
-            .file()
-            .set_title(dialog_title.unwrap_or_else(|| "Select data folder".to_string()))
-            .blocking_pick_folder();
+        let mut dialog_builder = app.dialog().file();
+        if let Some(title) = dialog_title.filter(|value| !value.trim().is_empty()) {
+            dialog_builder = dialog_builder.set_title(title);
+        }
+        let selection = dialog_builder.blocking_pick_folder();
         let Some(fp) = selection else {
             return Ok(false);
         };

@@ -45,6 +45,10 @@
   "action.save": "Save",
   "dialog.createTitle": "Create data card",
   "dialog.editTitle": "Edit data card",
+  "dialog.closeUnsavedCreate.title": "Close without saving?",
+  "dialog.closeUnsavedCreate.description": "Your changes will be lost.",
+  "dialog.closeUnsavedCreate.cancel": "Continue editing",
+  "dialog.closeUnsavedCreate.confirm": "Close",
   "label.markFavorite": "Mark as favorite",
   "validation.titleRequired": "Title is required",
   "validation.folderNotFound": "Folder not found",
@@ -95,6 +99,10 @@
     "addAction": "Add 2FA",
     "editAction": "Edit 2FA",
     "remove": "Remove 2FA",
+    "defaults": {
+      "issuer": "Vault",
+      "label": "Account"
+    },
     "title": "Two-factor authentication (TOTP)",
     "tab": {
       "text": "Text",

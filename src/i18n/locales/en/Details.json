@@ -46,6 +46,7 @@
   "attachments.previewUnsupported": "Preview not supported. Use Download.",
   "attachments.previewTooLarge": "Attachment too large to preview",
   "attachments.loadingPreview": "Loading preview...",
+  "attachments.pdfPreviewTitle": "PDF preview",
   "attachments.downloadSuccess": "File saved",
   "attachments.downloadError": "Unable to download attachment",
   "attachments.deleteTitle": "Delete attachment?",

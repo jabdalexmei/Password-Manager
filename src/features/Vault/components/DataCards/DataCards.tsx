@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from '../../../../shared/lib/i18n';
 import { useToaster } from '../../../../shared/components/Toaster';
+import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
 import { generatePassword, PasswordGeneratorOptions } from '../../utils/passwordGenerator';
 import { DataCardsViewModel } from './useDataCards';
 import {
@@ -143,6 +144,7 @@ export function DataCards({
   const [seedPhraseTargetDialogId, setSeedPhraseTargetDialogId] = useState<
     'datacard-create-dialog' | 'datacard-edit-dialog' | null
   >(null);
+  const [isCloseCreateConfirmOpen, setIsCloseCreateConfirmOpen] = useState(false);
   const genPwdTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const genPwdLastCopiedRef = useRef<string | null>(null);
   const actionMenuRef = useRef<HTMLDivElement | null>(null);
@@ -239,14 +241,24 @@ export function DataCards({
     setRenameError(null);
   }, [viewModel]);
 
-  const handleCloseCreateModal = useCallback(() => {
+  const closeCreateModalImmediately = useCallback(() => {
     viewModel.closeCreateModal();
+    setIsCloseCreateConfirmOpen(false);
     setIsEditFieldsMode(false);
     setIsRenameModalOpen(false);
     setRenameError(null);
     setRenameTargetRowId(null);
     setRenameTargetDialogId(null);
   }, [viewModel]);
+
+  const handleCloseCreateModal = useCallback(() => {
+    if (isCreateSubmitting) return;
+    if (viewModel.isCreateDirty) {
+      setIsCloseCreateConfirmOpen(true);
+      return;
+    }
+    closeCreateModalImmediately();
+  }, [closeCreateModalImmediately, isCreateSubmitting, viewModel.isCreateDirty]);
 
   useEffect(() => {
     if (!isGeneratorOpen) return;
@@ -360,6 +372,7 @@ export function DataCards({
     setTwoFactorTargetDialogId(null);
     setIsSeedPhraseModalOpen(false);
     setSeedPhraseTargetDialogId(null);
+    setIsCloseCreateConfirmOpen(false);
   }, [isCreateOpen, isEditOpen]);
 
   useEffect(() => {
@@ -390,6 +403,10 @@ export function DataCards({
           setRenameError(null);
           return;
         }
+        if (isCloseCreateConfirmOpen) {
+          setIsCloseCreateConfirmOpen(false);
+          return;
+        }
         if (isEditOpen) handleCloseEditModal();
         if (isCreateOpen) handleCloseCreateModal();
       }
@@ -404,6 +421,7 @@ export function DataCards({
     is2faModalOpen,
     isSeedPhraseModalOpen,
     isCreateOpen,
+    isCloseCreateConfirmOpen,
     isCustomFieldModalOpen,
     isEditOpen,
     isRenameModalOpen,
@@ -429,6 +447,8 @@ export function DataCards({
     const v = t('label.empty');
     return v === 'label.empty' ? tCommon('label.empty') : v;
   })();
+  const defaultTwoFactorIssuer = t('twoFactor.defaults.issuer');
+  const defaultTwoFactorLabel = t('twoFactor.defaults.label');
 
   const hasAnyOverlayOpen =
     isCreateOpen ||
@@ -437,7 +457,8 @@ export function DataCards({
     isCustomFieldModalOpen ||
     isRenameModalOpen ||
     is2faModalOpen ||
-    isSeedPhraseModalOpen;
+    isSeedPhraseModalOpen ||
+    isCloseCreateConfirmOpen;
 
   if (suppressEmptyState && cards.length === 0 && !hasAnyOverlayOpen) {
     return null;
@@ -576,6 +597,16 @@ export function DataCards({
         />
       )}
 
+      <ConfirmDialog
+        open={isCloseCreateConfirmOpen}
+        title={t('dialog.closeUnsavedCreate.title')}
+        description={t('dialog.closeUnsavedCreate.description')}
+        confirmLabel={t('dialog.closeUnsavedCreate.confirm')}
+        cancelLabel={t('dialog.closeUnsavedCreate.cancel')}
+        onCancel={() => setIsCloseCreateConfirmOpen(false)}
+        onConfirm={closeCreateModalImmediately}
+      />
+
       {isCustomFieldModalOpen && (
         <React.Suspense fallback={null}>
           <LazyCustomFieldModal
@@ -597,9 +628,7 @@ export function DataCards({
                   : viewModel.addEditCustomFieldByName(customFieldName);
 
               if (result.ok === false) {
-                setCustomFieldModalError(
-                  result.reason === 'EMPTY' ? t('customFields.errorEmpty') : t('customFields.errorDuplicate')
-                );
+                setCustomFieldModalError(t('customFields.errorEmpty'));
                 return;
               }
 
@@ -636,9 +665,7 @@ export function DataCards({
                   ? viewModel.renameCreateCustomFieldById(renameTargetRowId, renameName)
                   : viewModel.renameEditCustomFieldById(renameTargetRowId, renameName);
               if (result.ok === false) {
-                setRenameError(
-                  result.reason === 'EMPTY' ? t('customFields.errorEmpty') : t('customFields.errorDuplicate')
-                );
+                setRenameError(t('customFields.errorEmpty'));
                 return;
               }
 
@@ -679,12 +706,12 @@ export function DataCards({
             defaults={{
               issuer:
                 twoFactorTargetDialogId === 'datacard-create-dialog'
-                  ? ((viewModel.createForm.title ?? 'Vault').trim() || 'Vault')
-                  : ((viewModel.editForm?.title ?? 'Vault').trim() || 'Vault'),
+                  ? ((viewModel.createForm.title ?? defaultTwoFactorIssuer).trim() || defaultTwoFactorIssuer)
+                  : ((viewModel.editForm?.title ?? defaultTwoFactorIssuer).trim() || defaultTwoFactorIssuer),
               label:
                 twoFactorTargetDialogId === 'datacard-create-dialog'
-                  ? ((viewModel.createForm.title ?? 'Account').trim() || 'Account')
-                  : ((viewModel.editForm?.title ?? 'Account').trim() || 'Account'),
+                  ? ((viewModel.createForm.title ?? defaultTwoFactorLabel).trim() || defaultTwoFactorLabel)
+                  : ((viewModel.editForm?.title ?? defaultTwoFactorLabel).trim() || defaultTwoFactorLabel),
             }}
             onCancel={() => {
               setIs2faModalOpen(false);

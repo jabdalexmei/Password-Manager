@@ -124,18 +124,28 @@
 }
 
 .datacard-top {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: flex-start;
-  justify-content: flex-start;
   gap: 12px;
 }
 
 .datacard-badges {
-  margin-left: auto;
   display: flex;
-  align-items: flex-start;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-content: flex-start;
+  align-items: center;
   gap: 8px;
   flex: 0 0 auto;
+  max-width: 220px;
+}
+
+.datacard-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .datacard-favorite {
@@ -151,6 +161,14 @@
   color: var(--color-text-muted);
   font-size: 12px;
   line-height: 16px;
+  min-width: 0;
+}
+
+.datacard-meta > span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .datacard-meta-empty {
@@ -182,4 +200,3 @@
 .muted {
   color: var(--color-text-muted);
 }
-

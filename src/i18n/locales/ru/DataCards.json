@@ -45,6 +45,10 @@
   "action.save": "Сохранить",
   "dialog.createTitle": "Создать карточку данных",
   "dialog.editTitle": "Редактировать карточку данных",
+  "dialog.closeUnsavedCreate.title": "Закрыть без сохранения?",
+  "dialog.closeUnsavedCreate.description": "Введённые данные будут потеряны.",
+  "dialog.closeUnsavedCreate.cancel": "Продолжить редактирование",
+  "dialog.closeUnsavedCreate.confirm": "Закрыть",
   "label.markFavorite": "Отметить как избранное",
   "validation.titleRequired": "Требуется название",
   "validation.folderNotFound": "Папка не найдена",
@@ -95,6 +99,10 @@
     "addAction": "Добавить 2FA",
     "editAction": "Изменить 2FA",
     "remove": "Удалить 2FA",
+    "defaults": {
+      "issuer": "Хранилище",
+      "label": "Аккаунт"
+    },
     "title": "Двухфакторная аутентификация (TOTP)",
     "tab": {
       "text": "Текст",

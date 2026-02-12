@@ -65,7 +65,19 @@ export function DataCardListItem({
       }}
     >
       <div className="datacard-top">
-        <div className="datacard-title">{displayTitleText}</div>
+        <div className="datacard-main">
+          <div className="datacard-title">{displayTitleText}</div>
+
+          {metaLines.length > 0 && (
+            <div className="datacard-meta-lines">
+              {metaLines.map((line, idx) => (
+                <div key={`${card.id}-meta-${idx}`} className="datacard-meta">
+                  <span>{line}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
         <DataCardBadges
           isFavorite={Boolean(card.isFavorite)}
           hasAttachments={Boolean(card.hasAttachments)}
@@ -74,16 +86,6 @@ export function DataCardListItem({
           t={t}
         />
       </div>
-
-      {metaLines.length > 0 && (
-        <div className="datacard-meta-lines">
-          {metaLines.map((line, idx) => (
-            <div key={`${card.id}-meta-${idx}`} className="datacard-meta">
-              <span>{line}</span>
-            </div>
-          ))}
-        </div>
-      )}
     </button>
   );
 }

@@ -96,7 +96,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
   const handleCreate = useCallback(async () => {
     setBusy(true);
     try {
-      const ok = await workspaceCreateViaDialog();
+      const ok = await workspaceCreateViaDialog(t('selectDataFolderDialogTitle'));
       if (!ok) return;
       await refresh();
       onWorkspaceReady();
@@ -115,7 +115,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
     } finally {
       setBusy(false);
     }
-  }, [onWorkspaceReady, refresh]);
+  }, [onWorkspaceReady, refresh, t]);
 
   const handleRestoreFromBackup = useCallback(async () => {
     setBusy(true);
@@ -152,7 +152,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
   const handleOpenDataFolder = useCallback(async () => {
     setBusy(true);
     try {
-      const ok = await workspaceCreateViaDialog();
+      const ok = await workspaceCreateViaDialog(t('selectDataFolderDialogTitle'));
       if (!ok) return;
 
       await refresh();

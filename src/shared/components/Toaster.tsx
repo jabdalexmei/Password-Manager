@@ -12,6 +12,7 @@ type ToasterContextValue = {
 const ToasterContext = createContext<ToasterContextValue | undefined>(undefined);
 
 export const ToasterProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { t: tCommon } = useTranslation('Common');
   const [toasts, setToasts] = useState<Toast[]>([]);
   const nextIdRef = useRef(0);
 
@@ -46,9 +47,9 @@ export const ToasterProvider: React.FC<{ children: React.ReactNode }> = ({ child
               type="button"
               className="toast-close"
               onClick={() => dismiss(toast.id)}
-              aria-label="Close"
+              aria-label={tCommon('aria.dismissToast')}
             >
-              ×
+              {'\u00D7'}
             </button>
           </div>
         ))}
@@ -65,3 +66,4 @@ export const useToaster = () => {
   }
   return ctx;
 };
+

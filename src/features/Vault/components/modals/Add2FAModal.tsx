@@ -38,6 +38,7 @@ export const Add2FAModal: React.FC<Props> = ({
   onRemove,
 }) => {
   const { t } = useTranslation('DataCards');
+  const { t: tCommon } = useTranslation('Common');
   const [tab, setTab] = useState<'text' | 'qr'>('text');
   const [textValue, setTextValue] = useState(existingUri ?? '');
   const [textError, setTextError] = useState<string | null>(null);
@@ -276,7 +277,12 @@ export const Add2FAModal: React.FC<Props> = ({
       }}
     >
       <div className="dialog" role="dialog" aria-modal="true" aria-labelledby="add2fa-title">
-        <button className="dialog-close dialog-close--topright" type="button" aria-label="Close" onClick={onCancel}>
+        <button
+          className="dialog-close dialog-close--topright"
+          type="button"
+          aria-label={tCommon('action.close')}
+          onClick={onCancel}
+        >
           {'\u00D7'}
         </button>
         <div className="dialog-header">

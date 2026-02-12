@@ -6,6 +6,7 @@
   "error": "Unable to load workspaces.",
   "empty": "No workspaces yet. Use Create, Create in the default path, or Open data folder to select a folder and initialize it.",
   "chooseFolder": "Choose data folder",
+  "selectDataFolderDialogTitle": "Select data folder",
   "chooseBackupFile": "Choose backup file",
   "create": "Create",
   "createDefaultPath": "Create in the default path",

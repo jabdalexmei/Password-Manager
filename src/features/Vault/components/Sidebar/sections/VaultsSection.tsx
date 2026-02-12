@@ -211,7 +211,6 @@ export function VaultsSection({
                   setVaultName(e.target.value);
                   if (vaultError) setVaultError(null);
                 }}
-                placeholder={t('dialog.newVault.placeholder')}
               />
               {vaultError && <div className="form-error">{vaultError}</div>}
             </div>
