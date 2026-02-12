@@ -1,42 +1,216 @@
---- a/src/features/Vault/hooks/vault/useVaultSearch.ts
-+++ b/src/features/Vault/hooks/vault/useVaultSearch.ts
-@@ -2,7 +2,7 @@
- import { searchDataCards } from '../../api/vaultApi';
- import { useDebouncedValue } from '../useDebouncedValue';
+diff --git a/src-tauri/src/services/settings_service.rs b/src-tauri/src/services/settings_service.rs
+index 5932222..2c24fae 100644
+--- a/src-tauri/src/services/settings_service.rs
++++ b/src-tauri/src/services/settings_service.rs
+@@ -47,6 +47,7 @@ fn validate_settings(settings: &UserSettings) -> Result<()> {
+     let valid_sort_field =
+         ["created_at", "updated_at", "title"].contains(&settings.default_sort_field.as_str());
+     let valid_sort_direction = ["ASC", "DESC"].contains(&settings.default_sort_direction.as_str());
++    let valid_theme = ["blueTheme", "darkTheme"].contains(&settings.theme.as_str());
+     let valid_active_vault_id = !settings.active_vault_id.trim().is_empty();
  
--export function useVaultSearch() {
-+export function useVaultSearch(activeVaultId: string) {
-   const [searchInput, setSearchInput] = useState('');
-   const debouncedSearchQuery = useDebouncedValue(searchInput, 200);
-   const [searchMatchIds, setSearchMatchIds] = useState<Set<string> | null>(null);
-@@ -29,7 +29,7 @@
-     return () => {
-       cancelled = true;
-     };
--  }, [debouncedSearchQuery]);
-+  }, [activeVaultId, debouncedSearchQuery]);
- 
-   return {
-     searchInput,
---- a/src/features/Vault/hooks/vault/useVault.ts
-+++ b/src/features/Vault/hooks/vault/useVault.ts
-@@ -51,7 +51,7 @@
-     setError,
-   } = useVaultState({ profileId });
- 
--  const { searchInput, setSearchInput, debouncedSearchQuery, searchMatchIds } = useVaultSearch();
-+  const { searchInput, setSearchInput, debouncedSearchQuery, searchMatchIds } = useVaultSearch(activeVaultId);
- 
-   const isTrashMode = selectedNav === 'deleted';
-   const selectedFolderId = typeof selectedNav === 'object' ? selectedNav.folderId : null;
---- a/src/features/Vault/hooks/useBankCards.ts
-+++ b/src/features/Vault/hooks/useBankCards.ts
-@@ -94,7 +94,7 @@
-     return () => {
-       cancelled = true;
-     };
--  }, [debouncedSearchQuery]);
-+  }, [activeVaultId, debouncedSearchQuery]);
+     if valid_values
+@@ -55,6 +56,7 @@ fn validate_settings(settings: &UserSettings) -> Result<()> {
+         && valid_frequency
+         && valid_sort_field
+         && valid_sort_direction
++        && valid_theme
+         && valid_active_vault_id
+     {
+         Ok(())
+diff --git a/src-tauri/src/types.rs b/src-tauri/src/types.rs
+index 91df544..48ad035 100644
+--- a/src-tauri/src/types.rs
++++ b/src-tauri/src/types.rs
+@@ -375,6 +375,7 @@ impl Default for UserSettings {
+             default_sort_direction: "DESC".to_string(),
+             mask_password_by_default: true,
+             multiply_vaults_enabled: default_multiply_vaults_enabled(),
++            theme: default_theme(),
+             active_vault_id: default_active_vault_id(),
+         }
+     }
+diff --git a/src/features/Vault/components/modals/SettingsModal/SettingsModal.tsx b/src/features/Vault/components/modals/SettingsModal/SettingsModal.tsx
+index 5c31844..933ddae 100644
+--- a/src/features/Vault/components/modals/SettingsModal/SettingsModal.tsx
++++ b/src/features/Vault/components/modals/SettingsModal/SettingsModal.tsx
+@@ -12,6 +12,7 @@ import {
+ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../../../../../shared/ui/dialog';
+ import { SettingsSidebar, type SettingsSection } from './components/SettingsSidebar';
+ import { GeneralSection } from './sections/GeneralSection';
++import { AppearanceSection } from './sections/AppearanceSection';
+ import { ProfileSection } from './sections/ProfileSection';
+ import { SecuritySection } from './sections/SecuritySection';
+ import { FeaturesSection } from './sections/FeaturesSection';
+@@ -60,6 +61,7 @@ export function SettingsModal({
+   const [trashAutoCleanupEnabled, setTrashAutoCleanupEnabled] = useState(false);
+   const [trashRetentionDays, setTrashRetentionDays] = useState('');
+   const [multiplyVaultsEnabled, setMultiplyVaultsEnabled] = useState(false);
++  const [theme, setTheme] = useState<'blueTheme' | 'darkTheme'>('blueTheme');
+   const [renameProfileOpen, setRenameProfileOpen] = useState(false);
+   const [renameProfileValue, setRenameProfileValue] = useState('');
+   const [isRenamingProfile, setIsRenamingProfile] = useState(false);
+@@ -87,6 +89,7 @@ export function SettingsModal({
+     setTrashAutoCleanupEnabled(settings.trash_auto_cleanup_enabled);
+     setTrashRetentionDays(String(settings.trash_retention_days));
+     setMultiplyVaultsEnabled(settings.multiply_vaults_enabled);
++    setTheme(settings.theme === 'darkTheme' ? 'darkTheme' : 'blueTheme');
+   }, [open, settings]);
  
    useEffect(() => {
-     const handler = (event: Event) => {
+@@ -268,6 +271,7 @@ export function SettingsModal({
+       auto_backup_interval_minutes: Math.round(interval),
+       backup_max_copies: Math.round(max),
+       multiply_vaults_enabled: multiplyVaultsEnabled,
++      theme: theme,
+     });
+   };
+ 
+@@ -333,6 +337,10 @@ export function SettingsModal({
+                 <GeneralSection language={language} onLanguageChange={handleLanguageChange} tVault={tVault} disabled={busy} />
+               )}
+ 
++              {activeSection === 'appearance' && (
++                <AppearanceSection theme={theme} onThemeChange={setTheme} tVault={tVault} disabled={busy} />
++              )}
++
+               {activeSection === 'profile' && (
+                 <ProfileSection
+                   busy={busy}
+diff --git a/src/features/Vault/components/modals/SettingsModal/components/SettingsSidebar.tsx b/src/features/Vault/components/modals/SettingsModal/components/SettingsSidebar.tsx
+index 1aa2f0e..c237433 100644
+--- a/src/features/Vault/components/modals/SettingsModal/components/SettingsSidebar.tsx
++++ b/src/features/Vault/components/modals/SettingsModal/components/SettingsSidebar.tsx
+@@ -1,6 +1,6 @@
+ ﻿import React from 'react';
+ 
+-export type SettingsSection = 'general' | 'profile' | 'security' | 'features' | 'vaults' | 'backups';
++export type SettingsSection = 'general' | 'profile' | 'security' | 'features' | 'vaults' | 'backups' | 'appearance';
+ 
+ type TranslateFn = (key: string, params?: Record<string, string | number>) => string;
+ 
+@@ -23,6 +23,14 @@ export function SettingsSidebar({ activeSection, onChangeSection, tVault }: Sett
+         >
+           {tVault('settingsModal.generalTitle')}
+         </button>
++        <button
++          type="button"
++          className="settings-nav-item"
++          data-active={activeSection === 'appearance' ? 'true' : 'false'}
++          onClick={() => onChangeSection('appearance')}
++        >
++          {tVault('settingsModal.appearanceTitle')}
++        </button>
+         <button
+           type="button"
+           className="settings-nav-item"
+diff --git a/src/features/Vault/hooks/useBankCards.ts b/src/features/Vault/hooks/useBankCards.ts
+index e2adc9d..577e1fa 100644
+--- a/src/features/Vault/hooks/useBankCards.ts
++++ b/src/features/Vault/hooks/useBankCards.ts
+@@ -216,6 +216,7 @@ export function useBankCards(
+       try {
+         await updateSettings(nextSettings);
+         setSettings(nextSettings);
++        document.documentElement.dataset.theme = nextSettings.theme === 'darkTheme' ? 'darkTheme' : 'blueTheme';
+         return true;
+       } catch (err) {
+         handleError(err);
+@@ -265,7 +266,10 @@ export function useBankCards(
+     refreshActive();
+     refreshTrash();
+     getSettings()
+-      .then(setSettings)
++      .then((nextSettings) => {
++        document.documentElement.dataset.theme = nextSettings.theme === 'darkTheme' ? 'darkTheme' : 'blueTheme';
++        setSettings(nextSettings);
++      })
+       .catch(handleError);
+   }, [activeVaultId, handleError, refreshActive, refreshTrash]);
+ 
+diff --git a/src/features/Vault/hooks/vault/useVault.ts b/src/features/Vault/hooks/vault/useVault.ts
+index d74565f..8d31eee 100644
+--- a/src/features/Vault/hooks/vault/useVault.ts
++++ b/src/features/Vault/hooks/vault/useVault.ts
+@@ -185,6 +185,7 @@ export function useVault(profileId: string, onLocked: () => void) {
+     getSettings()
+       .then((nextSettings) => {
+         const normalizedActiveVaultId = nextSettings.active_vault_id || DEFAULT_ACTIVE_VAULT_ID;
++        document.documentElement.dataset.theme = nextSettings.theme === 'darkTheme' ? 'darkTheme' : 'blueTheme';
+         setSettings({ ...nextSettings, active_vault_id: normalizedActiveVaultId });
+         setActiveVaultId(normalizedActiveVaultId);
+       })
+diff --git a/src/features/Vault/hooks/vault/useVaultSettings.ts b/src/features/Vault/hooks/vault/useVaultSettings.ts
+index c3a1614..afe1b38 100644
+--- a/src/features/Vault/hooks/vault/useVaultSettings.ts
++++ b/src/features/Vault/hooks/vault/useVaultSettings.ts
+@@ -45,6 +45,7 @@ export function useVaultSettings({
+         }
+ 
+         setSettings({ ...appliedSettings, active_vault_id: normalizedActiveVaultId });
++        document.documentElement.dataset.theme = appliedSettings.theme === 'darkTheme' ? 'darkTheme' : 'blueTheme';
+         await refreshVaults();
+         return true;
+       } catch (err) {
+diff --git a/src/i18n/locales/en/Vault.json b/src/i18n/locales/en/Vault.json
+index f1e5f85..6579120 100644
+--- a/src/i18n/locales/en/Vault.json
++++ b/src/i18n/locales/en/Vault.json
+@@ -46,6 +46,10 @@
+   "settingsModal.general.language.description": "Change the display language.",
+   "settingsModal.general.language.option.en": "English",
+   "settingsModal.general.language.option.ru": "Русский",
++  "settingsModal.appearanceTitle": "Appearance",
++  "settingsModal.appearance.themes.title": "Themes",
++  "settingsModal.appearance.themes.option.blue": "Blue",
++  "settingsModal.appearance.themes.option.dark": "Dark",
+   "settingsModal.securityTitle": "Security",
+   "settingsModal.autoLock.enabled": "Enable auto-lock",
+   "settingsModal.autoLock.timeoutSeconds": "Auto-lock timeout (seconds)",
+diff --git a/src/i18n/locales/ru/Vault.json b/src/i18n/locales/ru/Vault.json
+index 8492686..befd7de 100644
+--- a/src/i18n/locales/ru/Vault.json
++++ b/src/i18n/locales/ru/Vault.json
+@@ -46,6 +46,10 @@
+   "settingsModal.general.language.description": "Изменить язык интерфейса.",
+   "settingsModal.general.language.option.en": "English",
+   "settingsModal.general.language.option.ru": "Русский",
++  "settingsModal.appearanceTitle": "Внешний вид",
++  "settingsModal.appearance.themes.title": "Темы",
++  "settingsModal.appearance.themes.option.blue": "Синяя",
++  "settingsModal.appearance.themes.option.dark": "Тёмная",
+   "settingsModal.securityTitle": "Безопасность",
+   "settingsModal.autoLock.enabled": "Включить автоблокировку",
+   "settingsModal.autoLock.timeoutSeconds": "Таймаут автоблокировки (сек)",
+diff --git a/src/shared/styles/app.css b/src/shared/styles/app.css
+index bf47e5b..1d7306b 100644
+--- a/src/shared/styles/app.css
++++ b/src/shared/styles/app.css
+@@ -1,6 +1,7 @@
+ ﻿@layer tokens, base, ui, screens;
+ 
+ @import "./themes/blueTheme.css" layer(tokens);
++@import "./themes/darkTheme.css" layer(tokens);
+ @import "./base.css" layer(base);
+ @import "./ui/index.css" layer(ui);
+ @import "./screens/startup.css" layer(screens);
+diff --git a/src/shared/styles/themes/blueTheme.css b/src/shared/styles/themes/blueTheme.css
+index 70663ef..852aa63 100644
+--- a/src/shared/styles/themes/blueTheme.css
++++ b/src/shared/styles/themes/blueTheme.css
+@@ -1,4 +1,4 @@
+-:root {
++:root[data-theme="blueTheme"] {
+   --font-body: system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+ 
+   --color-bg: #0b1222;
+diff --git a/src/shared/styles/themes/darkTheme.css b/src/shared/styles/themes/darkTheme.css
+index 7565fe7..9e10d21 100644
+--- a/src/shared/styles/themes/darkTheme.css
++++ b/src/shared/styles/themes/darkTheme.css
+@@ -1,4 +1,4 @@
+-:root {
++:root[data-theme="darkTheme"] {
+   --font-body: system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+   
+   /* Основные цвета фона - темная тема */
