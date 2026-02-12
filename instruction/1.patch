@@ -1,216 +1,332 @@
-diff --git a/src-tauri/src/services/settings_service.rs b/src-tauri/src/services/settings_service.rs
-index 5932222..2c24fae 100644
---- a/src-tauri/src/services/settings_service.rs
-+++ b/src-tauri/src/services/settings_service.rs
-@@ -47,6 +47,7 @@ fn validate_settings(settings: &UserSettings) -> Result<()> {
-     let valid_sort_field =
-         ["created_at", "updated_at", "title"].contains(&settings.default_sort_field.as_str());
-     let valid_sort_direction = ["ASC", "DESC"].contains(&settings.default_sort_direction.as_str());
-+    let valid_theme = ["blueTheme", "darkTheme"].contains(&settings.theme.as_str());
-     let valid_active_vault_id = !settings.active_vault_id.trim().is_empty();
- 
-     if valid_values
-@@ -55,6 +56,7 @@ fn validate_settings(settings: &UserSettings) -> Result<()> {
-         && valid_frequency
-         && valid_sort_field
-         && valid_sort_direction
-+        && valid_theme
-         && valid_active_vault_id
-     {
-         Ok(())
-diff --git a/src-tauri/src/types.rs b/src-tauri/src/types.rs
-index 91df544..48ad035 100644
---- a/src-tauri/src/types.rs
-+++ b/src-tauri/src/types.rs
-@@ -375,6 +375,7 @@ impl Default for UserSettings {
-             default_sort_direction: "DESC".to_string(),
-             mask_password_by_default: true,
-             multiply_vaults_enabled: default_multiply_vaults_enabled(),
-+            theme: default_theme(),
-             active_vault_id: default_active_vault_id(),
-         }
-     }
-diff --git a/src/features/Vault/components/modals/SettingsModal/SettingsModal.tsx b/src/features/Vault/components/modals/SettingsModal/SettingsModal.tsx
-index 5c31844..933ddae 100644
---- a/src/features/Vault/components/modals/SettingsModal/SettingsModal.tsx
-+++ b/src/features/Vault/components/modals/SettingsModal/SettingsModal.tsx
-@@ -12,6 +12,7 @@ import {
- import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../../../../../shared/ui/dialog';
- import { SettingsSidebar, type SettingsSection } from './components/SettingsSidebar';
- import { GeneralSection } from './sections/GeneralSection';
-+import { AppearanceSection } from './sections/AppearanceSection';
- import { ProfileSection } from './sections/ProfileSection';
- import { SecuritySection } from './sections/SecuritySection';
- import { FeaturesSection } from './sections/FeaturesSection';
-@@ -60,6 +61,7 @@ export function SettingsModal({
-   const [trashAutoCleanupEnabled, setTrashAutoCleanupEnabled] = useState(false);
-   const [trashRetentionDays, setTrashRetentionDays] = useState('');
-   const [multiplyVaultsEnabled, setMultiplyVaultsEnabled] = useState(false);
-+  const [theme, setTheme] = useState<'blueTheme' | 'darkTheme'>('blueTheme');
-   const [renameProfileOpen, setRenameProfileOpen] = useState(false);
-   const [renameProfileValue, setRenameProfileValue] = useState('');
-   const [isRenamingProfile, setIsRenamingProfile] = useState(false);
-@@ -87,6 +89,7 @@ export function SettingsModal({
-     setTrashAutoCleanupEnabled(settings.trash_auto_cleanup_enabled);
-     setTrashRetentionDays(String(settings.trash_retention_days));
-     setMultiplyVaultsEnabled(settings.multiply_vaults_enabled);
-+    setTheme(settings.theme === 'darkTheme' ? 'darkTheme' : 'blueTheme');
-   }, [open, settings]);
- 
-   useEffect(() => {
-@@ -268,6 +271,7 @@ export function SettingsModal({
-       auto_backup_interval_minutes: Math.round(interval),
-       backup_max_copies: Math.round(max),
-       multiply_vaults_enabled: multiplyVaultsEnabled,
-+      theme: theme,
-     });
-   };
- 
-@@ -333,6 +337,10 @@ export function SettingsModal({
-                 <GeneralSection language={language} onLanguageChange={handleLanguageChange} tVault={tVault} disabled={busy} />
-               )}
- 
-+              {activeSection === 'appearance' && (
-+                <AppearanceSection theme={theme} onThemeChange={setTheme} tVault={tVault} disabled={busy} />
-+              )}
-+
-               {activeSection === 'profile' && (
-                 <ProfileSection
-                   busy={busy}
-diff --git a/src/features/Vault/components/modals/SettingsModal/components/SettingsSidebar.tsx b/src/features/Vault/components/modals/SettingsModal/components/SettingsSidebar.tsx
-index 1aa2f0e..c237433 100644
---- a/src/features/Vault/components/modals/SettingsModal/components/SettingsSidebar.tsx
-+++ b/src/features/Vault/components/modals/SettingsModal/components/SettingsSidebar.tsx
-@@ -1,6 +1,6 @@
- ﻿import React from 'react';
- 
--export type SettingsSection = 'general' | 'profile' | 'security' | 'features' | 'vaults' | 'backups';
-+export type SettingsSection = 'general' | 'profile' | 'security' | 'features' | 'vaults' | 'backups' | 'appearance';
- 
- type TranslateFn = (key: string, params?: Record<string, string | number>) => string;
- 
-@@ -23,6 +23,14 @@ export function SettingsSidebar({ activeSection, onChangeSection, tVault }: Sett
-         >
-           {tVault('settingsModal.generalTitle')}
-         </button>
-+        <button
-+          type="button"
-+          className="settings-nav-item"
-+          data-active={activeSection === 'appearance' ? 'true' : 'false'}
-+          onClick={() => onChangeSection('appearance')}
-+        >
-+          {tVault('settingsModal.appearanceTitle')}
-+        </button>
-         <button
-           type="button"
-           className="settings-nav-item"
-diff --git a/src/features/Vault/hooks/useBankCards.ts b/src/features/Vault/hooks/useBankCards.ts
-index e2adc9d..577e1fa 100644
---- a/src/features/Vault/hooks/useBankCards.ts
-+++ b/src/features/Vault/hooks/useBankCards.ts
-@@ -216,6 +216,7 @@ export function useBankCards(
-       try {
-         await updateSettings(nextSettings);
-         setSettings(nextSettings);
-+        document.documentElement.dataset.theme = nextSettings.theme === 'darkTheme' ? 'darkTheme' : 'blueTheme';
-         return true;
-       } catch (err) {
-         handleError(err);
-@@ -265,7 +266,10 @@ export function useBankCards(
-     refreshActive();
-     refreshTrash();
-     getSettings()
--      .then(setSettings)
-+      .then((nextSettings) => {
-+        document.documentElement.dataset.theme = nextSettings.theme === 'darkTheme' ? 'darkTheme' : 'blueTheme';
-+        setSettings(nextSettings);
-+      })
-       .catch(handleError);
-   }, [activeVaultId, handleError, refreshActive, refreshTrash]);
- 
-diff --git a/src/features/Vault/hooks/vault/useVault.ts b/src/features/Vault/hooks/vault/useVault.ts
-index d74565f..8d31eee 100644
---- a/src/features/Vault/hooks/vault/useVault.ts
-+++ b/src/features/Vault/hooks/vault/useVault.ts
-@@ -185,6 +185,7 @@ export function useVault(profileId: string, onLocked: () => void) {
-     getSettings()
-       .then((nextSettings) => {
-         const normalizedActiveVaultId = nextSettings.active_vault_id || DEFAULT_ACTIVE_VAULT_ID;
-+        document.documentElement.dataset.theme = nextSettings.theme === 'darkTheme' ? 'darkTheme' : 'blueTheme';
-         setSettings({ ...nextSettings, active_vault_id: normalizedActiveVaultId });
-         setActiveVaultId(normalizedActiveVaultId);
-       })
-diff --git a/src/features/Vault/hooks/vault/useVaultSettings.ts b/src/features/Vault/hooks/vault/useVaultSettings.ts
-index c3a1614..afe1b38 100644
---- a/src/features/Vault/hooks/vault/useVaultSettings.ts
-+++ b/src/features/Vault/hooks/vault/useVaultSettings.ts
-@@ -45,6 +45,7 @@ export function useVaultSettings({
-         }
- 
-         setSettings({ ...appliedSettings, active_vault_id: normalizedActiveVaultId });
-+        document.documentElement.dataset.theme = appliedSettings.theme === 'darkTheme' ? 'darkTheme' : 'blueTheme';
-         await refreshVaults();
-         return true;
-       } catch (err) {
-diff --git a/src/i18n/locales/en/Vault.json b/src/i18n/locales/en/Vault.json
-index f1e5f85..6579120 100644
---- a/src/i18n/locales/en/Vault.json
-+++ b/src/i18n/locales/en/Vault.json
-@@ -46,6 +46,10 @@
-   "settingsModal.general.language.description": "Change the display language.",
-   "settingsModal.general.language.option.en": "English",
-   "settingsModal.general.language.option.ru": "Русский",
-+  "settingsModal.appearanceTitle": "Appearance",
-+  "settingsModal.appearance.themes.title": "Themes",
-+  "settingsModal.appearance.themes.option.blue": "Blue",
-+  "settingsModal.appearance.themes.option.dark": "Dark",
-   "settingsModal.securityTitle": "Security",
-   "settingsModal.autoLock.enabled": "Enable auto-lock",
-   "settingsModal.autoLock.timeoutSeconds": "Auto-lock timeout (seconds)",
-diff --git a/src/i18n/locales/ru/Vault.json b/src/i18n/locales/ru/Vault.json
-index 8492686..befd7de 100644
---- a/src/i18n/locales/ru/Vault.json
-+++ b/src/i18n/locales/ru/Vault.json
-@@ -46,6 +46,10 @@
-   "settingsModal.general.language.description": "Изменить язык интерфейса.",
-   "settingsModal.general.language.option.en": "English",
-   "settingsModal.general.language.option.ru": "Русский",
-+  "settingsModal.appearanceTitle": "Внешний вид",
-+  "settingsModal.appearance.themes.title": "Темы",
-+  "settingsModal.appearance.themes.option.blue": "Синяя",
-+  "settingsModal.appearance.themes.option.dark": "Тёмная",
-   "settingsModal.securityTitle": "Безопасность",
-   "settingsModal.autoLock.enabled": "Включить автоблокировку",
-   "settingsModal.autoLock.timeoutSeconds": "Таймаут автоблокировки (сек)",
-diff --git a/src/shared/styles/app.css b/src/shared/styles/app.css
-index bf47e5b..1d7306b 100644
---- a/src/shared/styles/app.css
-+++ b/src/shared/styles/app.css
-@@ -1,6 +1,7 @@
- ﻿@layer tokens, base, ui, screens;
- 
- @import "./themes/blueTheme.css" layer(tokens);
-+@import "./themes/darkTheme.css" layer(tokens);
- @import "./base.css" layer(base);
- @import "./ui/index.css" layer(ui);
- @import "./screens/startup.css" layer(screens);
-diff --git a/src/shared/styles/themes/blueTheme.css b/src/shared/styles/themes/blueTheme.css
-index 70663ef..852aa63 100644
---- a/src/shared/styles/themes/blueTheme.css
-+++ b/src/shared/styles/themes/blueTheme.css
+diff --git a/src/features/Vault/components/modals/SettingsModal/sections/AppearanceSection.tsx b/src/features/Vault/components/modals/SettingsModal/sections/AppearanceSection.tsx
+index 7dc84cd..f4b8e86 100644
+--- a/src/features/Vault/components/modals/SettingsModal/sections/AppearanceSection.tsx
++++ b/src/features/Vault/components/modals/SettingsModal/sections/AppearanceSection.tsx
 @@ -1,4 +1,4 @@
--:root {
-+:root[data-theme="blueTheme"] {
-   --font-body: system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+-import React from 'react';
++import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
  
-   --color-bg: #0b1222;
+ type ThemeOption = 'blueTheme' | 'darkTheme';
+ 
+@@ -11,7 +11,137 @@ type AppearanceSectionProps = {
+   disabled?: boolean;
+ };
+ 
++const THEME_OPTIONS: Array<{ value: ThemeOption; labelKey: string }> = [
++  { value: 'blueTheme', labelKey: 'settingsModal.appearance.themes.option.blue' },
++  { value: 'darkTheme', labelKey: 'settingsModal.appearance.themes.option.dark' },
++];
++
+ export function AppearanceSection({ theme, onThemeChange, tVault, disabled = false }: AppearanceSectionProps) {
++  const [isOpen, setIsOpen] = useState(false);
++  const dropdownRef = useRef<HTMLDivElement | null>(null);
++  const triggerRef = useRef<HTMLButtonElement | null>(null);
++  const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
++  const listboxId = useId();
++
++  const selectedIndex = useMemo(() => THEME_OPTIONS.findIndex((option) => option.value === theme), [theme]);
++
++  const selectedLabel = useMemo(() => {
++    const option = THEME_OPTIONS[selectedIndex] ?? THEME_OPTIONS[0];
++    return tVault(option.labelKey);
++  }, [selectedIndex, tVault]);
++
++  const focusOption = useCallback((index: number) => {
++    if (THEME_OPTIONS.length === 0) return;
++    const normalizedIndex = ((index % THEME_OPTIONS.length) + THEME_OPTIONS.length) % THEME_OPTIONS.length;
++    optionRefs.current[normalizedIndex]?.focus();
++  }, []);
++
++  const closeMenu = useCallback(() => {
++    setIsOpen(false);
++  }, []);
++
++  const closeMenuAndFocusTrigger = useCallback(() => {
++    setIsOpen(false);
++    requestAnimationFrame(() => {
++      triggerRef.current?.focus();
++    });
++  }, []);
++
++  const handleSelect = useCallback(
++    (nextTheme: ThemeOption) => {
++      onThemeChange(nextTheme);
++      closeMenuAndFocusTrigger();
++    },
++    [closeMenuAndFocusTrigger, onThemeChange],
++  );
++
++  const handleTriggerKeyDown = useCallback(
++    (event: React.KeyboardEvent<HTMLButtonElement>) => {
++      if (disabled) return;
++
++      switch (event.key) {
++        case 'ArrowDown':
++        case 'ArrowUp':
++        case 'Enter':
++        case ' ': {
++          event.preventDefault();
++          setIsOpen(true);
++          break;
++        }
++        default:
++          break;
++      }
++    },
++    [disabled],
++  );
++
++  const handleMenuKeyDown = useCallback(
++    (event: React.KeyboardEvent<HTMLDivElement>) => {
++      const currentIndex = optionRefs.current.findIndex((option) => option === document.activeElement);
++
++      switch (event.key) {
++        case 'Escape': {
++          event.preventDefault();
++          closeMenuAndFocusTrigger();
++          break;
++        }
++        case 'ArrowDown': {
++          event.preventDefault();
++          focusOption(currentIndex < 0 ? 0 : currentIndex + 1);
++          break;
++        }
++        case 'ArrowUp': {
++          event.preventDefault();
++          focusOption(currentIndex < 0 ? THEME_OPTIONS.length - 1 : currentIndex - 1);
++          break;
++        }
++        case 'Home': {
++          event.preventDefault();
++          focusOption(0);
++          break;
++        }
++        case 'End': {
++          event.preventDefault();
++          focusOption(THEME_OPTIONS.length - 1);
++          break;
++        }
++        case 'Tab': {
++          closeMenu();
++          break;
++        }
++        default:
++          break;
++      }
++    },
++    [closeMenu, closeMenuAndFocusTrigger, focusOption],
++  );
++
++  useEffect(() => {
++    if (!isOpen) return;
++
++    const onPointerDown = (event: MouseEvent) => {
++      const target = event.target as Node | null;
++      if (!target) return;
++      if (!dropdownRef.current?.contains(target)) {
++        setIsOpen(false);
++      }
++    };
++
++    document.addEventListener('mousedown', onPointerDown);
++    return () => {
++      document.removeEventListener('mousedown', onPointerDown);
++    };
++  }, [isOpen]);
++
++  useEffect(() => {
++    if (!isOpen) return;
++
++    const indexToFocus = selectedIndex >= 0 ? selectedIndex : 0;
++    requestAnimationFrame(() => {
++      focusOption(indexToFocus);
++    });
++  }, [focusOption, isOpen, selectedIndex]);
++
+   return (
+     <>
+       <h3 id="appearance-title" className="settings-modal-section-title">
+@@ -20,27 +150,66 @@ export function AppearanceSection({ theme, onThemeChange, tVault, disabled = fal
+ 
+       <div role="group" aria-labelledby="appearance-title" className="settings-group">
+         <div className="form-field settings-toggle-row">
+-          <div className="form-label settings-subheader">{tVault('settingsModal.appearance.themes.title')}</div>
+-
+-          <div className="settings-toggle-row__control" style={{ display: 'flex', gap: 8 }}>
+-            <button
+-              type="button"
+-              className="btn btn-secondary"
+-              data-active={theme === 'blueTheme' ? 'true' : 'false'}
+-              onClick={() => onThemeChange('blueTheme')}
+-              disabled={disabled}
+-            >
+-              {tVault('settingsModal.appearance.themes.option.blue')}
+-            </button>
+-            <button
+-              type="button"
+-              className="btn btn-secondary"
+-              data-active={theme === 'darkTheme' ? 'true' : 'false'}
+-              onClick={() => onThemeChange('darkTheme')}
+-              disabled={disabled}
+-            >
+-              {tVault('settingsModal.appearance.themes.option.dark')}
+-            </button>
++          <div className="form-label settings-subheader" id="theme-label">
++            {tVault('settingsModal.appearance.themes.title')}
++          </div>
++
++          <div className="settings-toggle-row__control">
++            <div ref={dropdownRef} className="settings-language-dropdown">
++              <button
++                ref={triggerRef}
++                id="theme-select-trigger"
++                type="button"
++                className="settings-language-dropdown__trigger"
++                aria-labelledby="theme-label theme-select-trigger"
++                aria-haspopup="listbox"
++                aria-controls={listboxId}
++                aria-expanded={isOpen}
++                data-open={isOpen ? 'true' : 'false'}
++                disabled={disabled}
++                onClick={() => {
++                  if (disabled) return;
++                  setIsOpen((value) => !value);
++                }}
++                onKeyDown={handleTriggerKeyDown}
++              >
++                <span className="settings-language-dropdown__value">{selectedLabel}</span>
++                <span className="settings-language-dropdown__chevron" aria-hidden="true">
++                  ▾
++                </span>
++              </button>
++
++              {isOpen && (
++                <div
++                  id={listboxId}
++                  role="listbox"
++                  aria-labelledby="theme-label"
++                  className="settings-language-dropdown__menu"
++                  onKeyDown={handleMenuKeyDown}
++                >
++                  {THEME_OPTIONS.map((option, index) => {
++                    const isSelected = option.value === theme;
++                    return (
++                      <button
++                        key={option.value}
++                        ref={(element) => {
++                          optionRefs.current[index] = element;
++                        }}
++                        id={`${listboxId}-${option.value}`}
++                        type="button"
++                        role="option"
++                        aria-selected={isSelected}
++                        className="settings-language-dropdown__item"
++                        data-selected={isSelected ? 'true' : 'false'}
++                        onClick={() => handleSelect(option.value)}
++                      >
++                        {tVault(option.labelKey)}
++                      </button>
++                    );
++                  })}
++                </div>
++              )}
++            </div>
+           </div>
+         </div>
+       </div>
 diff --git a/src/shared/styles/themes/darkTheme.css b/src/shared/styles/themes/darkTheme.css
-index 7565fe7..9e10d21 100644
+index 9e10d21..791b8d3 100644
 --- a/src/shared/styles/themes/darkTheme.css
 +++ b/src/shared/styles/themes/darkTheme.css
-@@ -1,4 +1,4 @@
--:root {
-+:root[data-theme="darkTheme"] {
+@@ -2,23 +2,23 @@
    --font-body: system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
    
    /* Основные цвета фона - темная тема */
+-  --color-bg: #0f0f0f;
+-  --color-surface-1: #1a1a1a;
+-  --color-surface-2: #232323;
+-  --color-surface-3: #2a2a2a;
++  --color-bg: #202020;
++  --color-surface-1: #252525;
++  --color-surface-2: #2b2b2b;
++  --color-surface-3: #313131;
+   --color-surface: var(--color-surface-3);
+   
+   /* Границы и разделители */
+   --color-border: #3a3a3a;
+-  --color-input-bg: #1e1e1e;
++  --color-input-bg: #252525;
+   
+   /* Текст */
+-  --color-text: #e5e5e5;
+-  --color-text-muted: #a0a0a0;
++  --color-text: #e6e6e6;
++  --color-text-muted: #b3b3b3;
+   
+   /* Акцентные цвета */
+-  --color-primary: #3b82f6;
+-  --color-primary-strong: #2563eb;
++  --color-primary: #8b6cef;
++  --color-primary-strong: #7255c7;
+   --color-danger: #ef4444;
+   --color-danger-strong: #dc2626;
+   --color-success: #22c55e;
+@@ -40,41 +40,41 @@
+   /* Градиент основного фона */
+   --bg-app: linear-gradient(
+     135deg,
+-    #0f0f0f 0%,
+-    #1a1a1a 60%,
+-    #232323 100%
++    #202020 0%,
++    #1f1f1f 60%,
++    #1e1e1e 100%
+   );
+   
+   /* Градиенты для экранов */
+-  --bg-startup-screen: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.08), transparent 35%),
+-    radial-gradient(circle at 80% 10%, rgba(59, 130, 246, 0.05), transparent 30%),
+-    linear-gradient(135deg, rgba(30, 30, 30, 0.5), rgba(15, 15, 15, 0.9));
++  --bg-startup-screen: radial-gradient(circle at 20% 20%, rgba(139, 108, 239, 0.10), transparent 35%),
++    radial-gradient(circle at 80% 10%, rgba(139, 108, 239, 0.06), transparent 30%),
++    linear-gradient(135deg, rgba(37, 37, 37, 0.6), rgba(32, 32, 32, 0.96));
+   
+-  --bg-profile-create-screen: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.06), transparent 35%),
+-    radial-gradient(circle at 80% 10%, rgba(59, 130, 246, 0.04), transparent 30%),
+-    linear-gradient(135deg, rgba(26, 26, 26, 0.5), rgba(15, 15, 15, 0.9));
++  --bg-profile-create-screen: radial-gradient(circle at 20% 20%, rgba(139, 108, 239, 0.08), transparent 35%),
++    radial-gradient(circle at 80% 10%, rgba(139, 108, 239, 0.05), transparent 30%),
++    linear-gradient(135deg, rgba(37, 37, 37, 0.55), rgba(32, 32, 32, 0.96));
+   
+-  --bg-login-screen: radial-gradient(circle at 10% 0%, rgba(59, 130, 246, 0.07), transparent 35%),
+-    radial-gradient(circle at 90% 0%, rgba(59, 130, 246, 0.04), transparent 30%),
+-    linear-gradient(135deg, rgba(26, 26, 26, 0.4), rgba(15, 15, 15, 0.95));
++  --bg-login-screen: radial-gradient(circle at 10% 0%, rgba(139, 108, 239, 0.09), transparent 35%),
++    radial-gradient(circle at 90% 0%, rgba(139, 108, 239, 0.05), transparent 30%),
++    linear-gradient(135deg, rgba(37, 37, 37, 0.5), rgba(32, 32, 32, 0.97));
+   
+   /* Оверлеи и полупрозрачные поверхности */
+   --overlay-dialog-backdrop: rgba(0, 0, 0, 0.75);
+   --surface-tint-02: rgba(255, 255, 255, 0.02);
+-  --surface-tint-08: rgba(255, 255, 255, 0.08);
++  --surface-tint-08: rgba(255, 255, 255, 0.10);
+   
+   /* Семантические полупрозрачные фоны */
+-  --primary-soft-bg: rgba(59, 130, 246, 0.12);
++  --primary-soft-bg: rgba(139, 108, 239, 0.14);
+   --success-soft-bg: rgba(34, 197, 94, 0.12);
+   --danger-soft-bg: rgba(239, 68, 68, 0.12);
+   
+   /* Границы фокуса */
+-  --focus-border: rgba(59, 130, 246, 0.5);
+-  --focus-border-strong: rgba(59, 130, 246, 0.7);
++  --focus-border: rgba(139, 108, 239, 0.45);
++  --focus-border-strong: rgba(139, 108, 239, 0.6);
+   
+   /* Стили для опасных действий */
+   --danger-border-weak: rgba(239, 68, 68, 0.4);
+-  --danger-hover-bg: rgba(239, 68, 68, 0.1);
++  --danger-hover-bg: rgba(239, 68, 68, 0.08);
+ 
+   /* ==========================================================================
+      Unified semantic design tokens (single source of truth)
