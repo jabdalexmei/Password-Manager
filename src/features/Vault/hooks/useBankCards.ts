@@ -216,6 +216,7 @@ export function useBankCards(
       try {
         await updateSettings(nextSettings);
         setSettings(nextSettings);
+        document.documentElement.dataset.theme = nextSettings.theme === 'darkTheme' ? 'darkTheme' : 'blueTheme';
         return true;
       } catch (err) {
         handleError(err);
@@ -265,7 +266,10 @@ export function useBankCards(
     refreshActive();
     refreshTrash();
     getSettings()
-      .then(setSettings)
+      .then((nextSettings) => {
+        document.documentElement.dataset.theme = nextSettings.theme === 'darkTheme' ? 'darkTheme' : 'blueTheme';
+        setSettings(nextSettings);
+      })
       .catch(handleError);
   }, [activeVaultId, handleError, refreshActive, refreshTrash]);
 

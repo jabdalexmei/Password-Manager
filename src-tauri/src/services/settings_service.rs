@@ -47,6 +47,7 @@ fn validate_settings(settings: &UserSettings) -> Result<()> {
     let valid_sort_field =
         ["created_at", "updated_at", "title"].contains(&settings.default_sort_field.as_str());
     let valid_sort_direction = ["ASC", "DESC"].contains(&settings.default_sort_direction.as_str());
+    let valid_theme = ["blueTheme", "darkTheme"].contains(&settings.theme.as_str());
     let valid_active_vault_id = !settings.active_vault_id.trim().is_empty();
 
     if valid_values
@@ -55,6 +56,7 @@ fn validate_settings(settings: &UserSettings) -> Result<()> {
         && valid_frequency
         && valid_sort_field
         && valid_sort_direction
+        && valid_theme
         && valid_active_vault_id
     {
         Ok(())

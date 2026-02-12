@@ -193,6 +193,7 @@ export type BackendUserSettings = {
   default_sort_direction: "ASC" | "DESC";
   mask_password_by_default: boolean;
   multiply_vaults_enabled: boolean;
+  theme: "blueTheme" | "darkTheme";
   active_vault_id: string;
 };
 

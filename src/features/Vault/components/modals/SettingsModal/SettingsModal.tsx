@@ -12,6 +12,7 @@ import {
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../../../../../shared/ui/dialog';
 import { SettingsSidebar, type SettingsSection } from './components/SettingsSidebar';
 import { GeneralSection } from './sections/GeneralSection';
+import { AppearanceSection } from './sections/AppearanceSection';
 import { ProfileSection } from './sections/ProfileSection';
 import { SecuritySection } from './sections/SecuritySection';
 import { FeaturesSection } from './sections/FeaturesSection';
@@ -60,6 +61,7 @@ export function SettingsModal({
   const [trashAutoCleanupEnabled, setTrashAutoCleanupEnabled] = useState(false);
   const [trashRetentionDays, setTrashRetentionDays] = useState('');
   const [multiplyVaultsEnabled, setMultiplyVaultsEnabled] = useState(false);
+  const [theme, setTheme] = useState<'blueTheme' | 'darkTheme'>('blueTheme');
   const [renameProfileOpen, setRenameProfileOpen] = useState(false);
   const [renameProfileValue, setRenameProfileValue] = useState('');
   const [isRenamingProfile, setIsRenamingProfile] = useState(false);
@@ -87,6 +89,7 @@ export function SettingsModal({
     setTrashAutoCleanupEnabled(settings.trash_auto_cleanup_enabled);
     setTrashRetentionDays(String(settings.trash_retention_days));
     setMultiplyVaultsEnabled(settings.multiply_vaults_enabled);
+    setTheme(settings.theme === 'darkTheme' ? 'darkTheme' : 'blueTheme');
   }, [open, settings]);
 
   useEffect(() => {
@@ -268,6 +271,7 @@ export function SettingsModal({
       auto_backup_interval_minutes: Math.round(interval),
       backup_max_copies: Math.round(max),
       multiply_vaults_enabled: multiplyVaultsEnabled,
+      theme: theme,
     });
   };
 
@@ -331,6 +335,10 @@ export function SettingsModal({
             <section className="settings-content">
               {activeSection === 'general' && (
                 <GeneralSection language={language} onLanguageChange={handleLanguageChange} tVault={tVault} disabled={busy} />
+              )}
+
+              {activeSection === 'appearance' && (
+                <AppearanceSection theme={theme} onThemeChange={setTheme} tVault={tVault} disabled={busy} />
               )}
 
               {activeSection === 'profile' && (

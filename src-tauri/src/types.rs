@@ -351,6 +351,8 @@ pub struct UserSettings {
 
     #[serde(default = "default_multiply_vaults_enabled")]
     pub multiply_vaults_enabled: bool,
+    #[serde(default = "default_theme")]
+    pub theme: String,
     #[serde(default = "default_active_vault_id")]
     pub active_vault_id: String,
 }
@@ -375,6 +377,7 @@ impl Default for UserSettings {
             default_sort_direction: "DESC".to_string(),
             mask_password_by_default: true,
             multiply_vaults_enabled: default_multiply_vaults_enabled(),
+            theme: default_theme(),
             active_vault_id: default_active_vault_id(),
         }
     }
@@ -410,6 +413,10 @@ fn default_multiply_vaults_enabled() -> bool {
 
 fn default_trash_auto_cleanup_enabled() -> bool {
     false
+}
+
+fn default_theme() -> String {
+    "blueTheme".to_string()
 }
 
 fn default_active_vault_id() -> String {

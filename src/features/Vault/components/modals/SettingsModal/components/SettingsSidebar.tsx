@@ -1,6 +1,6 @@
 ﻿import React from 'react';
 
-export type SettingsSection = 'general' | 'profile' | 'security' | 'features' | 'vaults' | 'backups';
+export type SettingsSection = 'general' | 'profile' | 'security' | 'features' | 'vaults' | 'backups' | 'appearance';
 
 type TranslateFn = (key: string, params?: Record<string, string | number>) => string;
 
@@ -22,6 +22,14 @@ export function SettingsSidebar({ activeSection, onChangeSection, tVault }: Sett
           onClick={() => onChangeSection('general')}
         >
           {tVault('settingsModal.generalTitle')}
+        </button>
+        <button
+          type="button"
+          className="settings-nav-item"
+          data-active={activeSection === 'appearance' ? 'true' : 'false'}
+          onClick={() => onChangeSection('appearance')}
+        >
+          {tVault('settingsModal.appearanceTitle')}
         </button>
         <button
           type="button"

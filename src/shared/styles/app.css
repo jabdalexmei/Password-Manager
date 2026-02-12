@@ -1,6 +1,7 @@
 ﻿@layer tokens, base, ui, screens;
 
 @import "./themes/blueTheme.css" layer(tokens);
+@import "./themes/darkTheme.css" layer(tokens);
 @import "./base.css" layer(base);
 @import "./ui/index.css" layer(ui);
 @import "./screens/startup.css" layer(screens);
