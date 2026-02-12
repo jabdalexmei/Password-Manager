@@ -1,332 +1,55 @@
-diff --git a/src/features/Vault/components/modals/SettingsModal/sections/AppearanceSection.tsx b/src/features/Vault/components/modals/SettingsModal/sections/AppearanceSection.tsx
-index 7dc84cd..f4b8e86 100644
---- a/src/features/Vault/components/modals/SettingsModal/sections/AppearanceSection.tsx
-+++ b/src/features/Vault/components/modals/SettingsModal/sections/AppearanceSection.tsx
-@@ -1,4 +1,4 @@
--import React from 'react';
-+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+--- a/src/features/Vault/layout/VaultDetailsPane.tsx
++++ b/src/features/Vault/layout/VaultDetailsPane.tsx
+@@ -70,7 +70,13 @@
  
- type ThemeOption = 'blueTheme' | 'darkTheme';
- 
-@@ -11,7 +11,137 @@ type AppearanceSectionProps = {
-   disabled?: boolean;
- };
- 
-+const THEME_OPTIONS: Array<{ value: ThemeOption; labelKey: string }> = [
-+  { value: 'blueTheme', labelKey: 'settingsModal.appearance.themes.option.blue' },
-+  { value: 'darkTheme', labelKey: 'settingsModal.appearance.themes.option.dark' },
-+];
-+
- export function AppearanceSection({ theme, onThemeChange, tVault, disabled = false }: AppearanceSectionProps) {
-+  const [isOpen, setIsOpen] = useState(false);
-+  const dropdownRef = useRef<HTMLDivElement | null>(null);
-+  const triggerRef = useRef<HTMLButtonElement | null>(null);
-+  const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
-+  const listboxId = useId();
-+
-+  const selectedIndex = useMemo(() => THEME_OPTIONS.findIndex((option) => option.value === theme), [theme]);
-+
-+  const selectedLabel = useMemo(() => {
-+    const option = THEME_OPTIONS[selectedIndex] ?? THEME_OPTIONS[0];
-+    return tVault(option.labelKey);
-+  }, [selectedIndex, tVault]);
-+
-+  const focusOption = useCallback((index: number) => {
-+    if (THEME_OPTIONS.length === 0) return;
-+    const normalizedIndex = ((index % THEME_OPTIONS.length) + THEME_OPTIONS.length) % THEME_OPTIONS.length;
-+    optionRefs.current[normalizedIndex]?.focus();
-+  }, []);
-+
-+  const closeMenu = useCallback(() => {
-+    setIsOpen(false);
-+  }, []);
-+
-+  const closeMenuAndFocusTrigger = useCallback(() => {
-+    setIsOpen(false);
-+    requestAnimationFrame(() => {
-+      triggerRef.current?.focus();
-+    });
-+  }, []);
-+
-+  const handleSelect = useCallback(
-+    (nextTheme: ThemeOption) => {
-+      onThemeChange(nextTheme);
-+      closeMenuAndFocusTrigger();
-+    },
-+    [closeMenuAndFocusTrigger, onThemeChange],
-+  );
-+
-+  const handleTriggerKeyDown = useCallback(
-+    (event: React.KeyboardEvent<HTMLButtonElement>) => {
-+      if (disabled) return;
-+
-+      switch (event.key) {
-+        case 'ArrowDown':
-+        case 'ArrowUp':
-+        case 'Enter':
-+        case ' ': {
-+          event.preventDefault();
-+          setIsOpen(true);
-+          break;
-+        }
-+        default:
-+          break;
-+      }
-+    },
-+    [disabled],
-+  );
-+
-+  const handleMenuKeyDown = useCallback(
-+    (event: React.KeyboardEvent<HTMLDivElement>) => {
-+      const currentIndex = optionRefs.current.findIndex((option) => option === document.activeElement);
-+
-+      switch (event.key) {
-+        case 'Escape': {
-+          event.preventDefault();
-+          closeMenuAndFocusTrigger();
-+          break;
-+        }
-+        case 'ArrowDown': {
-+          event.preventDefault();
-+          focusOption(currentIndex < 0 ? 0 : currentIndex + 1);
-+          break;
-+        }
-+        case 'ArrowUp': {
-+          event.preventDefault();
-+          focusOption(currentIndex < 0 ? THEME_OPTIONS.length - 1 : currentIndex - 1);
-+          break;
-+        }
-+        case 'Home': {
-+          event.preventDefault();
-+          focusOption(0);
-+          break;
-+        }
-+        case 'End': {
-+          event.preventDefault();
-+          focusOption(THEME_OPTIONS.length - 1);
-+          break;
-+        }
-+        case 'Tab': {
-+          closeMenu();
-+          break;
-+        }
-+        default:
-+          break;
-+      }
-+    },
-+    [closeMenu, closeMenuAndFocusTrigger, focusOption],
-+  );
-+
-+  useEffect(() => {
-+    if (!isOpen) return;
-+
-+    const onPointerDown = (event: MouseEvent) => {
-+      const target = event.target as Node | null;
-+      if (!target) return;
-+      if (!dropdownRef.current?.contains(target)) {
-+        setIsOpen(false);
-+      }
-+    };
-+
-+    document.addEventListener('mousedown', onPointerDown);
-+    return () => {
-+      document.removeEventListener('mousedown', onPointerDown);
-+    };
-+  }, [isOpen]);
-+
-+  useEffect(() => {
-+    if (!isOpen) return;
-+
-+    const indexToFocus = selectedIndex >= 0 ? selectedIndex : 0;
-+    requestAnimationFrame(() => {
-+      focusOption(indexToFocus);
-+    });
-+  }, [focusOption, isOpen, selectedIndex]);
-+
    return (
-     <>
-       <h3 id="appearance-title" className="settings-modal-section-title">
-@@ -20,27 +150,66 @@ export function AppearanceSection({ theme, onThemeChange, tVault, disabled = fal
- 
-       <div role="group" aria-labelledby="appearance-title" className="settings-group">
-         <div className="form-field settings-toggle-row">
--          <div className="form-label settings-subheader">{tVault('settingsModal.appearance.themes.title')}</div>
--
--          <div className="settings-toggle-row__control" style={{ display: 'flex', gap: 8 }}>
--            <button
--              type="button"
--              className="btn btn-secondary"
--              data-active={theme === 'blueTheme' ? 'true' : 'false'}
--              onClick={() => onThemeChange('blueTheme')}
--              disabled={disabled}
--            >
--              {tVault('settingsModal.appearance.themes.option.blue')}
--            </button>
--            <button
--              type="button"
--              className="btn btn-secondary"
--              data-active={theme === 'darkTheme' ? 'true' : 'false'}
--              onClick={() => onThemeChange('darkTheme')}
--              disabled={disabled}
--            >
--              {tVault('settingsModal.appearance.themes.option.dark')}
--            </button>
-+          <div className="form-label settings-subheader" id="theme-label">
-+            {tVault('settingsModal.appearance.themes.title')}
-+          </div>
+     <div className="vault-panel-wrapper">
+-      <div className="vault-section-header">{tVault('information.title')}</div>
++      <div className="datacards-header">
++        <div className="vault-section-header">{tVault('information.title')}</div>
 +
-+          <div className="settings-toggle-row__control">
-+            <div ref={dropdownRef} className="settings-language-dropdown">
-+              <button
-+                ref={triggerRef}
-+                id="theme-select-trigger"
-+                type="button"
-+                className="settings-language-dropdown__trigger"
-+                aria-labelledby="theme-label theme-select-trigger"
-+                aria-haspopup="listbox"
-+                aria-controls={listboxId}
-+                aria-expanded={isOpen}
-+                data-open={isOpen ? 'true' : 'false'}
-+                disabled={disabled}
-+                onClick={() => {
-+                  if (disabled) return;
-+                  setIsOpen((value) => !value);
-+                }}
-+                onKeyDown={handleTriggerKeyDown}
-+              >
-+                <span className="settings-language-dropdown__value">{selectedLabel}</span>
-+                <span className="settings-language-dropdown__chevron" aria-hidden="true">
-+                  ▾
-+                </span>
-+              </button>
-+
-+              {isOpen && (
-+                <div
-+                  id={listboxId}
-+                  role="listbox"
-+                  aria-labelledby="theme-label"
-+                  className="settings-language-dropdown__menu"
-+                  onKeyDown={handleMenuKeyDown}
-+                >
-+                  {THEME_OPTIONS.map((option, index) => {
-+                    const isSelected = option.value === theme;
-+                    return (
-+                      <button
-+                        key={option.value}
-+                        ref={(element) => {
-+                          optionRefs.current[index] = element;
-+                        }}
-+                        id={`${listboxId}-${option.value}`}
-+                        type="button"
-+                        role="option"
-+                        aria-selected={isSelected}
-+                        className="settings-language-dropdown__item"
-+                        data-selected={isSelected ? 'true' : 'false'}
-+                        onClick={() => handleSelect(option.value)}
-+                      >
-+                        {tVault(option.labelKey)}
-+                      </button>
-+                    );
-+                  })}
-+                </div>
-+              )}
-+            </div>
-           </div>
-         </div>
-       </div>
-diff --git a/src/shared/styles/themes/darkTheme.css b/src/shared/styles/themes/darkTheme.css
-index 9e10d21..791b8d3 100644
---- a/src/shared/styles/themes/darkTheme.css
-+++ b/src/shared/styles/themes/darkTheme.css
-@@ -2,23 +2,23 @@
-   --font-body: system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
-   
-   /* Основные цвета фона - темная тема */
--  --color-bg: #0f0f0f;
--  --color-surface-1: #1a1a1a;
--  --color-surface-2: #232323;
--  --color-surface-3: #2a2a2a;
-+  --color-bg: #202020;
-+  --color-surface-1: #252525;
-+  --color-surface-2: #2b2b2b;
-+  --color-surface-3: #313131;
-   --color-surface: var(--color-surface-3);
-   
-   /* Границы и разделители */
-   --color-border: #3a3a3a;
--  --color-input-bg: #1e1e1e;
-+  --color-input-bg: #252525;
-   
-   /* Текст */
--  --color-text: #e5e5e5;
--  --color-text-muted: #a0a0a0;
-+  --color-text: #e6e6e6;
-+  --color-text-muted: #b3b3b3;
-   
-   /* Акцентные цвета */
--  --color-primary: #3b82f6;
--  --color-primary-strong: #2563eb;
-+  --color-primary: #8b6cef;
-+  --color-primary-strong: #7255c7;
-   --color-danger: #ef4444;
-   --color-danger-strong: #dc2626;
-   --color-success: #22c55e;
-@@ -40,41 +40,41 @@
-   /* Градиент основного фона */
-   --bg-app: linear-gradient(
-     135deg,
--    #0f0f0f 0%,
--    #1a1a1a 60%,
--    #232323 100%
-+    #202020 0%,
-+    #1f1f1f 60%,
-+    #1e1e1e 100%
++        <div className="datacards-header__right">
++          <div className="datacards-header__spacer" aria-hidden="true" />
++        </div>
++      </div>
+       <div className="vault-empty">{tDetails('empty.selectPrompt')}</div>
+     </div>
    );
-   
-   /* Градиенты для экранов */
--  --bg-startup-screen: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.08), transparent 35%),
--    radial-gradient(circle at 80% 10%, rgba(59, 130, 246, 0.05), transparent 30%),
--    linear-gradient(135deg, rgba(30, 30, 30, 0.5), rgba(15, 15, 15, 0.9));
-+  --bg-startup-screen: radial-gradient(circle at 20% 20%, rgba(139, 108, 239, 0.10), transparent 35%),
-+    radial-gradient(circle at 80% 10%, rgba(139, 108, 239, 0.06), transparent 30%),
-+    linear-gradient(135deg, rgba(37, 37, 37, 0.6), rgba(32, 32, 32, 0.96));
-   
--  --bg-profile-create-screen: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.06), transparent 35%),
--    radial-gradient(circle at 80% 10%, rgba(59, 130, 246, 0.04), transparent 30%),
--    linear-gradient(135deg, rgba(26, 26, 26, 0.5), rgba(15, 15, 15, 0.9));
-+  --bg-profile-create-screen: radial-gradient(circle at 20% 20%, rgba(139, 108, 239, 0.08), transparent 35%),
-+    radial-gradient(circle at 80% 10%, rgba(139, 108, 239, 0.05), transparent 30%),
-+    linear-gradient(135deg, rgba(37, 37, 37, 0.55), rgba(32, 32, 32, 0.96));
-   
--  --bg-login-screen: radial-gradient(circle at 10% 0%, rgba(59, 130, 246, 0.07), transparent 35%),
--    radial-gradient(circle at 90% 0%, rgba(59, 130, 246, 0.04), transparent 30%),
--    linear-gradient(135deg, rgba(26, 26, 26, 0.4), rgba(15, 15, 15, 0.95));
-+  --bg-login-screen: radial-gradient(circle at 10% 0%, rgba(139, 108, 239, 0.09), transparent 35%),
-+    radial-gradient(circle at 90% 0%, rgba(139, 108, 239, 0.05), transparent 30%),
-+    linear-gradient(135deg, rgba(37, 37, 37, 0.5), rgba(32, 32, 32, 0.97));
-   
-   /* Оверлеи и полупрозрачные поверхности */
-   --overlay-dialog-backdrop: rgba(0, 0, 0, 0.75);
-   --surface-tint-02: rgba(255, 255, 255, 0.02);
--  --surface-tint-08: rgba(255, 255, 255, 0.08);
-+  --surface-tint-08: rgba(255, 255, 255, 0.10);
-   
-   /* Семантические полупрозрачные фоны */
--  --primary-soft-bg: rgba(59, 130, 246, 0.12);
-+  --primary-soft-bg: rgba(139, 108, 239, 0.14);
-   --success-soft-bg: rgba(34, 197, 94, 0.12);
-   --danger-soft-bg: rgba(239, 68, 68, 0.12);
-   
-   /* Границы фокуса */
--  --focus-border: rgba(59, 130, 246, 0.5);
--  --focus-border-strong: rgba(59, 130, 246, 0.7);
-+  --focus-border: rgba(139, 108, 239, 0.45);
-+  --focus-border-strong: rgba(139, 108, 239, 0.6);
-   
-   /* Стили для опасных действий */
-   --danger-border-weak: rgba(239, 68, 68, 0.4);
--  --danger-hover-bg: rgba(239, 68, 68, 0.1);
-+  --danger-hover-bg: rgba(239, 68, 68, 0.08);
+--- a/src/features/Vault/components/Details/Details.tsx
++++ b/src/features/Vault/components/Details/Details.tsx
+@@ -131,7 +131,15 @@
+     }));
+   };
  
-   /* ==========================================================================
-      Unified semantic design tokens (single source of truth)
+-  const informationTitle = <div className="vault-section-header">{tVault('information.title')}</div>;
++  const informationTitle = (
++    <div className="datacards-header">
++      <div className="vault-section-header">{tVault('information.title')}</div>
++
++      <div className="datacards-header__right">
++        <div className="datacards-header__spacer" aria-hidden="true" />
++      </div>
++    </div>
++  );
+ 
+   if (!card) {
+     return (
+--- a/src/features/Vault/components/BankCards/BankCardDetails.tsx
++++ b/src/features/Vault/components/BankCards/BankCardDetails.tsx
+@@ -133,7 +133,15 @@
+     };
+   }, []);
+ 
+-  const informationTitle = <div className="vault-section-header">{tVault('information.title')}</div>;
++  const informationTitle = (
++    <div className="datacards-header">
++      <div className="vault-section-header">{tVault('information.title')}</div>
++
++      <div className="datacards-header__right">
++        <div className="datacards-header__spacer" aria-hidden="true" />
++      </div>
++    </div>
++  );
+ 
+   if (!card) {
+     return (
