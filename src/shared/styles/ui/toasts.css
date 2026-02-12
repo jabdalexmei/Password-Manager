@@ -1,0 +1,84 @@
+﻿/* ==========================================================================
+   Toasts (notifications)
+   --------------------------------------------------------------------------
+   - Host position (top-right) + toast card styling + success/error variants.
+   ========================================================================== */
+.toast-host {
+  position: fixed;
+  right: 16px;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 40;
+}
+
+.toast {
+  min-width: 240px;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  color: var(--color-text);
+  box-shadow: var(--shadow-card);
+
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.toast-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.toast-close {
+  margin-left: auto;
+  flex: 0 0 auto;
+  align-self: flex-start;
+
+  width: 28px;
+  height: 28px;
+  padding: 0;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-text-muted);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.toast-close:hover {
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.toast-title {
+  font-weight: 700;
+  margin: 0 0 4px 0;
+}
+
+.toast-description {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
+
+/* Toast variants */
+.toast-success {
+  border-color: var(--color-success);
+  background: var(--success-soft-bg);
+}
+
+.toast-error {
+  border-color: var(--color-danger);
+  background: var(--danger-soft-bg);
+}

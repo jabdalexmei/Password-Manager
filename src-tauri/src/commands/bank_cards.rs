@@ -6,8 +6,8 @@ use crate::app_state::AppState;
 use crate::error::{ErrorCodeString, Result};
 use crate::services::bank_cards_service;
 use crate::types::{
-    BankCardItem, BankCardSummary, CreateBankCardInput, SetBankCardArchivedInput,
-    SetBankCardFavoriteInput, UpdateBankCardInput, BankCardPreviewFields,
+    BankCardItem, BankCardPreviewFields, BankCardSummary, CreateBankCardInput,
+    SetBankCardArchivedInput, SetBankCardFavoriteInput, UpdateBankCardInput,
 };
 
 #[tauri::command]
@@ -94,9 +94,11 @@ pub async fn search_bank_cards(
     state: State<'_, Arc<AppState>>,
 ) -> Result<Vec<String>> {
     let app = state.inner().clone();
-    tauri::async_runtime::spawn_blocking(move || bank_cards_service::search_bank_card_ids(query, &app))
-        .await
-        .map_err(|_| ErrorCodeString::new("TASK_JOIN_FAILED"))?
+    tauri::async_runtime::spawn_blocking(move || {
+        bank_cards_service::search_bank_card_ids(query, &app)
+    })
+    .await
+    .map_err(|_| ErrorCodeString::new("TASK_JOIN_FAILED"))?
 }
 
 #[tauri::command]
@@ -136,9 +138,11 @@ pub async fn restore_all_deleted_bank_cards(state: State<'_, Arc<AppState>>) -> 
 #[tauri::command]
 pub async fn purge_all_deleted_bank_cards(state: State<'_, Arc<AppState>>) -> Result<bool> {
     let app = state.inner().clone();
-    tauri::async_runtime::spawn_blocking(move || bank_cards_service::purge_all_deleted_bank_cards(&app))
-        .await
-        .map_err(|_| ErrorCodeString::new("TASK_JOIN_FAILED"))?
+    tauri::async_runtime::spawn_blocking(move || {
+        bank_cards_service::purge_all_deleted_bank_cards(&app)
+    })
+    .await
+    .map_err(|_| ErrorCodeString::new("TASK_JOIN_FAILED"))?
 }
 
 #[tauri::command]

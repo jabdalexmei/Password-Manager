@@ -3,7 +3,6 @@
 #[cfg(not(windows))]
 compile_error!("This application is Windows-only.");
 
-
 mod app_state;
 mod commands;
 mod data {
@@ -30,7 +29,9 @@ mod data {
     pub mod sqlite {
         pub mod diagnostics;
         pub mod init;
-        pub mod migrations;
+        pub mod schema_initialization;
+        pub mod schema_migration;
+        pub mod schema_validation;
         pub mod repo_impl;
     }
 }
@@ -46,6 +47,7 @@ mod services {
     pub mod profiles_service;
     pub mod security_service;
     pub mod settings_service;
+    pub mod trash_auto_cleanup_service;
     pub mod ui_prefs_service;
     pub mod vaults_service;
 }
@@ -56,16 +58,16 @@ use std::sync::Arc;
 use app_state::AppState;
 use commands::{
     attachments::*, backup::*, bank_cards::*, clipboard::*, datacards::*, folders::*,
-    password_history::*, profiles::*, security::*, settings::*, ui_prefs::*, vaults::*,
-    workspace::*,
+    password_history::*, profiles::*, security::*, settings::*, trash_auto_cleanup::*, ui_prefs::*,
+    vaults::*, workspace::*,
 };
 use data::storage_paths::StoragePaths;
 use services::security_service;
 use tauri::{Manager, WindowEvent};
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 
-use windows::core::Interface;
 use webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2Settings4;
+use windows::core::Interface;
 
 fn main() {
     tauri::Builder::default()
@@ -137,10 +139,12 @@ fn main() {
             is_logged_in,
             health_check,
             list_attachments,
+            rename_attachment,
             attachments_pick_files,
             attachments_discard_pick,
             add_attachments_from_pick,
             add_attachments_via_dialog,
+            add_attachments_from_paths,
             remove_attachment,
             purge_attachment,
             get_attachment_bytes_base64,
@@ -158,6 +162,7 @@ fn main() {
             create_vault,
             rename_vault,
             delete_vault,
+            set_default_vault,
             set_active_vault,
             create_folder,
             rename_folder,
@@ -197,8 +202,11 @@ fn main() {
             clear_datacard_password_history,
             get_settings,
             update_settings,
+            run_trash_auto_cleanup_if_enabled,
             get_datacard_preview_fields,
             set_datacard_preview_fields,
+            get_datacard_preview_fields_folder_only_by_folder,
+            set_datacard_preview_fields_folder_only_by_folder,
             set_datacard_preview_fields_for_card,
             get_bankcard_preview_fields,
             set_bankcard_preview_fields,

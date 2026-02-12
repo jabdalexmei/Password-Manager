@@ -206,7 +206,7 @@ export function FoldersTreeSection({
               </div>
             )}
 
-            <div className="form-field form-field--spacious">
+            <div className="form-field form-field--navigation">
               <label className="form-label" htmlFor="folder-name">
                 {t('dialog.newFolder.label')}
               </label>

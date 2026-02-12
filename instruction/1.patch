@@ -1,0 +1,251 @@
+diff --git a/src/features/Vault/api/vaultApi.ts b/src/features/Vault/api/vaultApi.ts
+index fbb1fbb..e6125db 100644
+--- a/src/features/Vault/api/vaultApi.ts
++++ b/src/features/Vault/api/vaultApi.ts
+@@ -262,6 +262,10 @@ export async function clearPasswordHistory(datacardId: string): Promise<void> {
+   await invoke('clear_datacard_password_history', { datacardId });
+ }
+ 
++export async function deletePasswordHistoryEntry(entryId: string): Promise<void> {
++  await invoke('delete_datacard_password_history_entry', { entryId });
++}
++
+ export async function listAttachments(datacardId: string): Promise<BackendAttachmentMeta[]> {
+   return invoke('list_attachments', { datacardId });
+ }
+diff --git a/src/features/Vault/components/modals/PasswordHistoryDialog.tsx b/src/features/Vault/components/modals/PasswordHistoryDialog.tsx
+index 25786d9..ceac9f6 100644
+--- a/src/features/Vault/components/modals/PasswordHistoryDialog.tsx
++++ b/src/features/Vault/components/modals/PasswordHistoryDialog.tsx
+@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+ import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
+ import { useTranslation } from '../../../../shared/lib/i18n';
+ import { useToaster } from '../../../../shared/components/Toaster';
+-import { clearPasswordHistory, getPasswordHistory } from '../../api/vaultApi';
++import { clearPasswordHistory, deletePasswordHistoryEntry, getPasswordHistory } from '../../api/vaultApi';
+ import { PasswordHistoryEntry } from '../../types/ui';
+ import { IconCopy, IconPreview, IconPreviewOff } from '@/shared/icons/lucide/icons';
+ import { clipboardClearAll } from '../../../../shared/lib/tauri';
+@@ -32,6 +32,9 @@ const PasswordHistoryDialog: React.FC<PasswordHistoryDialogProps> = ({
+   const [items, setItems] = useState<PasswordHistoryEntry[]>([]);
+   const [showPasswords, setShowPasswords] = useState(false);
+   const [confirmOpen, setConfirmOpen] = useState(false);
++  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; entryId: string } | null>(null);
++  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
++  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+   const lastCopiedValueRef = useRef<string | null>(null);
+ 
+@@ -57,9 +60,28 @@ const PasswordHistoryDialog: React.FC<PasswordHistoryDialogProps> = ({
+     }
+   }, [datacardId, showToast, tCommon]);
+ 
++  const handleDeleteEntry = useCallback(async () => {
++    const entryId = deleteTargetId;
++    if (!entryId) return;
++    try {
++      await deletePasswordHistoryEntry(entryId);
++      setItems((prev) => prev.filter((row) => row.id !== entryId));
++    } catch (err) {
++      console.error(err);
++      showToast(tCommon('error.operationFailed'), 'error');
++    } finally {
++      setDeleteConfirmOpen(false);
++      setDeleteTargetId(null);
++    }
++  }, [deleteTargetId, showToast, tCommon]);
++
+   useEffect(() => {
+     if (isOpen) {
+       setShowPasswords(false);
++      setConfirmOpen(false);
++      setDeleteConfirmOpen(false);
++      setDeleteTargetId(null);
++      setContextMenu(null);
+       void loadHistory();
+     } else {
+       setItems([]);
+@@ -130,7 +152,14 @@ const PasswordHistoryDialog: React.FC<PasswordHistoryDialogProps> = ({
+     return (
+       <div className="password-history-list">
+         {items.map((entry) => (
+-          <div key={entry.id} className="password-history-row">
++          <div
++            key={entry.id}
++            className="password-history-row"
++            onContextMenu={(event) => {
++              event.preventDefault();
++              setContextMenu({ x: event.clientX, y: event.clientY, entryId: entry.id });
++            }}
++          >
+             <div className="password-history-meta">{formatTimestamp(entry.createdAt)}</div>
+             <div className="password-history-value">{showPasswords ? entry.passwordValue : MASKED_PASSWORD}</div>
+             <div className="password-history-actions">
+@@ -207,6 +236,44 @@ const PasswordHistoryDialog: React.FC<PasswordHistoryDialogProps> = ({
+         </div>
+       </div>
+ 
++      {contextMenu && (
++        <>
++          <div
++            className="vault-actionmenu-backdrop"
++            style={{ zIndex: 50 }}
++            onClick={() => setContextMenu(null)}
++            onContextMenu={(event) => {
++              event.preventDefault();
++              setContextMenu(null);
++            }}
++          />
++          <div
++            className="vault-actionmenu-panel vault-contextmenu-panel"
++            role="menu"
++            style={
++              {
++                '--menu-x': `${contextMenu.x}px`,
++                '--menu-y': `${contextMenu.y}px`,
++                zIndex: 51,
++              } as React.CSSProperties
++            }
++          >
++            <button
++              className="vault-actionmenu-item vault-actionmenu-danger"
++              type="button"
++              onClick={() => {
++                const id = contextMenu.entryId;
++                setContextMenu(null);
++                setDeleteTargetId(id);
++                setDeleteConfirmOpen(true);
++              }}
++            >
++              {t('action.delete')}
++            </button>
++          </div>
++        </>
++      )}
++
+       <ConfirmDialog
+         open={confirmOpen}
+         title={t('dialog.passwordHistoryTitle')}
+@@ -216,6 +283,19 @@ const PasswordHistoryDialog: React.FC<PasswordHistoryDialogProps> = ({
+         onConfirm={handleClearHistory}
+         onCancel={() => setConfirmOpen(false)}
+       />
++
++      <ConfirmDialog
++        open={deleteConfirmOpen}
++        title={t('dialog.passwordHistoryTitle')}
++        description={t('dialog.deleteHistoryEntryConfirm')}
++        confirmLabel={t('action.delete')}
++        cancelLabel={tCommon('action.cancel')}
++        onConfirm={handleDeleteEntry}
++        onCancel={() => {
++          setDeleteConfirmOpen(false);
++          setDeleteTargetId(null);
++        }}
++      />
+     </>
+   );
+ };
+diff --git a/src/i18n/locales/en/Details.json b/src/i18n/locales/en/Details.json
+index 908e301..ea35157 100644
+--- a/src/i18n/locales/en/Details.json
++++ b/src/i18n/locales/en/Details.json
+@@ -57,6 +57,7 @@
+   "toast.attachmentLoadError": "Unable to load attachments",
+   "dialog.passwordHistoryTitle": "Password history",
+   "dialog.clearHistoryConfirm": "Clear password history?",
++  "dialog.deleteHistoryEntryConfirm": "Delete this password from history?",
+   "label.passwordHistoryEmpty": "No password history yet",
+   "label.seedPhrase": "Seed phrase",
+   "action.open": "Open",
+diff --git a/src/i18n/locales/ru/Details.json b/src/i18n/locales/ru/Details.json
+index 63e674f..6b6aa90 100644
+--- a/src/i18n/locales/ru/Details.json
++++ b/src/i18n/locales/ru/Details.json
+@@ -57,6 +57,7 @@
+   "toast.attachmentLoadError": "Не удалось загрузить вложения",
+   "dialog.passwordHistoryTitle": "История паролей",
+   "dialog.clearHistoryConfirm": "Очистить историю паролей?",
++  "dialog.deleteHistoryEntryConfirm": "Удалить этот пароль из истории?",
+   "label.passwordHistoryEmpty": "История паролей пуста",
+   "label.seedPhrase": "Seed-фраза",
+   "action.open": "Открыть",
+diff --git a/src-tauri/src/commands/password_history.rs b/src-tauri/src/commands/password_history.rs
+index f21d504..2e3fd4c 100644
+--- a/src-tauri/src/commands/password_history.rs
++++ b/src-tauri/src/commands/password_history.rs
+@@ -52,3 +52,20 @@ pub async fn clear_datacard_password_history(
+ 
+     Ok(())
+ }
++
++
++#[tauri::command]
++pub async fn delete_datacard_password_history_entry(
++    app: tauri::AppHandle,
++    entry_id: String,
++) -> Result<()> {
++    let app_state = app.state::<Arc<AppState>>().inner().clone();
++
++    tauri::async_runtime::spawn_blocking(move || {
++        password_history_service::delete_history_entry(&app_state, &entry_id)
++    })
++    .await
++    .map_err(|_| ErrorCodeString::new("TASK_JOIN_FAILED"))??;
++
++    Ok(())
++}
+diff --git a/src-tauri/src/data/sqlite/repo_impl/password_history.rs b/src-tauri/src/data/sqlite/repo_impl/password_history.rs
+index c32e159..89dfebb 100644
+--- a/src-tauri/src/data/sqlite/repo_impl/password_history.rs
++++ b/src-tauri/src/data/sqlite/repo_impl/password_history.rs
+@@ -41,3 +41,21 @@ pub fn clear_password_history(
+         Ok(deleted as usize)
+     })
+ }
++
++
++pub fn delete_password_history_entry(
++    state: &Arc<AppState>,
++    profile_id: &str,
++    entry_id: &str,
++) -> Result<usize> {
++    with_connection_in_active_vault(state, profile_id, |conn, active_vault_id| {
++        let deleted = conn
++            .execute(
++                "DELETE FROM datacard_password_history WHERE id = ?1 AND datacard_id IN (SELECT id FROM datacards WHERE vault_id = ?2)",
++                params![entry_id, active_vault_id],
++            )
++            .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
++
++        Ok(deleted as usize)
++    })
++}
+diff --git a/src-tauri/src/main.rs b/src-tauri/src/main.rs
+index b2eadbe..d2edc44 100644
+--- a/src-tauri/src/main.rs
++++ b/src-tauri/src/main.rs
+@@ -199,6 +199,7 @@ fn main() {
+             restore_all_deleted_datacards,
+             purge_all_deleted_datacards,
+             get_datacard_password_history,
++            delete_datacard_password_history_entry,
+             clear_datacard_password_history,
+             get_settings,
+             update_settings,
+diff --git a/src-tauri/src/services/password_history_service.rs b/src-tauri/src/services/password_history_service.rs
+index ef6a91d..6bfecb3 100644
+--- a/src-tauri/src/services/password_history_service.rs
++++ b/src-tauri/src/services/password_history_service.rs
+@@ -17,3 +17,11 @@ pub fn clear_history(state: &Arc<AppState>, datacard_id: &str) -> Result<()> {
+     security_service::request_persist_active_vault(state.clone());
+     Ok(())
+ }
++
++pub fn delete_history_entry(state: &Arc<AppState>, entry_id: &str) -> Result<()> {
++    let profile_id = security_service::require_unlocked_active_profile(state)?.profile_id;
++    repo_impl::delete_password_history_entry(state, &profile_id, entry_id)?;
++    security_service::request_persist_active_vault(state.clone());
++    Ok(())
++}
++

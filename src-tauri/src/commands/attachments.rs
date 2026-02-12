@@ -29,6 +29,19 @@ fn now_ms() -> Result<u128> {
 }
 
 #[tauri::command]
+pub async fn rename_attachment(
+    app: AppHandle,
+    attachment_id: String,
+    file_name: String,
+) -> Result<AttachmentMeta> {
+    tauri::async_runtime::spawn_blocking(move || {
+        attachments_service::rename_attachment(&app, attachment_id, file_name)
+    })
+    .await
+    .map_err(|_| ErrorCodeString::new("TASK_JOIN_FAILED"))?
+}
+
+#[tauri::command]
 pub async fn remove_attachment(app: AppHandle, attachment_id: String) -> Result<()> {
     tauri::async_runtime::spawn_blocking(move || {
         attachments_service::remove_attachment(&app, attachment_id)
@@ -185,8 +198,11 @@ pub async fn add_attachments_from_pick(
                     continue;
                 }
             }
-            let meta =
-                attachments_service::add_attachment_from_fs_path(&app, datacard_id.clone(), &f.path)?;
+            let meta = attachments_service::add_attachment_from_fs_path(
+                &app,
+                datacard_id.clone(),
+                &f.path,
+            )?;
             out.push(meta);
         }
         Ok(out)
@@ -209,6 +225,26 @@ pub async fn add_attachments_via_dialog(
         let mut out: Vec<AttachmentMeta> = Vec::new();
         for fp in paths {
             let path = file_path_to_pathbuf(fp)?;
+            let meta =
+                attachments_service::add_attachment_from_fs_path(&app, datacard_id.clone(), &path)?;
+            out.push(meta);
+        }
+        Ok(out)
+    })
+    .await
+    .map_err(|_| ErrorCodeString::new("TASK_JOIN_FAILED"))?
+}
+
+#[tauri::command]
+pub async fn add_attachments_from_paths(
+    app: AppHandle,
+    datacard_id: String,
+    paths: Vec<String>,
+) -> Result<Vec<AttachmentMeta>> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let mut out: Vec<AttachmentMeta> = Vec::new();
+        for p in paths {
+            let path = std::path::PathBuf::from(p);
             let meta =
                 attachments_service::add_attachment_from_fs_path(&app, datacard_id.clone(), &path)?;
             out.push(meta);
