@@ -1,0 +1,58 @@
+/* NOTE:
+   Base screen wrapper + card now come from ui.css (.screen-shell/.screen-card).
+   This file keeps ONLY ProfileCreate-specific layout/typography. */
+
+/* Header */
+.profile-create-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.profile-create-title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.profile-create-subtitle {
+  margin: 6px 0 0 0;
+  font-size: 15px;
+  color: var(--color-text-muted);
+}
+
+/* Form should fill card width like Select profile */
+.profile-create-form {
+  width: 100%;
+}
+
+/* Full-width inner wrapper for form fields.
+   IMPORTANT: It must NOT look like a separate panel (no border/box). */
+.profile-create-panel {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+/* Footer row: Back left, Create right */
+.profile-create-footer {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Footnote stays centered like on Select profile */
+.profile-create-footnote {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 720px) {
+  /* Base padding handled by .screen-shell/.screen-card */
+}

@@ -1,0 +1,6 @@
+{
+  "backup.export": "Export backup",
+  "backup.import": "Import backup",
+  "vault.settings": "Settings",
+  "vault.lock": "Lock"
+}

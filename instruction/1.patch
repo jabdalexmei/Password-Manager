@@ -1,0 +1,33 @@
+--- a/src/features/Startup/Startup.tsx
++++ b/src/features/Startup/Startup.tsx
+@@ -96,7 +96,7 @@
+           </button>
+ 
+           <button type="button" className="btn btn-primary" onClick={onCreate}>
++            {t('create')}
+-            {t('selectStorageFolder')}
+           </button>
+         </div>
+         <p className="startup-footnote">{t('footnote')}</p>
+
+--- a/src/i18n/locales/en/Startup.json
++++ b/src/i18n/locales/en/Startup.json
+@@ -3,6 +3,7 @@
+   "subtitle": "Choose an existing profile or create a new one to continue.",
+   "noProfiles": "No profiles",
+   "create": "Create new profile",
+-  "selectStorageFolder": "Select storage folder",
+   "back": "Back",
+   "delete": "Delete",
+   "open": "Choose",
+
+--- a/src/i18n/locales/ru/Startup.json
++++ b/src/i18n/locales/ru/Startup.json
+@@ -3,6 +3,7 @@
+   "subtitle": "Выберите существующий профиль или создайте новый.",
+   "noProfiles": "Профили отсутствуют",
+   "create": "Создать профиль",
+-  "selectStorageFolder": "Выбрать папку для хранения данных",
+   "back": "Назад",
+   "delete": "Удалить",
+   "open": "Выбрать",

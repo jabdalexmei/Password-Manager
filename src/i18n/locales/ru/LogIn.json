@@ -1,0 +1,14 @@
+﻿{
+  "title": "Вход",
+  "subtitle": "Введите мастер-пароль для разблокировки хранилища",
+  "selectedProfile": "Выбранный профиль",
+  "unnamedProfile": "Профиль без имени",
+  "passwordLabel": "Пароль",
+  "passwordPlaceholder": "Пароль",
+  "back": "Назад",
+  "submit": "Войти",
+  "invalidPassword": "Неверный пароль",
+  "validationPassword": "Введите пароль",
+  "error": "Не удалось разблокировать профиль",
+  "label.profileId": "ID: {{id}}"
+}

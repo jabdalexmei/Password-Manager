@@ -1,0 +1,17 @@
+﻿{
+  "title": "Создание профиля",
+  "subtitle": "Добавьте профиль и, при необходимости, пароль",
+  "name": "Имя профиля",
+  "namePlaceholder": "Введите имя профиля",
+  "password": "Мастер-пароль",
+  "passwordLabel": "Мастер-пароль (необязательно)",
+  "passwordPlaceholder": "Оставьте пустым, чтобы создать профиль без пароля",
+  "confirmPassword": "Подтвердите пароль",
+  "confirmPasswordPlaceholder": "Подтвердите пароль",
+  "optional": "(необязательно)",
+  "submit": "Создать",
+  "back": "Назад",
+  "validationName": "Введите имя профиля",
+  "validationMatch": "Пароли не совпадают",
+  "footnote": "Password Manager надёжно защищает ваше хранилище."
+}

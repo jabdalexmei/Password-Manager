@@ -1,0 +1,384 @@
+﻿/* ===== Layout ===== */
+
+.vault-body {
+  display: grid;
+  grid-template-columns: 330px minmax(0, 1.2fr) minmax(0, 1.3fr);
+  flex: 1;
+  min-height: 0;
+}
+
+/* =======================================================================
+   LEFT SIDEBAR â€” 1:1 ÑÑ‚Ð¸Ð»ÑŒ ÐºÐ°Ðº Ð² oldthemegood (Ð¸ Ð±ÐµÐ· ÐºÐ¾Ð½Ñ„Ð»Ð¸ÐºÑ‚Ð¾Ð²)
+   ======================================================================= */
+
+.vault-sidebar {
+  background: var(--color-surface-2);
+  border-right: 1px solid var(--color-border);
+  padding: 40px;
+  overflow: auto;
+  --sidebar-section-gap: 16px;
+}
+
+.vault-sidebar-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.vault-search-wrapper {
+  position: relative;
+}
+
+.vault-search-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vault-search-row .vault-search {
+  width: auto;
+  flex: 1 1 auto;
+}
+
+.vault-search {
+  width: 100%;
+  padding: 12px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-input-bg);
+  color: var(--color-text);
+}
+
+.vault-search:focus-visible {
+  outline: 2px solid var(--color-primary);
+  border-color: transparent;
+}
+
+.vault-filter-btn {
+  /* only shape matches top buttons */
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+
+  /* keep existing colors/behavior */
+  border: 1px solid var(--greycolorsecondaryborder);
+  background: var(--greycolorsecondary);
+  color: var(--color-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.vault-filter-btn:hover {
+  border-color: var(--focus-border);
+}
+
+.vault-filter-btn:active {
+  transform: translateY(1px);
+}
+
+.vault-filter-btn:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.vault-filter-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: transparent;
+}
+
+.vault-filter-panel {
+  position: absolute;
+  z-index: 41;
+  top: calc(100% + 8px);
+  right: 0;
+  /* shrink popover to content */
+  min-width: 0;
+  width: fit-content;
+  max-width: 100%;
+  padding: 8px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-popover);
+
+  /* Filter chips edit size */
+  --filter-chip-width: 100px;
+  --filter-chip-pad-y: 5px;
+  --filter-chip-pad-x: 1px;
+}
+
+.vault-filter-panel__title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 10px;
+}
+
+.vault-filter-list {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.filter-chip {
+  /* customizable knobs */
+  --filter-chip-font-size: 13px;
+
+  flex: 0 0 auto;
+  width: var(--filter-chip-width);
+  max-width: 100%;
+  align-self: flex-start;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  padding: var(--filter-chip-pad-y) var(--filter-chip-pad-x);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--greycolorsecondaryborder);
+  background: var(--greycolorsecondary);
+  color: var(--color-text);
+  font-size: var(--filter-chip-font-size);
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.filter-chip:hover {
+  border-color: var(--focus-border);
+}
+
+.filter-chip:active {
+  transform: translateY(1px);
+}
+
+.filter-chip.is-active {
+  background: var(--blueprimarycolor);
+  border-color: var(--blueprimarycolor);
+  color: var(--color-on-primary);
+}
+
+.filter-chip:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.vault-sidebar-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+  margin-bottom: var(--sidebar-section-gap);
+}
+
+.vault-sidebar-actions--vaults {
+  grid-template-columns: minmax(0, 1fr);
+  margin-top: var(--sidebar-section-gap);
+}
+
+.vault-sidebar-actions > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.vault-sidebar-actions .btn {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  height: 40px;
+  padding: 6px 10px;
+  line-height: 1.15;
+  text-align: center;
+  white-space: normal;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.vault-sidebar-actions .vault-sidebar-btn-nowrap {
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
+  text-overflow: ellipsis;
+}
+
+.vault-sidebar-addmenu {
+  position: relative;
+  flex: 1;
+  overflow: visible;
+}
+
+.vault-sidebar-addmenu > .btn {
+  width: 100%;
+}
+
+/* Keep dropdown menu inside the app/sidebar */
+.vault-sidebar-addmenu .vault-actionmenu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+}
+
+.vault-sidebar-addmenu .vault-actionmenu-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 51;
+
+  /* Never overflow horizontally; match button width */
+  width: auto;
+  max-width: 100%;
+  box-sizing: border-box;
+
+  /* Prevent going out of window vertically */
+  max-height: min(320px, calc(100vh - 160px));
+  overflow-y: auto;
+}
+
+.vault-sidebar-addmenu .vault-actionmenu-item {
+  width: 100%;
+  text-align: left;
+}
+
+.vault-sidebar-title {
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 8px;
+}
+
+.vault-folder-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vault-folder-node {
+  --folder-indent: 0px;
+  --folder-toggle-offset: 30px;
+
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding-left: var(--folder-indent);
+}
+
+.vault-folder-tree-children {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vault-folder-toggle {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  position: absolute;
+  left: calc(var(--folder-indent) - var(--folder-toggle-offset));
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.vault-folder-toggle:hover,
+.vault-folder-toggle:focus-visible {
+  color: var(--color-text);
+  border-color: var(--focus-border);
+  background: var(--color-surface-2);
+  outline: none;
+}
+
+.vault-folder-toggle-placeholder {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  position: absolute;
+  left: calc(var(--folder-indent) - var(--folder-toggle-offset));
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  opacity: 0;
+}
+.vault-folder-list + .vault-sidebar-title {
+  margin-top: var(--sidebar-section-gap);
+}
+
+
+/* !!! ÐšÐ›Ð®Ð§Ð•Ð’ÐžÐ• Ð˜Ð¡ÐŸÐ ÐÐ’Ð›Ð•ÐÐ˜Ð•: ÐÐ• Ð¡Ð‘Ð ÐÐ¡Ð«Ð’ÐÐ•Ðœ Ð¡Ð¢Ð˜Ð›Ð˜ Ð”Ð›Ð¯ li button !!!
+   Ð¸Ð½Ð°Ñ‡Ðµ .vault-folder ÑÑ‚Ð°Ð½Ð¾Ð²Ð¸Ñ‚ÑÑ Ð¿Ñ€Ð¾Ð·Ñ€Ð°Ñ‡Ð½Ñ‹Ð¼ Ð¸ â€œÐºÑ€Ð¸Ð²Ñ‹Ð¼â€
+*/
+
+.vault-folder {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.vault-folder:hover {
+  border-color: var(--focus-border);
+  background: var(--color-surface-2);
+  transform: translateY(-1px);
+  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+}
+
+.vault-folder--tree {
+  flex: 1 1 auto;
+}
+
+.vault-folder:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.vault-folder-list li.active > .vault-folder,
+.vault-folder-list li.active > .vault-folder-node > .vault-folder,
+.vault-folder-tree-children li.active > .vault-folder-node > .vault-folder {
+  background: linear-gradient(90deg, var(--color-surface-2) 0%, var(--color-surface-3) 100%);
+  border-color: var(--color-primary);
+}
+
+.folder-name {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.folder-badge {
+  color: var(--color-primary);
+  margin-left: 6px;
+}
+
+.folder-count {
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
