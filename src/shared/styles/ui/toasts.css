@@ -1,16 +1,17 @@
 ﻿/* ==========================================================================
    Toasts (notifications)
    --------------------------------------------------------------------------
-   - Host position (top-right) + toast card styling + success/error variants.
+   - Host position (bottom-right) + toast card styling + success/error variants.
    ========================================================================== */
 .toast-host {
   position: fixed;
   right: 16px;
-  top: 16px;
+  bottom: 16px;
   display: flex;
   flex-direction: column;
   gap: 10px;
   z-index: 40;
+  pointer-events: none;
 }
 
 .toast {
@@ -26,6 +27,8 @@
   flex-direction: row;
   align-items: flex-start;
   gap: 12px;
+  pointer-events: auto;
+  will-change: transform, opacity;
 }
 
 .toast-body {
@@ -54,6 +57,8 @@
   color: var(--color-text-muted);
   border-radius: var(--radius-sm);
   cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
 }
 
 .toast-close:hover {
