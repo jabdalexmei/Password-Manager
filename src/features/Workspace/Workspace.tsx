@@ -152,7 +152,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
   const handleOpenDataFolder = useCallback(async () => {
     setBusy(true);
     try {
-      const ok = await workspaceCreateViaDialog(t('selectDataFolderDialogTitle'));
+      const ok = await workspaceCreateViaDialog(t('openDataFolderDialogTitle'));
       if (!ok) return;
 
       await refresh();
@@ -160,7 +160,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
     } finally {
       setBusy(false);
     }
-  }, [onWorkspaceReady, refresh]);
+  }, [onWorkspaceReady, refresh, t]);
 
   const workspaceListContent = useMemo(() => {
     if (loading) return <p className="muted centered">{t('loading')}</p>;
@@ -331,7 +331,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
               onClick={handleCreate}
               disabled={busy}
             >
-              {t('create')}
+              {t('selectStorageFolder')}
             </button>
 
             <button
