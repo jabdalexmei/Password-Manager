@@ -241,17 +241,22 @@ select:autofill {
   padding-right: 6px;
 }
 
+.input-actions .icon-button {
+  width: 26px !important;
+  height: 26px !important;
+  min-width: 26px !important;
+  min-height: 26px !important;
+  padding: 0 !important;
+}
+
 .input-actions .icon-button:not(.icon-button-primary):not(.icon-button-danger) {
-  width: 30px;
-  height: 30px;
   border: 1px solid transparent;
   background: transparent;
   color: var(--color-text-muted);
 }
 
 .input-actions .icon-button.icon-button-primary {
-  width: 30px;
-  height: 30px;
+  border-radius: 8px;
 }
 
 .input-actions .icon-button:not(.icon-button-primary):not(.icon-button-danger):hover:not(:disabled) {
