@@ -1,8 +1,6 @@
 ﻿import React, { useCallback, useMemo, useState } from 'react';
 import { useVault, type SelectedNav } from './hooks/useVault';
 import { VaultHeader } from './components/Header/VaultHeader';
-import { Search } from './components/Search/Search';
-import { VaultSidebar } from './components/Sidebar/VaultSidebar';
 import { useDataCards } from './components/DataCards/useDataCards';
 import { useFolders } from './components/Folders/useFolders';
 import { useBankCards } from './hooks/useBankCards';
@@ -281,7 +279,6 @@ export default function Vault({
         <VaultSidebarPane
           selectedCategory={selectedCategory}
           activeVault={vault}
-          bankCards={bankCards}
           dataCardsViewModel={dataCardsViewModel}
           bankCardsViewModel={bankCardsViewModel}
           folderDialogs={folderDialogs}
@@ -359,5 +356,3 @@ export default function Vault({
     />
   );
 }
-
-

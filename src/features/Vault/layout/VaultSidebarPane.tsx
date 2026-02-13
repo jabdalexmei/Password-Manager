@@ -8,7 +8,6 @@ type TranslateFn = (key: string, params?: Record<string, string | number>) => st
 type VaultSidebarPaneProps = {
   selectedCategory: VaultCategory;
   activeVault: any;
-  bankCards: any;
   dataCardsViewModel: any;
   bankCardsViewModel: any;
   folderDialogs: any;
@@ -34,7 +33,6 @@ type VaultSidebarPaneProps = {
 export function VaultSidebarPane({
   selectedCategory,
   activeVault,
-  bankCards,
   dataCardsViewModel,
   bankCardsViewModel,
   folderDialogs,
