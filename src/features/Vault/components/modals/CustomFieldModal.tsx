@@ -19,6 +19,7 @@ export const CustomFieldModal: React.FC<CustomFieldModalProps> = ({
   onOk,
 }) => {
   const { t } = useTranslation('DataCards');
+  const { t: tCommon } = useTranslation('Common');
 
   if (!isOpen) return null;
 
@@ -32,7 +33,12 @@ export const CustomFieldModal: React.FC<CustomFieldModalProps> = ({
       }}
     >
       <div className="dialog customfield-dialog" role="dialog" aria-modal="true" aria-labelledby="customfield-title">
-        <button className="dialog-close dialog-close--topright" type="button" aria-label="Close" onClick={onCancel}>
+        <button
+          className="dialog-close dialog-close--topright"
+          type="button"
+          aria-label={tCommon('action.close')}
+          onClick={onCancel}
+        >
           {'\u00D7'}
         </button>
         <div className="dialog-header">
@@ -50,7 +56,6 @@ export const CustomFieldModal: React.FC<CustomFieldModalProps> = ({
               id="customfield-name"
               className="input"
               value={name}
-              placeholder={t('customFields.namePlaceholder')}
               onChange={(event) => onChangeName(event.target.value)}
             />
             {error && <div className="form-error">{error}</div>}

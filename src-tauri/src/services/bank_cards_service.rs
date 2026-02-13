@@ -117,7 +117,7 @@ pub fn purge_all_deleted_bank_cards(state: &Arc<AppState>) -> Result<bool> {
     }
 
     for id in ids {
-        purge_bank_card_internal(state, &profile_id, &id)?;
+        purge_bank_card_by_profile(state, &profile_id, &id)?;
     }
 
     security_service::request_persist_active_vault(state.clone());
@@ -179,7 +179,7 @@ pub fn delete_bank_card(id: String, state: &Arc<AppState>) -> Result<bool> {
         security_service::request_persist_active_vault(state.clone());
         Ok(true)
     } else {
-        let purged = purge_bank_card_internal(state, &profile_id, &id)?;
+        let purged = purge_bank_card_by_profile(state, &profile_id, &id)?;
         security_service::request_persist_active_vault(state.clone());
         Ok(purged)
     }
@@ -194,12 +194,16 @@ pub fn restore_bank_card(id: String, state: &Arc<AppState>) -> Result<bool> {
 
 pub fn purge_bank_card(id: String, state: &Arc<AppState>) -> Result<bool> {
     let profile_id = security_service::require_unlocked_active_profile(state)?.profile_id;
-    let purged = purge_bank_card_internal(state, &profile_id, &id)?;
+    let purged = purge_bank_card_by_profile(state, &profile_id, &id)?;
     security_service::request_persist_active_vault(state.clone());
     Ok(purged)
 }
 
-fn purge_bank_card_internal(state: &Arc<AppState>, profile_id: &str, id: &str) -> Result<bool> {
+pub(crate) fn purge_bank_card_by_profile(
+    state: &Arc<AppState>,
+    profile_id: &str,
+    id: &str,
+) -> Result<bool> {
     let purged = repo_impl::purge_bank_card(state, profile_id, id)?;
     Ok(purged)
 }

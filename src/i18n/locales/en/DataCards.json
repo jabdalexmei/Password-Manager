@@ -1,6 +1,6 @@
 {
   "label.dataCardsTitle": "Data cards",
-  "label.addDataCard": "Add data card",
+  "label.createDataCard": "Create data card",
   "label.empty": "Empty",
   "label.noMeta": "No meta",
   "label.untitled": "Untitled",
@@ -40,13 +40,15 @@
   "action.create": "Create",
   "action.cancel": "Cancel",
   "action.ok": "OK",
-  "action.more": "More",
-  "trash.actions": "Actions",
   "trash.restoreAll": "Restore all data",
   "trash.removeAll": "Remove all data",
   "action.save": "Save",
   "dialog.createTitle": "Create data card",
   "dialog.editTitle": "Edit data card",
+  "dialog.closeUnsavedCreate.title": "Close without saving?",
+  "dialog.closeUnsavedCreate.description": "Your changes will be lost.",
+  "dialog.closeUnsavedCreate.cancel": "Continue editing",
+  "dialog.closeUnsavedCreate.confirm": "Close",
   "label.markFavorite": "Mark as favorite",
   "validation.titleRequired": "Title is required",
   "validation.folderNotFound": "Folder not found",
@@ -69,12 +71,12 @@
   "attachments.add": "Add file",
   "attachments.selected": "Selected files",
   "attachments.remove": "Remove",
+  "attachments.pill": "Attachments",
   "toast.attachmentUploadError": "Some files failed to upload",
   "customFields.add": "Add field",
   "customFields.editFields": "Edit fields",
   "customFields.modalTitle": "Add custom field",
   "customFields.nameLabel": "Field name",
-  "customFields.namePlaceholder": "e.g. API key",
   "customFields.rename": "Rename field",
   "customFields.delete": "Delete field",
   "customFields.renameTitle": "Rename field",
@@ -97,6 +99,10 @@
     "addAction": "Add 2FA",
     "editAction": "Edit 2FA",
     "remove": "Remove 2FA",
+    "defaults": {
+      "issuer": "Vault",
+      "label": "Account"
+    },
     "title": "Two-factor authentication (TOTP)",
     "tab": {
       "text": "Text",
@@ -111,7 +117,10 @@
       "label": "Upload QR image",
       "chooseFile": "Choose file",
       "noFileChosen": "No file chosen",
-      "loading": "Decoding QR..."
+      "loading": "Decoding QR...",
+      "scanArea": "Scan area",
+      "scanSelected": "Scan selected",
+      "decodeSuccess": "QR decoded successfully"
     },
     "error": {
       "EMPTY": "Enter a setup code or secret",

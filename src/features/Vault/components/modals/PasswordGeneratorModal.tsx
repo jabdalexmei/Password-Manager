@@ -27,6 +27,7 @@ export const PasswordGeneratorModal: React.FC<PasswordGeneratorModalProps> = ({
   onCopy,
 }) => {
   const { t } = useTranslation('DataCards');
+  const { t: tCommon } = useTranslation('Common');
 
   if (!isOpen) return null;
 
@@ -68,7 +69,12 @@ export const PasswordGeneratorModal: React.FC<PasswordGeneratorModalProps> = ({
       }}
     >
       <div className="dialog generator-dialog" role="dialog" aria-modal="true" aria-labelledby="generator-title">
-        <button className="dialog-close dialog-close--topright" type="button" aria-label="Close" onClick={onClose}>
+        <button
+          className="dialog-close dialog-close--topright"
+          type="button"
+          aria-label={tCommon('action.close')}
+          onClick={onClose}
+        >
           {'\u00D7'}
         </button>
         <div className="dialog-header">

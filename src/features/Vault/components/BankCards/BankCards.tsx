@@ -455,7 +455,7 @@ export function BankCards({
               <button
                 className="btn btn-icon vault-actionbar"
                 type="button"
-                aria-label={t('trash.actions')}
+                aria-label={tCommon('common.moreActions')}
                 aria-haspopup="menu"
                 aria-expanded={isTrashActionsOpen}
                 onClick={() => setIsTrashActionsOpen((prev) => !prev)}

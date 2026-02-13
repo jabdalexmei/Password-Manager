@@ -94,7 +94,7 @@ export function useBankCards(
     return () => {
       cancelled = true;
     };
-  }, [debouncedSearchQuery]);
+  }, [activeVaultId, debouncedSearchQuery]);
 
   useEffect(() => {
     const handler = (event: Event) => {
@@ -265,7 +265,9 @@ export function useBankCards(
     refreshActive();
     refreshTrash();
     getSettings()
-      .then(setSettings)
+      .then((nextSettings) => {
+        setSettings(nextSettings);
+      })
       .catch(handleError);
   }, [activeVaultId, handleError, refreshActive, refreshTrash]);
 

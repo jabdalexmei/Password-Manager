@@ -19,6 +19,7 @@ export const CustomFieldRenameModal: React.FC<CustomFieldRenameModalProps> = ({
   onOk,
 }) => {
   const { t } = useTranslation('DataCards');
+  const { t: tCommon } = useTranslation('Common');
 
   if (!isOpen) return null;
 
@@ -37,7 +38,12 @@ export const CustomFieldRenameModal: React.FC<CustomFieldRenameModalProps> = ({
         aria-modal="true"
         aria-labelledby="customfield-rename-title"
       >
-        <button className="dialog-close dialog-close--topright" type="button" aria-label="Close" onClick={onCancel}>
+        <button
+          className="dialog-close dialog-close--topright"
+          type="button"
+          aria-label={tCommon('action.close')}
+          onClick={onCancel}
+        >
           {'\u00D7'}
         </button>
         <div className="dialog-header">

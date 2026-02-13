@@ -9,14 +9,22 @@ async function loadZxingBrowser(): Promise<ZxingBrowserModule> {
   return zxingBrowserPromise;
 }
 
+async function decodeQrFromImageUrl(url: string): Promise<string> {
+  const { BrowserQRCodeReader } = await loadZxingBrowser();
+  const reader = new BrowserQRCodeReader();
+  const decoded = await reader.decodeFromImageUrl(url);
+  return decoded.getText();
+}
+
 export async function decodeQrFromImageFile(file: File): Promise<string> {
   const url = URL.createObjectURL(file);
   try {
-    const { BrowserQRCodeReader } = await loadZxingBrowser();
-    const reader = new BrowserQRCodeReader();
-    const decoded = await reader.decodeFromImageUrl(url);
-    return decoded.getText();
+    return await decodeQrFromImageUrl(url);
   } finally {
     URL.revokeObjectURL(url);
   }
+}
+
+export async function decodeQrFromCanvas(canvas: HTMLCanvasElement): Promise<string> {
+  return decodeQrFromImageUrl(canvas.toDataURL('image/png'));
 }
