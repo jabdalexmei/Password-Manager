@@ -73,7 +73,7 @@ const ProfileCreate: React.FC<ProfileCreateProps> = ({ onCreated, onProfileCreat
                 <div className="input-actions">
                   <button
                     type="button"
-                    className="icon-button"
+                    className="icon-button input-action-eye"
                     aria-label={isPasswordVisible ? tCommon('action.hidePassword') : tCommon('action.showPassword')}
                     title={isPasswordVisible ? tCommon('action.hidePassword') : tCommon('action.showPassword')}
                     onClick={() => setIsPasswordVisible((prev) => !prev)}
@@ -102,7 +102,7 @@ const ProfileCreate: React.FC<ProfileCreateProps> = ({ onCreated, onProfileCreat
                 <div className="input-actions">
                   <button
                     type="button"
-                    className="icon-button"
+                    className="icon-button input-action-eye"
                     aria-label={isConfirmPasswordVisible ? tCommon('action.hidePassword') : tCommon('action.showPassword')}
                     title={isConfirmPasswordVisible ? tCommon('action.hidePassword') : tCommon('action.showPassword')}
                     onClick={() => setIsConfirmPasswordVisible((prev) => !prev)}

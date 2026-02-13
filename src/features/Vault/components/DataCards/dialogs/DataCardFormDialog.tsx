@@ -284,7 +284,7 @@ export function DataCardFormDialog({
               />
               <div className="input-actions">
                 <button
-                  className="icon-button"
+                  className="icon-button input-action-eye"
                   type="button"
                   onClick={togglePasswordVisibility}
                   aria-label={t('action.togglePasswordVisibility')}

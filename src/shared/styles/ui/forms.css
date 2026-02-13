@@ -249,6 +249,11 @@ select:autofill {
   color: var(--color-text-muted);
 }
 
+.input-actions .icon-button.icon-button-primary {
+  width: 30px;
+  height: 30px;
+}
+
 .input-actions .icon-button:not(.icon-button-primary):not(.icon-button-danger):hover:not(:disabled) {
   border-color: var(--border-subtle);
   background: var(--surface-tint-02);
@@ -257,6 +262,24 @@ select:autofill {
 
 .input-actions .icon-button:disabled {
   opacity: 0.55;
+}
+
+/* Password visibility button: no own border/background, keep only icon hover color. */
+.input-actions .input-action-eye {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--color-text-muted);
+  opacity: 0.88;
+  transition: color 0.15s ease, opacity 0.15s ease;
+}
+
+.input-actions .input-action-eye:hover:not(:disabled),
+.input-actions .input-action-eye:focus-visible {
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--color-text);
+  opacity: 1;
 }
 
 /* Selected profile info block (summary panel) */
