@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import ConfirmDialog from '../../../../../../shared/components/ConfirmDialog';
+import { IconPreview, IconPreviewOff } from '@/shared/icons/lucide/icons';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../../../../../../shared/ui/dialog';
 
 type TranslateFn = (key: string, params?: Record<string, string | number>) => string;
@@ -75,6 +76,23 @@ export function ProfileSection({
   tVault,
   tCommon,
 }: ProfileSectionProps) {
+  const [isSetPasswordVisible, setIsSetPasswordVisible] = useState(false);
+  const [isSetPasswordConfirmVisible, setIsSetPasswordConfirmVisible] = useState(false);
+  const [isChangePasswordVisible, setIsChangePasswordVisible] = useState(false);
+  const [isChangePasswordConfirmVisible, setIsChangePasswordConfirmVisible] = useState(false);
+
+  useEffect(() => {
+    if (setPasswordOpen) return;
+    setIsSetPasswordVisible(false);
+    setIsSetPasswordConfirmVisible(false);
+  }, [setPasswordOpen]);
+
+  useEffect(() => {
+    if (changePasswordOpen) return;
+    setIsChangePasswordVisible(false);
+    setIsChangePasswordConfirmVisible(false);
+  }, [changePasswordOpen]);
+
   return (
     <>
       <h3 id="profile-title" className="settings-modal-section-title">
@@ -166,30 +184,58 @@ export function ProfileSection({
               <label className="form-label" htmlFor="set-password-input">
                 {tVault('settingsModal.profile.passwordLabel')}
               </label>
-              <input
-                id="set-password-input"
-                type="password"
-                value={setPasswordValue}
-                disabled={busy || isSettingPassword || profileHasPassword}
-                onChange={(event) => setSetPasswordValue(event.target.value)}
-                autoComplete="new-password"
-                className="settings-input"
-              />
+              <div className="input-with-actions">
+                <input
+                  id="set-password-input"
+                  type={isSetPasswordVisible ? 'text' : 'password'}
+                  value={setPasswordValue}
+                  disabled={busy || isSettingPassword || profileHasPassword}
+                  onChange={(event) => setSetPasswordValue(event.target.value)}
+                  autoComplete="new-password"
+                  className="settings-input input"
+                />
+                <div className="input-actions">
+                  <button
+                    type="button"
+                    className="icon-button"
+                    disabled={busy || isSettingPassword || profileHasPassword}
+                    aria-label={isSetPasswordVisible ? tCommon('action.hidePassword') : tCommon('action.showPassword')}
+                    title={isSetPasswordVisible ? tCommon('action.hidePassword') : tCommon('action.showPassword')}
+                    onClick={() => setIsSetPasswordVisible((prev) => !prev)}
+                  >
+                    {isSetPasswordVisible ? <IconPreviewOff /> : <IconPreview />}
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div className="form-field">
               <label className="form-label" htmlFor="set-password-confirm-input">
                 {tVault('settingsModal.profile.confirmPasswordLabel')}
               </label>
-              <input
-                id="set-password-confirm-input"
-                type="password"
-                value={setPasswordConfirm}
-                disabled={busy || isSettingPassword || profileHasPassword}
-                onChange={(event) => setSetPasswordConfirm(event.target.value)}
-                autoComplete="new-password"
-                className="settings-input"
-              />
+              <div className="input-with-actions">
+                <input
+                  id="set-password-confirm-input"
+                  type={isSetPasswordConfirmVisible ? 'text' : 'password'}
+                  value={setPasswordConfirm}
+                  disabled={busy || isSettingPassword || profileHasPassword}
+                  onChange={(event) => setSetPasswordConfirm(event.target.value)}
+                  autoComplete="new-password"
+                  className="settings-input input"
+                />
+                <div className="input-actions">
+                  <button
+                    type="button"
+                    className="icon-button"
+                    disabled={busy || isSettingPassword || profileHasPassword}
+                    aria-label={isSetPasswordConfirmVisible ? tCommon('action.hidePassword') : tCommon('action.showPassword')}
+                    title={isSetPasswordConfirmVisible ? tCommon('action.hidePassword') : tCommon('action.showPassword')}
+                    onClick={() => setIsSetPasswordConfirmVisible((prev) => !prev)}
+                  >
+                    {isSetPasswordConfirmVisible ? <IconPreviewOff /> : <IconPreview />}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -220,30 +266,58 @@ export function ProfileSection({
               <label className="form-label" htmlFor="change-password-input">
                 {tVault('settingsModal.profile.passwordLabel')}
               </label>
-              <input
-                id="change-password-input"
-                type="password"
-                value={changePasswordValue}
-                disabled={busy || isChangingPassword || !profileHasPassword}
-                onChange={(event) => setChangePasswordValue(event.target.value)}
-                autoComplete="new-password"
-                className="settings-input"
-              />
+              <div className="input-with-actions">
+                <input
+                  id="change-password-input"
+                  type={isChangePasswordVisible ? 'text' : 'password'}
+                  value={changePasswordValue}
+                  disabled={busy || isChangingPassword || !profileHasPassword}
+                  onChange={(event) => setChangePasswordValue(event.target.value)}
+                  autoComplete="new-password"
+                  className="settings-input input"
+                />
+                <div className="input-actions">
+                  <button
+                    type="button"
+                    className="icon-button"
+                    disabled={busy || isChangingPassword || !profileHasPassword}
+                    aria-label={isChangePasswordVisible ? tCommon('action.hidePassword') : tCommon('action.showPassword')}
+                    title={isChangePasswordVisible ? tCommon('action.hidePassword') : tCommon('action.showPassword')}
+                    onClick={() => setIsChangePasswordVisible((prev) => !prev)}
+                  >
+                    {isChangePasswordVisible ? <IconPreviewOff /> : <IconPreview />}
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div className="form-field">
               <label className="form-label" htmlFor="change-password-confirm-input">
                 {tVault('settingsModal.profile.confirmPasswordLabel')}
               </label>
-              <input
-                id="change-password-confirm-input"
-                type="password"
-                value={changePasswordConfirm}
-                disabled={busy || isChangingPassword || !profileHasPassword}
-                onChange={(event) => setChangePasswordConfirm(event.target.value)}
-                autoComplete="new-password"
-                className="settings-input"
-              />
+              <div className="input-with-actions">
+                <input
+                  id="change-password-confirm-input"
+                  type={isChangePasswordConfirmVisible ? 'text' : 'password'}
+                  value={changePasswordConfirm}
+                  disabled={busy || isChangingPassword || !profileHasPassword}
+                  onChange={(event) => setChangePasswordConfirm(event.target.value)}
+                  autoComplete="new-password"
+                  className="settings-input input"
+                />
+                <div className="input-actions">
+                  <button
+                    type="button"
+                    className="icon-button"
+                    disabled={busy || isChangingPassword || !profileHasPassword}
+                    aria-label={isChangePasswordConfirmVisible ? tCommon('action.hidePassword') : tCommon('action.showPassword')}
+                    title={isChangePasswordConfirmVisible ? tCommon('action.hidePassword') : tCommon('action.showPassword')}
+                    onClick={() => setIsChangePasswordConfirmVisible((prev) => !prev)}
+                  >
+                    {isChangePasswordConfirmVisible ? <IconPreviewOff /> : <IconPreview />}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 

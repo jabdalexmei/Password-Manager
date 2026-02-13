@@ -1,6 +1,8 @@
 {
   "action.cancel": "Cancel",
   "action.close": "Close",
+  "action.showPassword": "Show password",
+  "action.hidePassword": "Hide password",
   "action.ok": "OK",
   "sort.aria.open": "Sort",
   "sort.nameAsc": "Name (A to Z)",

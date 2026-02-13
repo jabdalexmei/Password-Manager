@@ -1,4 +1,5 @@
-import React, { FormEvent, useEffect } from 'react';
+import React, { FormEvent, useEffect, useState } from 'react';
+import { IconPreview, IconPreviewOff } from '@/shared/icons/lucide/icons';
 import { useTranslation } from '../../shared/lib/i18n';
 import { useLogIn } from './hooks/useLogIn';
 
@@ -18,10 +19,12 @@ const LogIn: React.FC<LogInProps> = ({
   onSuccess,
 }) => {
   const { t } = useTranslation('LogIn');
+  const { t: tCommon } = useTranslation('Common');
   const { password, setPassword, submit, error } = useLogIn(
     profileId,
     onSuccess,
   );
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   useEffect(() => {
     if (!hasPassword) {
@@ -73,16 +76,29 @@ const LogIn: React.FC<LogInProps> = ({
                   <label className="form-label" htmlFor="login-password">
                     {t('passwordLabel')}
                   </label>
-                  <input
-                    id="login-password"
-                    type="password"
-                    className="input"
-                    name="pm-login-password"
-                    autoComplete="new-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder={t('passwordPlaceholder')}
-                  />
+                  <div className="input-with-actions">
+                    <input
+                      id="login-password"
+                      type={isPasswordVisible ? 'text' : 'password'}
+                      className="input"
+                      name="pm-login-password"
+                      autoComplete="new-password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder={t('passwordPlaceholder')}
+                    />
+                    <div className="input-actions">
+                      <button
+                        type="button"
+                        className="icon-button"
+                        aria-label={isPasswordVisible ? tCommon('action.hidePassword') : tCommon('action.showPassword')}
+                        title={isPasswordVisible ? tCommon('action.hidePassword') : tCommon('action.showPassword')}
+                        onClick={() => setIsPasswordVisible((prev) => !prev)}
+                      >
+                        {isPasswordVisible ? <IconPreviewOff /> : <IconPreview />}
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 {error && <div className="form-error">{t('error')}</div>}

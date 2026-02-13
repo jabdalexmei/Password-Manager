@@ -122,6 +122,20 @@
   padding: 10px 12px;
 }
 
+/* Disable browser-native password reveal/clear controls.
+   We render our own show/hide button for consistent UI across screens. */
+input[type='password']::-ms-reveal,
+input[type='password']::-ms-clear {
+  display: none;
+}
+
+input[type='password']::-webkit-credentials-auto-fill-button,
+input[type='password']::-webkit-strong-password-auto-fill-button {
+  visibility: hidden;
+  display: none !important;
+  pointer-events: none;
+}
+
 /* ==========================================================================
    WebView2/Chromium "Saved info" autofill highlight override (dark theme)
    --------------------------------------------------------------------------
@@ -195,16 +209,54 @@ select:autofill {
 .input-with-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  width: 100%;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: var(--input-surface);
+  overflow: hidden;
+}
+
+.input-with-actions:focus-within {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+  border-color: transparent;
 }
 
 .input-with-actions .input {
   flex: 1;
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.input-with-actions .input:focus-visible {
+  outline: none;
 }
 
 .input-actions {
-  display: flex;
-  gap: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 6px;
+}
+
+.input-actions .icon-button:not(.icon-button-primary):not(.icon-button-danger) {
+  width: 30px;
+  height: 30px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-text-muted);
+}
+
+.input-actions .icon-button:not(.icon-button-primary):not(.icon-button-danger):hover:not(:disabled) {
+  border-color: var(--border-subtle);
+  background: var(--surface-tint-02);
+  color: var(--color-text);
+}
+
+.input-actions .icon-button:disabled {
+  opacity: 0.55;
 }
 
 /* Selected profile info block (summary panel) */
@@ -222,4 +274,3 @@ select:autofill {
   font-size: 12px;
   letter-spacing: 0.08em;
 }
-

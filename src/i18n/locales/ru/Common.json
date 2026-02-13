@@ -1,6 +1,8 @@
 ﻿{
   "action.cancel": "Отмена",
   "action.close": "Закрыть",
+  "action.showPassword": "Показать пароль",
+  "action.hidePassword": "Скрыть пароль",
   "action.ok": "OK",
   "sort.aria.open": "Сортировка",
   "sort.nameAsc": "Имя (А-Я)",
