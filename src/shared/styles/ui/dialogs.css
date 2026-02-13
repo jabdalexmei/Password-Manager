@@ -242,6 +242,10 @@
   border: 0;
 }
 
+.seedphrase-select__option + .seedphrase-select__option {
+  margin-top: 2px;
+}
+
 .seedphrase-select__option:hover {
   background: var(--surface-tint-02);
 }
@@ -317,6 +321,10 @@
   cursor: pointer;
   /* stable "rail" for brand highlight (prevents layout jitter) */
   box-shadow: inset 2px 0 0 transparent;
+}
+
+.folder-select__option + .folder-select__option {
+  margin-top: 2px;
 }
 
 .folder-select__option:hover,
@@ -620,6 +628,10 @@
   cursor: pointer;
 }
 
+.settings-language-dropdown__item + .settings-language-dropdown__item {
+  margin-top: 4px;
+}
+
 .settings-language-dropdown__item:hover:not(:disabled),
 .settings-language-dropdown__item:focus-visible {
   background: var(--surface-tint-02);
@@ -897,4 +909,3 @@
   background: var(--color-success);
   transition: width 0.2s ease, background-color 0.2s ease;
 }
-
