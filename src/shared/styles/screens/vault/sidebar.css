@@ -213,6 +213,10 @@
 }
 
 .vault-sidebar-actions .vault-sidebar-btn-bankcard {
+  font-size: 12px;
+}
+
+:lang(ru) .vault-sidebar-actions .vault-sidebar-btn-bankcard {
   font-size: 10px;
   white-space: pre-line;
   overflow-wrap: normal;
