@@ -55,7 +55,7 @@ export function MetaSection({
               {t('action.restore')}
             </button>
             <button className="btn btn-danger" type="button" onClick={onOpenPurgeConfirm}>
-              {t('action.purge')}
+              {t('action.delete')}
             </button>
           </>
         )}

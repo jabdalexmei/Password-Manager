@@ -23,7 +23,6 @@
   "label.tagsPlaceholder": "Теги (через запятую)",
   "label.selectPrompt": "Выберите карточку данных для просмотра деталей",
   "action.restore": "Восстановить",
-  "action.purge": "Очистить",
   "action.delete": "Удалить",
   "action.edit": "Редактировать",
   "action.markFavorite": "В избранное",

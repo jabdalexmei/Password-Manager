@@ -57,7 +57,6 @@
   "dialog.editTitle": "Редактировать банковскую карту",
   "dialog.delete.title": "Удалить банковскую карту",
   "dialog.delete.message": "Вы действительно хотите удалить эту банковскую карту?",
-  "dialog.delete.permanentMessage": "Банковская карта будет удалена без возможности восстановления.",
   "dialog.delete.confirm": "Удалить",
   "validation.titleRequired": "Требуется название",
   "validation.expiryInvalid": "Срок действия должен быть в формате MM/YY (01-12/YY).",

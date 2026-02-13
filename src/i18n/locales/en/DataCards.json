@@ -23,7 +23,6 @@
   "label.tagsPlaceholder": "Tags (comma separated)",
   "label.selectPrompt": "Select a data card to see details",
   "action.restore": "Restore",
-  "action.purge": "Purge",
   "action.delete": "Delete",
   "action.edit": "Edit",
   "action.markFavorite": "Mark favorite",

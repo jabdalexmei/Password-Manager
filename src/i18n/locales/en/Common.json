@@ -1,6 +1,7 @@
 {
   "action.cancel": "Cancel",
   "action.close": "Close",
+  "dialog.delete.permanentMessage": "This will permanently delete the card.",
   "action.showPassword": "Show password",
   "action.hidePassword": "Hide password",
   "action.ok": "OK",

@@ -606,7 +606,7 @@ export function BankCardDetails({
       <ConfirmDialog
         open={purgeConfirmOpen}
         title={t('dialog.delete.title')}
-        description={t('dialog.delete.permanentMessage')}
+        description={tCommon('dialog.delete.permanentMessage')}
         confirmLabel={t('dialog.delete.confirm')}
         cancelLabel={tCommon('action.cancel')}
         onConfirm={() => {

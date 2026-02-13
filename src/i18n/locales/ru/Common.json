@@ -1,6 +1,7 @@
 ﻿{
   "action.cancel": "Отмена",
   "action.close": "Закрыть",
+  "dialog.delete.permanentMessage": "Карточка будет удалена без возможности восстановления.",
   "action.showPassword": "Показать пароль",
   "action.hidePassword": "Скрыть пароль",
   "action.ok": "OK",

@@ -207,9 +207,9 @@ export function Details({
 
           <ConfirmDialog
             open={purgeConfirmOpen}
-            title={t('dialog.purge.title')}
-            description={t('dialog.purge.message')}
-            confirmLabel={t('dialog.purge.confirm')}
+            title={t('dialog.delete.title')}
+            description={tCommon('dialog.delete.permanentMessage')}
+            confirmLabel={t('dialog.delete.confirm')}
             cancelLabel={tCommon('action.cancel')}
             onConfirm={() => {
               detailActions.purgeCard();
@@ -449,4 +449,3 @@ export function Details({
     </>
   );
 }
-
