@@ -17,7 +17,7 @@
   "action.renameVault": "Переименовать хранилище",
   "action.deleteVault": "Удалить хранилище",
   "action.createSubfolder": "Создать подпапку",
-  "action.createBankCard": "Создать карточку",
+  "action.createBankCard": "Создать банковскую карту",
   "action.expandFolder": "Развернуть папку",
   "action.collapseFolder": "Свернуть папку",
   "action.deleteFolder": "Удалить папку",

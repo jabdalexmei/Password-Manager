@@ -210,6 +210,18 @@
   overflow-wrap: normal;
   word-break: normal;
   text-overflow: ellipsis;
+}
+
+.vault-sidebar-actions .vault-sidebar-btn-bankcard {
+  font-size: 10px;
+  white-space: pre-line;
+  overflow-wrap: normal;
+  word-break: normal;
+  line-height: 1.1;
+  text-overflow: clip;
+}
+
+.vault-sidebar-actions .vault-sidebar-btn-datacard {
   font-size: 12px;
 }
 
