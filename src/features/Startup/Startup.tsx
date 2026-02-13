@@ -96,7 +96,7 @@ const Startup: React.FC<StartupProps> = ({ onCreate, onOpen, onBack }) => {
           </button>
 
           <button type="button" className="btn btn-primary" onClick={onCreate}>
-            {t('create')}
+            {t('selectStorageFolder')}
           </button>
         </div>
         <p className="startup-footnote">{t('footnote')}</p>
