@@ -619,6 +619,7 @@ export function DataCards({
         description={t('dialog.closeUnsavedCreate.description')}
         confirmLabel={t('dialog.closeUnsavedCreate.confirm')}
         cancelLabel={t('dialog.closeUnsavedCreate.cancel')}
+        confirmOnLeft
         onCancel={() => setIsCloseCreateConfirmOpen(false)}
         onConfirm={closeCreateModalImmediately}
       />
