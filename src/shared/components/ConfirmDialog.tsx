@@ -45,23 +45,27 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           </p>
         </div>
 
-        <DialogFooter className="dialog-footer">
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={onCancel}
-            disabled={!!cancelDisabled}
-          >
-            {cancelLabel}
-          </button>
-          <button
-            type="button"
-            className="btn btn-danger"
-            onClick={onConfirm}
-            disabled={!!confirmDisabled}
-          >
-            {confirmLabel}
-          </button>
+        <DialogFooter className="dialog-footer--split">
+          <div className="dialog-footer-left">
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={onCancel}
+              disabled={!!cancelDisabled}
+            >
+              {cancelLabel}
+            </button>
+          </div>
+          <div className="dialog-footer-right">
+            <button
+              type="button"
+              className="btn btn-danger"
+              onClick={onConfirm}
+              disabled={!!confirmDisabled}
+            >
+              {confirmLabel}
+            </button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -23,6 +23,10 @@
 /* Dialog container */
 .dialog {
   width: min(520px, calc(100vw - 32px));
+  --dialog-padding-x: 24px;
+  --dialog-header-padding-y: 18px;
+  --dialog-body-padding-y: 18px;
+  --dialog-footer-padding-y: 20px;
   border-radius: var(--radius-lg);
   background: var(--color-surface-1);
   border: 1px solid var(--border-subtle);
@@ -37,8 +41,8 @@
 
 /* Dialog header row */
 .dialog-header {
-  padding: 16px 18px;
-  padding-right: 60px;
+  padding: var(--dialog-header-padding-y) var(--dialog-padding-x);
+  padding-right: calc(var(--dialog-padding-x) + 42px);
 }
 
 .dialog-header--with-actions {
@@ -110,7 +114,7 @@
 .dialog-close--topright {
   position: absolute;
   top: 12px;
-  right: 12px;
+  right: var(--dialog-padding-x);
   z-index: 4;
 }
 
@@ -370,7 +374,7 @@
 
 /* Dialog body content area */
 .dialog-body {
-  padding: 16px 18px;
+  padding: var(--dialog-body-padding-y) var(--dialog-padding-x);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -382,15 +386,17 @@
 
 /* Dialog footer (buttons row) */
 .dialog-footer {
-  padding: 14px 18px;
+  padding: var(--dialog-footer-padding-y) var(--dialog-padding-x);
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: 10px;
 }
 
 /* When footer is placed INSIDE .dialog-body (like DataCard create/edit form),
-   don't double-apply horizontal padding. Keep the same left/right line as fields. */
-.dialog-body .dialog-footer {
+   don't double-apply horizontal padding. Keep the same left/right line as fields.
+   IMPORTANT: only direct child, otherwise nested dialogs lose their footer padding. */
+.dialog-body > .dialog-footer {
   padding-left: 0;
   padding-right: 0;
   width: 100%;
@@ -411,14 +417,19 @@
 
 /* Split footer: left actions + right actions */
 .dialog-footer--split {
-  justify-content: space-between;
+  justify-content: flex-start;
 }
 
 .dialog-footer-left,
 .dialog-footer-right {
   display: flex;
   align-items: center;
+  flex: 0 0 auto;
   gap: 10px;
+}
+
+.dialog-footer--split > .dialog-footer-right {
+  margin-left: auto;
 }
 
 /* ========================================================================
