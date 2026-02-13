@@ -10,11 +10,12 @@ type DataCardContextMenuProps = {
   cardMenu: { id: string; x: number; y: number } | null;
   cards: DataCardSummary[];
   onClose: () => void;
+  onRequestDelete: (id: string) => void;
   viewModel: DataCardsViewModel;
   t: TranslateFn;
 };
 
-export function DataCardContextMenu({ cardMenu, cards, onClose, viewModel, t }: DataCardContextMenuProps) {
+export function DataCardContextMenu({ cardMenu, cards, onClose, onRequestDelete, viewModel, t }: DataCardContextMenuProps) {
   if (!cardMenu || viewModel.isTrashMode) return null;
 
   const target = cards.find((card) => card.id === cardMenu.id) ?? null;
@@ -89,7 +90,7 @@ export function DataCardContextMenu({ cardMenu, cards, onClose, viewModel, t }: 
           onClick={async () => {
             const id = cardMenu.id;
             onClose();
-            await viewModel.deleteCard(id);
+            onRequestDelete(id);
           }}
         >
           {t('action.delete')}

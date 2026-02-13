@@ -120,6 +120,7 @@ export function DataCards({
   const [isTrashActionsOpen, setIsTrashActionsOpen] = useState(false);
   const shouldShowTrashActions = viewModel.isTrashMode && showTrashActions;
   const [cardMenu, setCardMenu] = useState<{ id: string; x: number; y: number } | null>(null);
+  const [deleteConfirmTargetId, setDeleteConfirmTargetId] = useState<string | null>(null);
   const [previewFields, setPreviewFields] = useState<DataCardPreviewField[]>([]);
   const [coreHiddenFields, setCoreHiddenFields] = useState<DataCardCoreField[]>([]);
   const [previewFieldsFolderOnlyByFolder, setPreviewFieldsFolderOnlyByFolder] =
@@ -470,6 +471,7 @@ export function DataCards({
         cardMenu={cardMenu}
         cards={cards}
         onClose={() => setCardMenu(null)}
+        onRequestDelete={(id) => setDeleteConfirmTargetId(id)}
         viewModel={viewModel}
         t={t}
       />
@@ -596,6 +598,20 @@ export function DataCards({
           tCommon={tCommon}
         />
       )}
+
+      <ConfirmDialog
+        open={Boolean(deleteConfirmTargetId)}
+        title={t('dialog.delete.title')}
+        description={t('dialog.delete.message')}
+        confirmLabel={t('dialog.delete.confirm')}
+        cancelLabel={tCommon('action.cancel')}
+        onCancel={() => setDeleteConfirmTargetId(null)}
+        onConfirm={() => {
+          if (!deleteConfirmTargetId) return;
+          void viewModel.deleteCard(deleteConfirmTargetId);
+          setDeleteConfirmTargetId(null);
+        }}
+      />
 
       <ConfirmDialog
         open={isCloseCreateConfirmOpen}
