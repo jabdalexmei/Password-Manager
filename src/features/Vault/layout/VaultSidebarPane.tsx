@@ -114,8 +114,8 @@ export function VaultSidebarPane({
             {tDataCards('label.createDataCard')}
           </button>
         ) : (
-          <button className="btn btn-primary" type="button" onClick={bankCardsViewModel.openCreateModal}>
-            {tBankCards('label.addBankCard')}
+          <button className="btn btn-primary vault-sidebar-btn-nowrap" type="button" onClick={bankCardsViewModel.openCreateModal}>
+            {tBankCards('label.createBankCard')}
           </button>
         )}
         <button className="btn btn-secondary" type="button" onClick={() => folderDialogs.openCreateFolder()}>

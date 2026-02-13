@@ -17,7 +17,7 @@
   "action.renameVault": "Rename vault",
   "action.deleteVault": "Delete vault",
   "action.createSubfolder": "Create subfolder",
-  "action.addBankCard": "Add bank card",
+  "action.createBankCard": "Create bank card",
   "action.expandFolder": "Expand folder",
   "action.collapseFolder": "Collapse folder",
   "action.deleteFolder": "Delete folder",

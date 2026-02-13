@@ -92,8 +92,8 @@ export function BankCardsBody({
         </div>
 
         <div className="vault-sidebar-actions">
-          <button className="btn btn-primary" type="button" onClick={viewModel.openCreateModal}>
-            {tBankCards('label.addBankCard')}
+          <button className="btn btn-primary vault-sidebar-btn-nowrap" type="button" onClick={viewModel.openCreateModal}>
+            {tBankCards('label.createBankCard')}
           </button>
           <button className="btn btn-secondary" type="button" onClick={() => folderDialogs.openCreateFolder()}>
             {tFolders('action.createFolder')}

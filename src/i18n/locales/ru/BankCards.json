@@ -1,6 +1,6 @@
 ﻿{
   "label.bankCardsTitle": "Банковские карты",
-  "label.addBankCard": "Новая карта",
+  "label.createBankCard": "Создать банковскую карту",
   "label.empty": "Пусто",
   "label.noMeta": "Нет мета-данных",
   "label.favorite": "Избранное",
