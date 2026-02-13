@@ -1,92 +1,33 @@
-diff -ruN /mnt/data/orig/Password-Manager-newbigfix2/src/features/Vault/components/DataCards/DataCards.tsx /mnt/data/work/Password-Manager-newbigfix2/src/features/Vault/components/DataCards/DataCards.tsx
---- a/src/features/Vault/components/DataCards/DataCards.tsx	2026-02-12 21:36:38.000000000 +0000
-+++ b/src/features/Vault/components/DataCards/DataCards.tsx	2026-02-13 07:49:25.879163457 +0000
-@@ -120,6 +120,7 @@
-   const [isTrashActionsOpen, setIsTrashActionsOpen] = useState(false);
-   const shouldShowTrashActions = viewModel.isTrashMode && showTrashActions;
-   const [cardMenu, setCardMenu] = useState<{ id: string; x: number; y: number } | null>(null);
-+  const [deleteConfirmTargetId, setDeleteConfirmTargetId] = useState<string | null>(null);
-   const [previewFields, setPreviewFields] = useState<DataCardPreviewField[]>([]);
-   const [coreHiddenFields, setCoreHiddenFields] = useState<DataCardCoreField[]>([]);
-   const [previewFieldsFolderOnlyByFolder, setPreviewFieldsFolderOnlyByFolder] =
-@@ -470,6 +471,7 @@
-         cardMenu={cardMenu}
-         cards={cards}
-         onClose={() => setCardMenu(null)}
-+        onRequestDelete={(id) => setDeleteConfirmTargetId(id)}
-         viewModel={viewModel}
-         t={t}
-       />
-@@ -598,6 +600,20 @@
-       )}
+--- a/src/features/Startup/Startup.tsx
++++ b/src/features/Startup/Startup.tsx
+@@ -96,7 +96,7 @@
+           </button>
  
-       <ConfirmDialog
-+        open={Boolean(deleteConfirmTargetId)}
-+        title={t('dialog.delete.title')}
-+        description={t('dialog.delete.message')}
-+        confirmLabel={t('dialog.delete.confirm')}
-+        cancelLabel={tCommon('action.cancel')}
-+        onCancel={() => setDeleteConfirmTargetId(null)}
-+        onConfirm={() => {
-+          if (!deleteConfirmTargetId) return;
-+          void viewModel.deleteCard(deleteConfirmTargetId);
-+          setDeleteConfirmTargetId(null);
-+        }}
-+      />
-+
-+      <ConfirmDialog
-         open={isCloseCreateConfirmOpen}
-         title={t('dialog.closeUnsavedCreate.title')}
-         description={t('dialog.closeUnsavedCreate.description')}
-diff -ruN /mnt/data/orig/Password-Manager-newbigfix2/src/features/Vault/components/DataCards/components/DataCardContextMenu.tsx /mnt/data/work/Password-Manager-newbigfix2/src/features/Vault/components/DataCards/components/DataCardContextMenu.tsx
---- a/src/features/Vault/components/DataCards/components/DataCardContextMenu.tsx	2026-02-12 21:36:38.000000000 +0000
-+++ b/src/features/Vault/components/DataCards/components/DataCardContextMenu.tsx	2026-02-13 07:48:27.001554132 +0000
-@@ -10,11 +10,12 @@
-   cardMenu: { id: string; x: number; y: number } | null;
-   cards: DataCardSummary[];
-   onClose: () => void;
-+  onRequestDelete: (id: string) => void;
-   viewModel: DataCardsViewModel;
-   t: TranslateFn;
- };
- 
--export function DataCardContextMenu({ cardMenu, cards, onClose, viewModel, t }: DataCardContextMenuProps) {
-+export function DataCardContextMenu({ cardMenu, cards, onClose, onRequestDelete, viewModel, t }: DataCardContextMenuProps) {
-   if (!cardMenu || viewModel.isTrashMode) return null;
- 
-   const target = cards.find((card) => card.id === cardMenu.id) ?? null;
-@@ -89,7 +90,7 @@
-           onClick={async () => {
-             const id = cardMenu.id;
-             onClose();
--            await viewModel.deleteCard(id);
-+            onRequestDelete(id);
-           }}
-         >
-           {t('action.delete')}
-diff -ruN /mnt/data/orig/Password-Manager-newbigfix2/src/i18n/locales/en/DataCards.json /mnt/data/work/Password-Manager-newbigfix2/src/i18n/locales/en/DataCards.json
---- a/src/i18n/locales/en/DataCards.json	2026-02-12 21:36:38.000000000 +0000
-+++ b/src/i18n/locales/en/DataCards.json	2026-02-13 07:49:37.977500383 +0000
-@@ -45,6 +45,9 @@
-   "action.save": "Save",
-   "dialog.createTitle": "Create data card",
-   "dialog.editTitle": "Edit data card",
-+  "dialog.delete.title": "Delete data card",
-+  "dialog.delete.message": "Are you sure you want to delete this data card?",
-+  "dialog.delete.confirm": "Delete",
-   "dialog.closeUnsavedCreate.title": "Close without saving?",
-   "dialog.closeUnsavedCreate.description": "Your changes will be lost.",
-   "dialog.closeUnsavedCreate.cancel": "Continue editing",
-diff -ruN /mnt/data/orig/Password-Manager-newbigfix2/src/i18n/locales/ru/DataCards.json /mnt/data/work/Password-Manager-newbigfix2/src/i18n/locales/ru/DataCards.json
---- a/src/i18n/locales/ru/DataCards.json	2026-02-12 21:36:38.000000000 +0000
-+++ b/src/i18n/locales/ru/DataCards.json	2026-02-13 07:49:47.860360668 +0000
-@@ -45,6 +45,9 @@
-   "action.save": "Сохранить",
-   "dialog.createTitle": "Создать карточку данных",
-   "dialog.editTitle": "Редактировать карточку данных",
-+  "dialog.delete.title": "Удалить карточку данных",
-+  "dialog.delete.message": "Удалить эту карточку данных?",
-+  "dialog.delete.confirm": "Удалить",
-   "dialog.closeUnsavedCreate.title": "Закрыть без сохранения?",
-   "dialog.closeUnsavedCreate.description": "Введённые данные будут потеряны.",
-   "dialog.closeUnsavedCreate.cancel": "Продолжить редактирование",
+           <button type="button" className="btn btn-primary" onClick={onCreate}>
+-            {t('create')}
++            {t('selectStorageFolder')}
+           </button>
+         </div>
+         <p className="startup-footnote">{t('footnote')}</p>
+
+--- a/src/i18n/locales/en/Startup.json
++++ b/src/i18n/locales/en/Startup.json
+@@ -3,6 +3,7 @@
+   "subtitle": "Choose an existing profile or create a new one to continue.",
+   "noProfiles": "No profiles",
+   "create": "Create new profile",
++  "selectStorageFolder": "Select storage folder",
+   "back": "Back",
+   "delete": "Delete",
+   "open": "Choose",
+
+--- a/src/i18n/locales/ru/Startup.json
++++ b/src/i18n/locales/ru/Startup.json
+@@ -3,6 +3,7 @@
+   "subtitle": "Выберите существующий профиль или создайте новый.",
+   "noProfiles": "Профили отсутствуют",
+   "create": "Создать профиль",
++  "selectStorageFolder": "Выбрать папку для хранения данных",
+   "back": "Назад",
+   "delete": "Удалить",
+   "open": "Выбрать",
