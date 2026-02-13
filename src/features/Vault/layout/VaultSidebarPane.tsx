@@ -110,7 +110,7 @@ export function VaultSidebarPane({
             )}
           </div>
         ) : selectedCategory === 'data_cards' ? (
-          <button className="btn btn-primary" type="button" onClick={dataCardsViewModel.openCreateModal}>
+          <button className="btn btn-primary vault-sidebar-btn-nowrap" type="button" onClick={dataCardsViewModel.openCreateModal}>
             {tDataCards('label.createDataCard')}
           </button>
         ) : (

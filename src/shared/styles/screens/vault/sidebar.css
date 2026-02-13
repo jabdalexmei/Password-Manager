@@ -205,6 +205,13 @@
   word-break: break-word;
 }
 
+.vault-sidebar-actions .vault-sidebar-btn-nowrap {
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
+  text-overflow: ellipsis;
+}
+
 .vault-sidebar-addmenu {
   position: relative;
   flex: 1;
@@ -375,4 +382,3 @@
   color: var(--color-text-muted);
   font-size: 13px;
 }
-
