@@ -3,6 +3,7 @@ import { useTranslation } from '../../../../shared/lib/i18n';
 import { BankCardFieldErrors, BankCardFormState, BankCardsViewModel } from './useBankCardsViewModel';
 import type { Folder } from '../../types/ui';
 import { FolderSelect } from '../shared/FolderSelect';
+import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
 import { VaultSortControl } from '../shared/VaultSortControl';
 import {
   getVaultSortMode,
@@ -122,6 +123,7 @@ export function BankCards({
   const cards = useMemo(() => sortBankCardSummaries(rawCards, sortMode), [rawCards, sortMode]);
   const [isTrashActionsOpen, setIsTrashActionsOpen] = useState(false);
   const [cardMenu, setCardMenu] = useState<null | { id: string; x: number; y: number }>(null);
+  const [deleteConfirmTargetId, setDeleteConfirmTargetId] = useState<string | null>(null);
   const shouldShowTrashActions = isTrashMode && showTrashActions;
   const createTitleRef = useRef<HTMLInputElement | null>(null);
   const editTitleRef = useRef<HTMLInputElement | null>(null);
@@ -430,10 +432,10 @@ export function BankCards({
                   <button
                     className="vault-actionmenu-item vault-actionmenu-danger"
                     type="button"
-                    onClick={async () => {
+                    onClick={() => {
                       const id = cardMenu.id;
                       setCardMenu(null);
-                      await viewModel.deleteCard(id);
+                      setDeleteConfirmTargetId(id);
                     }}
                   >
                     {t('action.delete')}
@@ -666,6 +668,20 @@ export function BankCards({
           'bankcard-edit-dialog',
           isEditSubmitting
         )}
+
+      <ConfirmDialog
+        open={Boolean(deleteConfirmTargetId)}
+        title={t('dialog.delete.title')}
+        description={t('dialog.delete.message')}
+        confirmLabel={t('dialog.delete.confirm')}
+        cancelLabel={tCommon('action.cancel')}
+        onCancel={() => setDeleteConfirmTargetId(null)}
+        onConfirm={() => {
+          if (!deleteConfirmTargetId) return;
+          viewModel.deleteCard(deleteConfirmTargetId);
+          setDeleteConfirmTargetId(null);
+        }}
+      />
     </div>
   );
 }
