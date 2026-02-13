@@ -1,35 +1,33 @@
---- a/src/shared/styles/screens/vault/sidebar.css
-+++ b/src/shared/styles/screens/vault/sidebar.css
-@@ -1,9 +1,9 @@
- ﻿/* ===== Layout ===== */
+--- a/src/features/Startup/Startup.tsx
++++ b/src/features/Startup/Startup.tsx
+@@ -96,7 +96,7 @@
+           </button>
  
- .vault-body {
-   display: grid;
--  grid-template-columns: 330px 1.2fr 1.3fr;
-+  grid-template-columns: 330px minmax(0, 1.2fr) minmax(0, 1.3fr);
-   flex: 1;
-   min-height: 0;
- }
---- a/src/shared/styles/screens/vault/datacards.css
-+++ b/src/shared/styles/screens/vault/datacards.css
-@@ -4,12 +4,13 @@
- 
- .vault-datacards,
- .vault-details {
-   background: var(--color-surface-2); /* match .vault-sidebar */
-   padding: 16px 20px;
-   overflow: hidden;
-   display: flex;
-   flex-direction: column;
-   gap: 12px;
-+  min-width: 0;
- }
- 
- .vault-section-header {
-   display: flex;
-   align-items: center;
-   gap: 8px;
-   font-weight: 700;
-   letter-spacing: 0.2px;
-   color: var(--color-text);
- }
+           <button type="button" className="btn btn-primary" onClick={onCreate}>
++            {t('create')}
+-            {t('selectStorageFolder')}
+           </button>
+         </div>
+         <p className="startup-footnote">{t('footnote')}</p>
+
+--- a/src/i18n/locales/en/Startup.json
++++ b/src/i18n/locales/en/Startup.json
+@@ -3,6 +3,7 @@
+   "subtitle": "Choose an existing profile or create a new one to continue.",
+   "noProfiles": "No profiles",
+   "create": "Create new profile",
+-  "selectStorageFolder": "Select storage folder",
+   "back": "Back",
+   "delete": "Delete",
+   "open": "Choose",
+
+--- a/src/i18n/locales/ru/Startup.json
++++ b/src/i18n/locales/ru/Startup.json
+@@ -3,6 +3,7 @@
+   "subtitle": "Выберите существующий профиль или создайте новый.",
+   "noProfiles": "Профили отсутствуют",
+   "create": "Создать профиль",
+-  "selectStorageFolder": "Выбрать папку для хранения данных",
+   "back": "Назад",
+   "delete": "Удалить",
+   "open": "Выбрать",
