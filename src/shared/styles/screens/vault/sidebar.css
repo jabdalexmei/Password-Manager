@@ -210,6 +210,7 @@
   overflow-wrap: normal;
   word-break: normal;
   text-overflow: ellipsis;
+  font-size: 12px;
 }
 
 .vault-sidebar-addmenu {

@@ -17,7 +17,7 @@
   "action.renameVault": "Переименовать хранилище",
   "action.deleteVault": "Удалить хранилище",
   "action.createSubfolder": "Создать подпапку",
-  "action.createBankCard": "Создать банковскую карту",
+  "action.createBankCard": "Создать карточку",
   "action.expandFolder": "Развернуть папку",
   "action.collapseFolder": "Свернуть папку",
   "action.deleteFolder": "Удалить папку",
@@ -45,3 +45,4 @@
   "validation.folderNameRequired": "Требуется имя папки",
   "validation.vaultNameRequired": "Требуется имя хранилища"
 }
+

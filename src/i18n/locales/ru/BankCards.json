@@ -1,6 +1,6 @@
 ﻿{
   "label.bankCardsTitle": "Банковские карты",
-  "label.createBankCard": "Создать банковскую карту",
+  "label.createBankCard": "Создать карточку",
   "label.empty": "Пусто",
   "label.noMeta": "Нет мета-данных",
   "label.favorite": "Избранное",
@@ -66,3 +66,4 @@
   "label.folder": "Папка",
   "label.folderRoot": "Без папки"
 }
+
