@@ -133,7 +133,15 @@ export function BankCardDetails({
     };
   }, []);
 
-  const informationTitle = <div className="vault-section-header">{tVault('information.title')}</div>;
+  const informationTitle = (
+    <div className="datacards-header">
+      <div className="vault-section-header">{tVault('information.title')}</div>
+
+      <div className="datacards-header__right">
+        <div className="datacards-header__spacer" aria-hidden="true" />
+      </div>
+    </div>
+  );
 
   if (!card) {
     return (
@@ -244,7 +252,7 @@ export function BankCardDetails({
                     {t('action.restore')}
                   </button>
                   <button className="btn btn-danger" type="button" onClick={() => setPurgeConfirmOpen(true)}>
-                    {t('action.purge')}
+                    {t('action.delete')}
                   </button>
                 </>
               )}
@@ -597,9 +605,9 @@ export function BankCardDetails({
       />
       <ConfirmDialog
         open={purgeConfirmOpen}
-        title={t('dialog.purge.title')}
-        description={t('dialog.purge.message')}
-        confirmLabel={t('dialog.purge.confirm')}
+        title={t('dialog.delete.title')}
+        description={tCommon('dialog.delete.permanentMessage')}
+        confirmLabel={t('dialog.delete.confirm')}
         cancelLabel={tCommon('action.cancel')}
         onConfirm={() => {
           detailActions.purgeCard();

@@ -1,6 +1,9 @@
 {
   "action.cancel": "Cancel",
   "action.close": "Close",
+  "dialog.delete.permanentMessage": "This will permanently delete the card.",
+  "action.showPassword": "Show password",
+  "action.hidePassword": "Hide password",
   "action.ok": "OK",
   "sort.aria.open": "Sort",
   "sort.nameAsc": "Name (A to Z)",
@@ -10,6 +13,7 @@
   "sort.createdDesc": "Created time (new to old)",
   "sort.createdAsc": "Created time (old to new)",
   "label.empty": "Empty",
+  "common.moreActions": "More actions",
   "label.loading": "Loading…",
   "aria.dismissToast": "Dismiss",
   "error.backupProfileMismatch": "This backup belongs to a different profile.",

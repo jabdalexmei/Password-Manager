@@ -71,7 +71,7 @@ export function CategorySection({
                 setOpenMenu(null);
               }}
             >
-              {t('action.addBankCard')}
+              {t('action.createBankCard')}
             </button>
           </div>
         </div>

@@ -1,0 +1,40 @@
+﻿/* ==========================================================================
+   Tile (unified container primitive)
+   --------------------------------------------------------------------------
+   Goal:
+   - Single visual container primitive used by:
+     - workspace tiles
+     - profile cards
+     - any future selectable list items
+   - Reduce duplicated borders/backgrounds/selected logic across screens.
+   ========================================================================== */
+.tile,
+.profile-card {
+  background: var(--surface-block);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.tile:hover,
+.profile-card:hover {
+  border-color: var(--border-subtle);
+}
+
+.tile--selectable {
+  cursor: pointer;
+}
+
+.tile--selectable:hover {
+  border-color: var(--color-primary);
+}
+
+.tile--selected {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--primary-soft-bg);
+}
+

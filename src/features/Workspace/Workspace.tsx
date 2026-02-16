@@ -28,6 +28,7 @@ type ActionsMenuState = {
 
 const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
   const { t } = useTranslation('Workspace');
+  const { t: tCommon } = useTranslation('Common');
   const { show: showToast } = useToaster();
   const { workspaces, loading, error, selectedId, setSelectedId, refresh, remove } = useWorkspace();
   const [busy, setBusy] = useState(false);
@@ -95,7 +96,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
   const handleCreate = useCallback(async () => {
     setBusy(true);
     try {
-      const ok = await workspaceCreateViaDialog();
+      const ok = await workspaceCreateViaDialog(t('selectDataFolderDialogTitle'));
       if (!ok) return;
       await refresh();
       onWorkspaceReady();
@@ -114,12 +115,12 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
     } finally {
       setBusy(false);
     }
-  }, [onWorkspaceReady, refresh]);
+  }, [onWorkspaceReady, refresh, t]);
 
   const handleRestoreFromBackup = useCallback(async () => {
     setBusy(true);
     try {
-      const ok = await workspaceCreateViaDialog();
+      const ok = await workspaceCreateViaDialog(t('restore.step1SelectDestinationFolder'));
       if (!ok) return;
       await refresh();
 
@@ -151,7 +152,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
   const handleOpenDataFolder = useCallback(async () => {
     setBusy(true);
     try {
-      const ok = await workspaceCreateViaDialog();
+      const ok = await workspaceCreateViaDialog(t('openDataFolderDialogTitle'));
       if (!ok) return;
 
       await refresh();
@@ -159,7 +160,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
     } finally {
       setBusy(false);
     }
-  }, [onWorkspaceReady, refresh]);
+  }, [onWorkspaceReady, refresh, t]);
 
   const workspaceListContent = useMemo(() => {
     if (loading) return <p className="muted centered">{t('loading')}</p>;
@@ -168,7 +169,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
     if (!workspaces.length) {
       return (
         <div className="empty empty--dashed">
-          <p className="empty-text">{t('empty')}</p>
+          <p className="empty-text">{t('workspaceinfo')}</p>
         </div>
       );
     }
@@ -203,8 +204,8 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
                 <button
                   type="button"
                   className="btn btn-icon workspace-actionbar"
-                  aria-label={t('actions')}
-                  title={t('actions')}
+                  aria-label={tCommon('common.moreActions')}
+                  title={tCommon('common.moreActions')}
                   aria-haspopup="menu"
                   aria-expanded={isActionsOpen}
                   aria-controls={isActionsOpen ? `workspace-actions-menu-${workspace.id}` : undefined}
@@ -259,7 +260,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
               id={`workspace-actions-menu-${actionsWorkspace.id}`}
               className="workspace-actionmenu-panel"
               role="menu"
-              aria-label={t('actions')}
+              aria-label={tCommon('common.moreActions')}
               style={{ top: actionsMenu.top, right: actionsMenu.right }}
               onClick={(e) => e.stopPropagation()}
             >
@@ -300,6 +301,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
     setSelectedId,
     t,
     toggleActionsMenu,
+    tCommon,
     workspaces,
   ]);
 
@@ -329,7 +331,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
               onClick={handleCreate}
               disabled={busy}
             >
-              {t('create')}
+              {t('selectStorageFolder')}
             </button>
 
             <button

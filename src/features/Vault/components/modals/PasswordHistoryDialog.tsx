@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
 import { useTranslation } from '../../../../shared/lib/i18n';
 import { useToaster } from '../../../../shared/components/Toaster';
-import { clearPasswordHistory, getPasswordHistory } from '../../api/vaultApi';
+import { clearPasswordHistory, deletePasswordHistoryEntry, getPasswordHistory } from '../../api/vaultApi';
 import { PasswordHistoryEntry } from '../../types/ui';
 import { IconCopy, IconPreview, IconPreviewOff } from '@/shared/icons/lucide/icons';
 import { clipboardClearAll } from '../../../../shared/lib/tauri';
@@ -32,6 +32,9 @@ const PasswordHistoryDialog: React.FC<PasswordHistoryDialogProps> = ({
   const [items, setItems] = useState<PasswordHistoryEntry[]>([]);
   const [showPasswords, setShowPasswords] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; entryId: string } | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastCopiedValueRef = useRef<string | null>(null);
 
@@ -57,9 +60,28 @@ const PasswordHistoryDialog: React.FC<PasswordHistoryDialogProps> = ({
     }
   }, [datacardId, showToast, tCommon]);
 
+  const handleDeleteEntry = useCallback(async () => {
+    const entryId = deleteTargetId;
+    if (!entryId) return;
+    try {
+      await deletePasswordHistoryEntry(entryId);
+      setItems((prev) => prev.filter((row) => row.id !== entryId));
+    } catch (err) {
+      console.error(err);
+      showToast(tCommon('error.operationFailed'), 'error');
+    } finally {
+      setDeleteConfirmOpen(false);
+      setDeleteTargetId(null);
+    }
+  }, [deleteTargetId, showToast, tCommon]);
+
   useEffect(() => {
     if (isOpen) {
       setShowPasswords(false);
+      setConfirmOpen(false);
+      setDeleteConfirmOpen(false);
+      setDeleteTargetId(null);
+      setContextMenu(null);
       void loadHistory();
     } else {
       setItems([]);
@@ -130,7 +152,14 @@ const PasswordHistoryDialog: React.FC<PasswordHistoryDialogProps> = ({
     return (
       <div className="password-history-list">
         {items.map((entry) => (
-          <div key={entry.id} className="password-history-row">
+          <div
+            key={entry.id}
+            className="password-history-row"
+            onContextMenu={(event) => {
+              event.preventDefault();
+              setContextMenu({ x: event.clientX, y: event.clientY, entryId: entry.id });
+            }}
+          >
             <div className="password-history-meta">{formatTimestamp(entry.createdAt)}</div>
             <div className="password-history-value">{showPasswords ? entry.passwordValue : MASKED_PASSWORD}</div>
             <div className="password-history-actions">
@@ -207,6 +236,44 @@ const PasswordHistoryDialog: React.FC<PasswordHistoryDialogProps> = ({
         </div>
       </div>
 
+      {contextMenu && (
+        <>
+          <div
+            className="vault-actionmenu-backdrop"
+            style={{ zIndex: 50 }}
+            onClick={() => setContextMenu(null)}
+            onContextMenu={(event) => {
+              event.preventDefault();
+              setContextMenu(null);
+            }}
+          />
+          <div
+            className="vault-actionmenu-panel vault-contextmenu-panel"
+            role="menu"
+            style={
+              {
+                '--menu-x': `${contextMenu.x}px`,
+                '--menu-y': `${contextMenu.y}px`,
+                zIndex: 51,
+              } as React.CSSProperties
+            }
+          >
+            <button
+              className="vault-actionmenu-item vault-actionmenu-danger"
+              type="button"
+              onClick={() => {
+                const id = contextMenu.entryId;
+                setContextMenu(null);
+                setDeleteTargetId(id);
+                setDeleteConfirmOpen(true);
+              }}
+            >
+              {t('action.delete')}
+            </button>
+          </div>
+        </>
+      )}
+
       <ConfirmDialog
         open={confirmOpen}
         title={t('dialog.passwordHistoryTitle')}
@@ -215,6 +282,19 @@ const PasswordHistoryDialog: React.FC<PasswordHistoryDialogProps> = ({
         cancelLabel={tCommon('action.cancel')}
         onConfirm={handleClearHistory}
         onCancel={() => setConfirmOpen(false)}
+      />
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        title={t('dialog.passwordHistoryTitle')}
+        description={t('dialog.deleteHistoryEntryConfirm')}
+        confirmLabel={t('action.delete')}
+        cancelLabel={tCommon('action.cancel')}
+        onConfirm={handleDeleteEntry}
+        onCancel={() => {
+          setDeleteConfirmOpen(false);
+          setDeleteTargetId(null);
+        }}
       />
     </>
   );

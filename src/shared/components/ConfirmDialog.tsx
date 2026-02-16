@@ -11,6 +11,7 @@ export type ConfirmDialogProps = {
   onCancel: () => void;
   confirmDisabled?: boolean;
   cancelDisabled?: boolean;
+  confirmOnLeft?: boolean;
 };
 
 const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
@@ -23,9 +24,30 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   onCancel,
   confirmDisabled,
   cancelDisabled,
+  confirmOnLeft,
 }) => {
   const titleId = 'confirm-dialog-title';
   const descId = 'confirm-dialog-desc';
+  const confirmButton = (
+    <button
+      type="button"
+      className="btn btn-danger"
+      onClick={onConfirm}
+      disabled={!!confirmDisabled}
+    >
+      {confirmLabel}
+    </button>
+  );
+  const cancelButton = (
+    <button
+      type="button"
+      className="btn btn-secondary"
+      onClick={onCancel}
+      disabled={!!cancelDisabled}
+    >
+      {cancelLabel}
+    </button>
+  );
 
   return (
     <Dialog
@@ -45,23 +67,13 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           </p>
         </div>
 
-        <DialogFooter className="dialog-footer">
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={onCancel}
-            disabled={!!cancelDisabled}
-          >
-            {cancelLabel}
-          </button>
-          <button
-            type="button"
-            className="btn btn-danger"
-            onClick={onConfirm}
-            disabled={!!confirmDisabled}
-          >
-            {confirmLabel}
-          </button>
+        <DialogFooter className="dialog-footer--split">
+          <div className="dialog-footer-left">
+            {confirmOnLeft ? confirmButton : cancelButton}
+          </div>
+          <div className="dialog-footer-right">
+            {confirmOnLeft ? cancelButton : confirmButton}
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -1,0 +1,200 @@
+﻿/* =======================================================================
+   CENTER (CARDS) + RIGHT (DETAILS)
+   ======================================================================= */
+
+.vault-datacards,
+.vault-details {
+  background: var(--color-surface-2); /* match .vault-sidebar */
+  padding: 16px 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.vault-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  color: var(--color-text);
+}
+
+.vault-folder-title {
+  padding-bottom: 4px;
+}
+
+.vault-folder-title .vault-section-header {
+  font-size: 18px;
+  line-height: 24px;
+}
+
+.datacards-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  /* Keep consistent header height across All/Archive/Deleted (prevents "Empty" Y shift) */
+  min-height: 32px;
+}
+
+.datacards-header__right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 32px;
+  flex: 0 0 auto;
+}
+
+.datacards-header__spacer {
+  width: 24px;
+  height: 24px;
+}
+
+.datacards-actions {
+  position: relative;
+}
+
+
+/* Cards list */
+.vault-datacard-list {
+  background: transparent; /* remove panel fill */
+  border: none; /* remove stroke */
+  border-radius: 0; /* avoid â€œpanel shapeâ€ */
+
+  /* prevent clipping of hover transform + focus-visible outline */
+  padding: 4px;
+  overflow: auto;
+  scrollbar-gutter: stable;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vault-datacard-list--empty {
+  /* Empty should be shown under the section header, not vertically centered */
+  justify-content: flex-start;
+}
+.vault-datacard {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.vault-datacard:hover {
+  border-color: var(--focus-border); /* primary hint */
+  background: var(--color-surface-2);
+  transform: translateY(-1px);
+  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+}
+
+.vault-datacard:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.vault-datacard.active {
+  border-color: var(--color-primary);
+  background: linear-gradient(90deg, var(--color-surface-3) 0%, var(--color-surface-1) 70%);
+}
+
+.datacard-title {
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.datacard-title--placeholder {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.datacard-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 26px; /* Reserve badge row height to avoid card jump when pills appear */
+}
+
+.datacard-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-content: flex-start;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  max-width: 220px;
+}
+
+.datacard-favorite {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.datacard-meta {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 10px;
+  align-items: center;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 16px;
+  min-width: 0;
+}
+
+.datacard-meta > span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.datacard-meta-empty {
+  opacity: 0;
+}
+
+.datacard-meta-lines {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.vault-datacard.active .datacard-title {
+  color: var(--color-text);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-3);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-size: 12px;
+}
+
+.muted {
+  color: var(--color-text-muted);
+}

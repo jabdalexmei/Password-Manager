@@ -9,8 +9,8 @@ use crate::error::{ErrorCodeString, Result};
 use crate::services::security_service;
 use crate::services::settings_service::get_settings;
 use crate::types::{
-    CreateDataCardInput, DataCard, DataCardSummary, MoveDataCardInput, SetDataCardFavoriteInput,
-    SetDataCardArchivedInput, UpdateDataCardInput,
+    CreateDataCardInput, DataCard, DataCardSummary, MoveDataCardInput, SetDataCardArchivedInput,
+    SetDataCardFavoriteInput, UpdateDataCardInput,
 };
 
 fn normalize_tags(tags: Vec<String>) -> Vec<String> {
@@ -62,16 +62,14 @@ pub fn create_datacard(input: CreateDataCardInput, state: &Arc<AppState>) -> Res
     let mut sanitized = input;
     sanitized.title = sanitized.title.trim().to_string();
     sanitized.tags = normalize_tags(sanitized.tags);
-    sanitized.totp_uri = sanitized
-        .totp_uri
-        .and_then(|value| {
-            let trimmed = value.trim().to_string();
-            if trimmed.is_empty() {
-                None
-            } else {
-                Some(trimmed)
-            }
-        });
+    sanitized.totp_uri = sanitized.totp_uri.and_then(|value| {
+        let trimmed = value.trim().to_string();
+        if trimmed.is_empty() {
+            None
+        } else {
+            Some(trimmed)
+        }
+    });
     let (seed_phrase, seed_phrase_word_count) =
         normalize_seed_phrase(sanitized.seed_phrase, sanitized.seed_phrase_word_count)?;
     sanitized.seed_phrase = seed_phrase;
@@ -87,16 +85,14 @@ pub fn update_datacard(input: UpdateDataCardInput, state: &Arc<AppState>) -> Res
     let mut sanitized = input;
     sanitized.title = sanitized.title.trim().to_string();
     sanitized.tags = normalize_tags(sanitized.tags);
-    sanitized.totp_uri = sanitized
-        .totp_uri
-        .and_then(|value| {
-            let trimmed = value.trim().to_string();
-            if trimmed.is_empty() {
-                None
-            } else {
-                Some(trimmed)
-            }
-        });
+    sanitized.totp_uri = sanitized.totp_uri.and_then(|value| {
+        let trimmed = value.trim().to_string();
+        if trimmed.is_empty() {
+            None
+        } else {
+            Some(trimmed)
+        }
+    });
     let (seed_phrase, seed_phrase_word_count) =
         normalize_seed_phrase(sanitized.seed_phrase, sanitized.seed_phrase_word_count)?;
     sanitized.seed_phrase = seed_phrase;
@@ -162,8 +158,8 @@ pub fn set_datacard_preview_fields_for_card(
     let profile_id = security_service::require_unlocked_active_profile(state)?.profile_id;
 
     let sanitized = sanitize_preview_fields(fields);
-    let json = serde_json::to_string(&sanitized)
-        .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
+    let json =
+        serde_json::to_string(&sanitized).map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
 
     let updated = repo_impl::set_datacard_preview_fields_for_card(state, &profile_id, &id, &json)?;
     security_service::request_persist_active_vault(state.clone());
@@ -233,7 +229,7 @@ pub fn purge_all_deleted_datacards(state: &Arc<AppState>) -> Result<bool> {
     }
 
     for id in ids {
-        purge_datacard_with_attachments(state, &profile_id, &id)?;
+        purge_datacard_by_profile_with_attachments(state, &profile_id, &id)?;
     }
 
     security_service::request_persist_active_vault(state.clone());
@@ -250,9 +246,17 @@ pub fn restore_datacard(id: String, state: &Arc<AppState>) -> Result<bool> {
 
 pub fn purge_datacard(id: String, state: &Arc<AppState>) -> Result<bool> {
     let profile_id = security_service::require_unlocked_active_profile(state)?.profile_id;
-    let purged = purge_datacard_with_attachments(state, &profile_id, &id)?;
+    let purged = purge_datacard_by_profile_with_attachments(state, &profile_id, &id)?;
     security_service::request_persist_active_vault(state.clone());
     Ok(purged)
+}
+
+pub(crate) fn purge_datacard_by_profile_with_attachments(
+    state: &Arc<AppState>,
+    profile_id: &str,
+    id: &str,
+) -> Result<bool> {
+    purge_datacard_with_attachments(state, profile_id, id)
 }
 
 fn purge_datacard_with_attachments(
