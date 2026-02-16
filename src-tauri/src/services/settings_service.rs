@@ -120,6 +120,59 @@ fn validate_settings(settings: &UserSettings) -> Result<()> {
     }
 }
 
+fn repair_settings(mut settings: UserSettings) -> (UserSettings, bool) {
+    let defaults = UserSettings::default();
+    let mut changed = false;
+
+    let in_range = |value: i64, min: i64, max: i64| (min..=max).contains(&value);
+
+    if !in_range(settings.auto_hide_secret_timeout_seconds, 1, 600) {
+        settings.auto_hide_secret_timeout_seconds = defaults.auto_hide_secret_timeout_seconds;
+        changed = true;
+    }
+    if !in_range(settings.clipboard_clear_timeout_seconds, 1, 600) {
+        settings.clipboard_clear_timeout_seconds = defaults.clipboard_clear_timeout_seconds;
+        changed = true;
+    }
+    if !in_range(settings.auto_lock_timeout, 30, 86_400) {
+        settings.auto_lock_timeout = defaults.auto_lock_timeout;
+        changed = true;
+    }
+
+    if settings.trash_auto_cleanup_enabled && !in_range(settings.trash_retention_days, 1, 3_650) {
+        settings.trash_retention_days = defaults.trash_retention_days;
+        changed = true;
+    }
+
+    if settings.backups_enabled && !in_range(settings.auto_backup_interval_minutes, 5, 525_600) {
+        settings.auto_backup_interval_minutes = defaults.auto_backup_interval_minutes;
+        changed = true;
+    }
+
+    if !["daily", "weekly", "monthly"].contains(&settings.backup_frequency.as_str()) {
+        settings.backup_frequency = defaults.backup_frequency.clone();
+        changed = true;
+    }
+
+    if !["created_at", "updated_at", "title"].contains(&settings.default_sort_field.as_str()) {
+        settings.default_sort_field = defaults.default_sort_field.clone();
+        changed = true;
+    }
+
+    if !["ASC", "DESC"].contains(&settings.default_sort_direction.as_str()) {
+        settings.default_sort_direction = defaults.default_sort_direction.clone();
+        changed = true;
+    }
+
+    let normalized_active_vault_id = normalize_active_vault_id(&settings.active_vault_id);
+    if settings.active_vault_id != normalized_active_vault_id {
+        settings.active_vault_id = normalized_active_vault_id;
+        changed = true;
+    }
+
+    (settings, changed)
+}
+
 pub fn get_settings(sp: &StoragePaths, profile_id: &str) -> Result<UserSettings> {
     let path = user_settings_path(sp, profile_id)?;
     if !path.exists() {
@@ -132,7 +185,39 @@ pub fn get_settings(sp: &StoragePaths, profile_id: &str) -> Result<UserSettings>
     }
 
     let content = fs::read_to_string(&path).map_err(|_| ErrorCodeString::new("SETTINGS_READ"))?;
-    serde_json::from_str(&content).map_err(|_| ErrorCodeString::new("SETTINGS_PARSE"))
+    let parsed: UserSettings =
+        serde_json::from_str(&content).map_err(|_| ErrorCodeString::new("SETTINGS_PARSE"))?;
+    let (repaired, changed) = repair_settings(parsed);
+
+    if validate_settings(&repaired).is_err() {
+        log::warn!(
+            "[SETTINGS] profile_id={} action=repair_failed fallback=defaults",
+            profile_id
+        );
+        let defaults = UserSettings::default();
+        if let Ok(serialized) = serde_json::to_string_pretty(&defaults) {
+            let _ = write_atomic(&path, serialized.as_bytes());
+        }
+        return Ok(defaults);
+    }
+
+    if changed {
+        log::warn!(
+            "[SETTINGS] profile_id={} action=auto_repair_invalid_user_settings",
+            profile_id
+        );
+        if let Ok(serialized) = serde_json::to_string_pretty(&repaired) {
+            if let Err(err) = write_atomic(&path, serialized.as_bytes()) {
+                log::warn!(
+                    "[SETTINGS] profile_id={} action=auto_repair_write_failed err={}",
+                    profile_id,
+                    err
+                );
+            }
+        }
+    }
+
+    Ok(repaired)
 }
 
 pub fn update_settings(
