@@ -92,7 +92,15 @@ pub fn list_bank_cards_summary(
     sort_dir: &str,
 ) -> Result<Vec<BankCardSummary>> {
     with_connection_in_active_vault(state, profile_id, |conn, active_vault_id| {
-        let clause = order_clause(sort_field, sort_dir).unwrap_or("ORDER BY updated_at DESC");
+        let (clause, fallback) = safe_order_clause(sort_field, sort_dir);
+        if fallback {
+            log::warn!(
+                "[SORT] profile_id={} entity=bank_cards action=list_bank_cards_summary fallback=true sort_field={} sort_dir={}",
+                profile_id,
+                sort_field,
+                sort_dir
+            );
+        }
         let query = format!(
             "SELECT id, folder_id, title, bank_name, holder, number, note, tags_json, preview_fields_json, is_favorite, created_at, updated_at, archived_at, deleted_at FROM bank_cards WHERE vault_id = ?1 AND deleted_at IS NULL {clause}"
         );

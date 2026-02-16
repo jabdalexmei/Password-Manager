@@ -235,8 +235,16 @@ pub fn list_datacards(
     sort_dir: &str,
 ) -> Result<Vec<DataCard>> {
     with_connection_in_active_vault(state, profile_id, |conn, active_vault_id| {
-        let clause = order_clause(sort_field, sort_dir)
-            .ok_or_else(|| ErrorCodeString::new("DB_QUERY_FAILED"))?;
+        let (clause, fallback) = safe_order_clause(sort_field, sort_dir);
+        if fallback {
+            log::warn!(
+                "[SORT] profile_id={} entity=datacards action=list_datacards include_deleted={} fallback=true sort_field={} sort_dir={}",
+                profile_id,
+                include_deleted,
+                sort_field,
+                sort_dir
+            );
+        }
         let base_query = if include_deleted {
             format!("SELECT * FROM datacards WHERE vault_id = ?1 {clause}")
         } else {
@@ -261,8 +269,15 @@ pub fn list_datacards_summary(
     sort_dir: &str,
 ) -> Result<Vec<DataCardSummary>> {
     with_connection_in_active_vault(state, profile_id, |conn, active_vault_id| {
-        let clause = order_clause(sort_field, sort_dir)
-            .ok_or_else(|| ErrorCodeString::new("DB_QUERY_FAILED"))?;
+        let (clause, fallback) = safe_order_clause(sort_field, sort_dir);
+        if fallback {
+            log::warn!(
+                "[SORT] profile_id={} entity=datacards action=list_datacards_summary fallback=true sort_field={} sort_dir={}",
+                profile_id,
+                sort_field,
+                sort_dir
+            );
+        }
         let query = format!(
             r#"
             SELECT

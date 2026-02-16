@@ -6,11 +6,23 @@ type SortableCard = {
   updatedAt: string;
 };
 
+type SortField = 'created_at' | 'updated_at' | 'title';
+type SortDirection = 'ASC' | 'DESC';
+
+const DEFAULT_SORT_FIELD: SortField = 'updated_at';
+const DEFAULT_SORT_DIRECTION: SortDirection = 'DESC';
+
 const compareStringsCaseInsensitive = (a: string, b: string) => {
   const lowerA = a.toLowerCase();
   const lowerB = b.toLowerCase();
   if (lowerA < lowerB) return -1;
   if (lowerA > lowerB) return 1;
+  return 0;
+};
+
+const compareStringsCaseSensitive = (a: string, b: string) => {
+  if (a < b) return -1;
+  if (a > b) return 1;
   return 0;
 };
 
@@ -20,7 +32,7 @@ export function sortFolders(a: Folder, b: Folder): number {
   return compareStringsCaseInsensitive(a.id, b.id);
 }
 
-const compareDates = (a: string, b: string, direction: 'ASC' | 'DESC') => {
+const compareDates = (a: string, b: string, direction: SortDirection) => {
   const aTime = Date.parse(a);
   const bTime = Date.parse(b);
   if (aTime === bTime) return 0;
@@ -30,8 +42,32 @@ const compareDates = (a: string, b: string, direction: 'ASC' | 'DESC') => {
   return aTime > bTime ? -1 : 1;
 };
 
-const compareTitles = (a: string, b: string, direction: 'ASC' | 'DESC') => {
-  const result = compareStringsCaseInsensitive(a, b);
+const normalizeSortField = (raw: string): SortField => {
+  switch (raw.trim().toLowerCase()) {
+    case 'created_at':
+      return 'created_at';
+    case 'updated_at':
+      return 'updated_at';
+    case 'title':
+      return 'title';
+    default:
+      return DEFAULT_SORT_FIELD;
+  }
+};
+
+const normalizeSortDirection = (raw: string): SortDirection => {
+  switch (raw.trim().toUpperCase()) {
+    case 'ASC':
+      return 'ASC';
+    case 'DESC':
+      return 'DESC';
+    default:
+      return DEFAULT_SORT_DIRECTION;
+  }
+};
+
+const compareTitles = (a: string, b: string, direction: SortDirection) => {
+  const result = compareStringsCaseSensitive(a, b);
   return direction === 'ASC' ? result : -result;
 };
 
@@ -41,8 +77,8 @@ export function sortCards<T extends SortableCard>(
   sortField: string,
   sortDir: string
 ): number {
-  const field = (sortField ?? 'updated_at') as 'created_at' | 'updated_at' | 'title';
-  const direction = (sortDir ?? 'DESC') as 'ASC' | 'DESC';
+  const field = normalizeSortField(sortField ?? DEFAULT_SORT_FIELD);
+  const direction = normalizeSortDirection(sortDir ?? DEFAULT_SORT_DIRECTION);
 
   if (field === 'title') {
     const byTitle = compareTitles(a.title, b.title, direction);
@@ -57,5 +93,5 @@ export function sortCards<T extends SortableCard>(
   );
 
   if (primaryDateCompare !== 0) return primaryDateCompare;
-  return compareStringsCaseInsensitive(a.title, b.title);
+  return compareStringsCaseSensitive(a.title, b.title);
 }

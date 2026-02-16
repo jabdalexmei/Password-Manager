@@ -359,6 +359,8 @@ fn map_password_history_row(row: &rusqlite::Row) -> rusqlite::Result<PasswordHis
     })
 }
 
+const DEFAULT_ORDER_CLAUSE: &str = "ORDER BY updated_at DESC, title ASC";
+
 fn order_clause(sort_field: &str, sort_dir: &str) -> Option<&'static str> {
     match (sort_field, sort_dir) {
         ("updated_at", "DESC") => Some("ORDER BY updated_at DESC, title ASC"),
@@ -368,6 +370,14 @@ fn order_clause(sort_field: &str, sort_dir: &str) -> Option<&'static str> {
         ("title", "ASC") => Some("ORDER BY title ASC, updated_at DESC"),
         ("title", "DESC") => Some("ORDER BY title DESC, updated_at DESC"),
         _ => None,
+    }
+}
+
+fn safe_order_clause(sort_field: &str, sort_dir: &str) -> (&'static str, bool) {
+    if let Some(clause) = order_clause(sort_field, sort_dir) {
+        (clause, false)
+    } else {
+        (DEFAULT_ORDER_CLAUSE, true)
     }
 }
 
@@ -452,4 +462,42 @@ fn insert_password_history(
     .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn safe_order_clause_supports_all_valid_sort_pairs() {
+        for (input, expected) in [
+            (("updated_at", "DESC"), "ORDER BY updated_at DESC, title ASC"),
+            (("updated_at", "ASC"), "ORDER BY updated_at ASC, title ASC"),
+            (("created_at", "DESC"), "ORDER BY created_at DESC, title ASC"),
+            (("created_at", "ASC"), "ORDER BY created_at ASC, title ASC"),
+            (("title", "ASC"), "ORDER BY title ASC, updated_at DESC"),
+            (("title", "DESC"), "ORDER BY title DESC, updated_at DESC"),
+        ] {
+            let (clause, fallback) = safe_order_clause(input.0, input.1);
+            assert_eq!(clause, expected);
+            assert!(!fallback);
+        }
+    }
+
+    #[test]
+    fn safe_order_clause_falls_back_for_invalid_sort_pairs() {
+        let invalid_cases = [
+            ("", "DESC"),
+            ("invalid", "DESC"),
+            ("title", "down"),
+            ("updated_at", ""),
+            ("updated_at", "desc"),
+        ];
+
+        for (field, dir) in invalid_cases {
+            let (clause, fallback) = safe_order_clause(field, dir);
+            assert_eq!(clause, DEFAULT_ORDER_CLAUSE);
+            assert!(fallback);
+        }
+    }
 }

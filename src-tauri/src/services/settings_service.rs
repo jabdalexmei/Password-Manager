@@ -78,6 +78,23 @@ pub fn normalize_active_vault_id(raw: &str) -> String {
     }
 }
 
+fn normalize_sort_field(raw: &str) -> Option<&'static str> {
+    match raw.trim().to_ascii_lowercase().as_str() {
+        "created_at" => Some("created_at"),
+        "updated_at" => Some("updated_at"),
+        "title" => Some("title"),
+        _ => None,
+    }
+}
+
+fn normalize_sort_direction(raw: &str) -> Option<&'static str> {
+    match raw.trim().to_ascii_uppercase().as_str() {
+        "ASC" => Some("ASC"),
+        "DESC" => Some("DESC"),
+        _ => None,
+    }
+}
+
 fn validate_settings(settings: &UserSettings) -> Result<()> {
     let in_range = |value: i64, min: i64, max: i64| (min..=max).contains(&value);
 
@@ -101,9 +118,8 @@ fn validate_settings(settings: &UserSettings) -> Result<()> {
 
     let valid_frequency =
         ["daily", "weekly", "monthly"].contains(&settings.backup_frequency.as_str());
-    let valid_sort_field =
-        ["created_at", "updated_at", "title"].contains(&settings.default_sort_field.as_str());
-    let valid_sort_direction = ["ASC", "DESC"].contains(&settings.default_sort_direction.as_str());
+    let valid_sort_field = normalize_sort_field(&settings.default_sort_field).is_some();
+    let valid_sort_direction = normalize_sort_direction(&settings.default_sort_direction).is_some();
     let valid_active_vault_id = !settings.active_vault_id.trim().is_empty();
 
     if valid_values
@@ -124,49 +140,17 @@ fn repair_settings(mut settings: UserSettings) -> (UserSettings, bool) {
     let defaults = UserSettings::default();
     let mut changed = false;
 
-    let in_range = |value: i64, min: i64, max: i64| (min..=max).contains(&value);
-
-    if !in_range(settings.auto_hide_secret_timeout_seconds, 1, 600) {
-        settings.auto_hide_secret_timeout_seconds = defaults.auto_hide_secret_timeout_seconds;
-        changed = true;
-    }
-    if !in_range(settings.clipboard_clear_timeout_seconds, 1, 600) {
-        settings.clipboard_clear_timeout_seconds = defaults.clipboard_clear_timeout_seconds;
-        changed = true;
-    }
-    if !in_range(settings.auto_lock_timeout, 30, 86_400) {
-        settings.auto_lock_timeout = defaults.auto_lock_timeout;
+    let normalized_sort_field = normalize_sort_field(&settings.default_sort_field)
+        .unwrap_or(defaults.default_sort_field.as_str());
+    if settings.default_sort_field != normalized_sort_field {
+        settings.default_sort_field = normalized_sort_field.to_string();
         changed = true;
     }
 
-    if settings.trash_auto_cleanup_enabled && !in_range(settings.trash_retention_days, 1, 3_650) {
-        settings.trash_retention_days = defaults.trash_retention_days;
-        changed = true;
-    }
-
-    if settings.backups_enabled && !in_range(settings.auto_backup_interval_minutes, 5, 525_600) {
-        settings.auto_backup_interval_minutes = defaults.auto_backup_interval_minutes;
-        changed = true;
-    }
-
-    if !["daily", "weekly", "monthly"].contains(&settings.backup_frequency.as_str()) {
-        settings.backup_frequency = defaults.backup_frequency.clone();
-        changed = true;
-    }
-
-    if !["created_at", "updated_at", "title"].contains(&settings.default_sort_field.as_str()) {
-        settings.default_sort_field = defaults.default_sort_field.clone();
-        changed = true;
-    }
-
-    if !["ASC", "DESC"].contains(&settings.default_sort_direction.as_str()) {
-        settings.default_sort_direction = defaults.default_sort_direction.clone();
-        changed = true;
-    }
-
-    let normalized_active_vault_id = normalize_active_vault_id(&settings.active_vault_id);
-    if settings.active_vault_id != normalized_active_vault_id {
-        settings.active_vault_id = normalized_active_vault_id;
+    let normalized_sort_direction = normalize_sort_direction(&settings.default_sort_direction)
+        .unwrap_or(defaults.default_sort_direction.as_str());
+    if settings.default_sort_direction != normalized_sort_direction {
+        settings.default_sort_direction = normalized_sort_direction.to_string();
         changed = true;
     }
 
@@ -225,7 +209,15 @@ pub fn update_settings(
     mut new_settings: UserSettings,
     profile_id: &str,
 ) -> Result<bool> {
+    let defaults = UserSettings::default();
     new_settings.active_vault_id = normalize_active_vault_id(&new_settings.active_vault_id);
+    new_settings.default_sort_field = normalize_sort_field(&new_settings.default_sort_field)
+        .unwrap_or(defaults.default_sort_field.as_str())
+        .to_string();
+    new_settings.default_sort_direction =
+        normalize_sort_direction(&new_settings.default_sort_direction)
+            .unwrap_or(defaults.default_sort_direction.as_str())
+            .to_string();
 
     validate_settings(&new_settings)?;
     let path = user_settings_path(sp, profile_id)?;
@@ -304,4 +296,48 @@ pub fn set_app_theme_command(state: &Arc<AppState>, theme: String) -> Result<boo
         },
     )?;
     Ok(true)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn repair_settings_fixes_invalid_sort_values_to_defaults() {
+        let mut settings = UserSettings::default();
+        settings.default_sort_field = "invalid".to_string();
+        settings.default_sort_direction = "down".to_string();
+
+        let (repaired, changed) = repair_settings(settings);
+
+        assert!(changed);
+        assert_eq!(repaired.default_sort_field, "updated_at");
+        assert_eq!(repaired.default_sort_direction, "DESC");
+    }
+
+    #[test]
+    fn repair_settings_canonicalizes_sort_values() {
+        let mut settings = UserSettings::default();
+        settings.default_sort_field = "  TITLE ".to_string();
+        settings.default_sort_direction = " asc ".to_string();
+
+        let (repaired, changed) = repair_settings(settings);
+
+        assert!(changed);
+        assert_eq!(repaired.default_sort_field, "title");
+        assert_eq!(repaired.default_sort_direction, "ASC");
+    }
+
+    #[test]
+    fn repair_settings_keeps_valid_sort_values_unchanged() {
+        let settings = UserSettings::default();
+        let (repaired, changed) = repair_settings(settings.clone());
+
+        assert!(!changed);
+        assert_eq!(repaired.default_sort_field, settings.default_sort_field);
+        assert_eq!(
+            repaired.default_sort_direction,
+            settings.default_sort_direction
+        );
+    }
 }
