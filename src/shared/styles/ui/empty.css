@@ -1,0 +1,35 @@
+﻿/* ==========================================================================
+   Empty state (unified)
+   --------------------------------------------------------------------------
+   Used across screens/lists when there is no data to show.
+   Canonical API:
+   - .empty
+   - .empty-text
+   - modifiers: .empty--dashed / .empty--solid / .empty--borderless
+   ========================================================================== */
+.empty {
+  padding: 18px;
+  text-align: center;
+  color: var(--color-text-muted);
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-block);
+}
+
+.empty--dashed {
+  border-style: dashed;
+}
+
+.empty--solid {
+  border-style: solid;
+}
+
+.empty--borderless {
+  border-color: transparent;
+}
+
+.empty-text {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
