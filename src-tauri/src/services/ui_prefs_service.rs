@@ -197,13 +197,15 @@ pub fn set_datacard_preview_fields(fields: Vec<String>, state: &Arc<AppState>) -
         serde_json::to_string(&cleaned).map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
 
     let now_utc = Utc::now().to_rfc3339();
-    repo_impl::set_ui_preference_value_json(
+    let updated = repo_impl::set_ui_preference_value_json(
         state,
         &profile_id,
         PREF_KEY_DATACARD_PREVIEW_FIELDS,
         &value_json,
         &now_utc,
-    )
+    )?;
+    security_service::request_persist_active_vault(state.clone());
+    Ok(updated)
 }
 
 pub fn get_datacard_preview_fields_folder_only_by_folder(
@@ -238,13 +240,15 @@ pub fn set_datacard_preview_fields_folder_only_by_folder(
         serde_json::to_string(&cleaned).map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
 
     let now_utc = Utc::now().to_rfc3339();
-    repo_impl::set_ui_preference_value_json(
+    let updated = repo_impl::set_ui_preference_value_json(
         state,
         &profile_id,
         PREF_KEY_DATACARD_PREVIEW_FIELDS_FOLDER_ONLY_BY_FOLDER,
         &value_json,
         &now_utc,
-    )
+    )?;
+    security_service::request_persist_active_vault(state.clone());
+    Ok(updated)
 }
 
 pub fn get_bankcard_preview_fields(state: &Arc<AppState>) -> Result<BankCardPreviewFields> {
@@ -283,13 +287,15 @@ pub fn set_bankcard_preview_fields(
         serde_json::to_string(&cleaned).map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
 
     let now_utc = Utc::now().to_rfc3339();
-    repo_impl::set_ui_preference_value_json(
+    let updated = repo_impl::set_ui_preference_value_json(
         state,
         &profile_id,
         PREF_KEY_BANKCARD_PREVIEW_FIELDS,
         &value_json,
         &now_utc,
-    )
+    )?;
+    security_service::request_persist_active_vault(state.clone());
+    Ok(updated)
 }
 
 pub fn get_datacard_core_hidden_fields(state: &Arc<AppState>) -> Result<Vec<String>> {
@@ -319,13 +325,15 @@ pub fn set_datacard_core_hidden_fields(fields: Vec<String>, state: &Arc<AppState
         serde_json::to_string(&cleaned).map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
 
     let now_utc = Utc::now().to_rfc3339();
-    repo_impl::set_ui_preference_value_json(
+    let updated = repo_impl::set_ui_preference_value_json(
         state,
         &profile_id,
         PREF_KEY_DATACARD_CORE_HIDDEN_FIELDS,
         &value_json,
         &now_utc,
-    )
+    )?;
+    security_service::request_persist_active_vault(state.clone());
+    Ok(updated)
 }
 
 pub fn get_bankcard_core_hidden_fields(state: &Arc<AppState>) -> Result<Vec<String>> {
@@ -355,11 +363,13 @@ pub fn set_bankcard_core_hidden_fields(fields: Vec<String>, state: &Arc<AppState
         serde_json::to_string(&cleaned).map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
 
     let now_utc = Utc::now().to_rfc3339();
-    repo_impl::set_ui_preference_value_json(
+    let updated = repo_impl::set_ui_preference_value_json(
         state,
         &profile_id,
         PREF_KEY_BANKCARD_CORE_HIDDEN_FIELDS,
         &value_json,
         &now_utc,
-    )
+    )?;
+    security_service::request_persist_active_vault(state.clone());
+    Ok(updated)
 }
