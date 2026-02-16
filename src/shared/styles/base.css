@@ -53,7 +53,7 @@
 
 @supports not (color: color-mix(in srgb, black 50%, white 50%)) {
   :root {
-    --scrollbar-thumb-hover: #1e1e1e;
+    --scrollbar-thumb-hover: var(--color-surface-1);
   }
 }
 

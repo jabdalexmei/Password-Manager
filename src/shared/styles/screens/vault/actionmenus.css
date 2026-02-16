@@ -106,11 +106,11 @@
 }
 
 .vault-actionbar:hover {
-  background: rgba(255, 255, 255, 0.06) !important;
+  background: var(--surface-tint-08) !important;
 }
 
 .vault-actionbar-icon {
-  color: var(--color-text, rgba(255, 255, 255, 0.88));
+  color: var(--color-text);
 }
 
 /* --------------------------------------------------------------------------
@@ -176,4 +176,3 @@
   top: var(--menu-y, 0px);
   right: auto;
 }
-

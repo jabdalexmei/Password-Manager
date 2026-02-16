@@ -131,9 +131,9 @@
   font-size: 12px;
   padding: 3px 10px;
   border-radius: 999px;
-  color: var(--color-text, rgba(255, 255, 255, 0.9));
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12));
+  color: var(--color-text);
+  background: var(--surface-tint-08);
+  border: 1px solid var(--border-subtle);
 }
 
 /* Action bar: keep it subtle and theme-ish */
@@ -146,13 +146,13 @@
 }
 
 .workspace-actionbar:hover {
-  background: rgba(255, 255, 255, 0.06) !important;
+  background: var(--surface-tint-08) !important;
 }
 
 .workspace-actionbar-dots {
   font-size: 20px;
   line-height: 1;
-  color: var(--color-text, rgba(255, 255, 255, 0.88));
+  color: var(--color-text);
   transform: translateY(-1px);
 }
 

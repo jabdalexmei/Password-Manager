@@ -1,8 +1,17 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const stylesRoot = path.resolve("src/styles");
-const themeFile = path.resolve("src/styles/themes/blueTheme.css");
+const ROOT_CANDIDATES = ["src/shared/styles", "src/styles"];
+const stylesRoot = ROOT_CANDIDATES
+  .map((p) => path.resolve(p))
+  .find((p) => fs.existsSync(p));
+
+if (!stylesRoot) {
+  console.error(`Styles root not found. Checked: ${ROOT_CANDIDATES.join(", ")}`);
+  process.exit(1);
+}
+
+const themesDir = path.resolve(stylesRoot, "themes");
 
 const COLOR_RE = /#[0-9a-fA-F]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)/;
 function walk(dir) {
@@ -15,7 +24,11 @@ function walk(dir) {
   return out;
 }
 
-const files = walk(stylesRoot).filter((f) => path.resolve(f) !== themeFile);
+const themeFiles = fs.existsSync(themesDir)
+  ? new Set(walk(themesDir).map((f) => path.resolve(f)))
+  : new Set();
+
+const files = walk(stylesRoot).filter((f) => !themeFiles.has(path.resolve(f)));
 
 const violations = [];
 for (const file of files) {
@@ -29,10 +42,9 @@ for (const file of files) {
 }
 
 if (violations.length) {
-  console.error("Theme color literals found outside blueTheme.css:\n");
+  console.error("Theme color literals found outside theme files:\n");
   console.error(violations.join("\n"));
   process.exit(1);
 }
 
-console.log("OK: No theme color literals outside blueTheme.css");
-
+console.log("OK: No theme color literals outside theme files");
