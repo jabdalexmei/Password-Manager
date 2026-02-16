@@ -77,7 +77,7 @@ export function Details({
   const { attachmentsDropRef, isDragOver: isAttachmentsDragOver } = useAttachmentsDrop({
     cardId: card?.id,
     isTrashMode,
-    onAddAttachmentsFromPaths: detailActions.onAddAttachmentsFromPaths,
+    onAddAttachmentsFromPick: detailActions.onAddAttachmentsFromPick,
   });
 
   const folderName = useMemo(() => {

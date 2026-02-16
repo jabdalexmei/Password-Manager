@@ -4,8 +4,9 @@ import { useTranslation } from '../../../../shared/lib/i18n';
 import { useToaster } from '../../../../shared/components/Toaster';
 import { clipboardClearAll } from '../../../../shared/lib/tauri';
 import {
-  addAttachmentsFromPaths,
+  addAttachmentsFromPick,
   addAttachmentsViaDialog,
+  attachmentsDiscardPick,
   getAttachmentBytesBase64,
   listAttachments,
   renameAttachment,
@@ -40,7 +41,7 @@ export type UseDetailsResult = {
   purgeCard: () => void;
   attachments: Attachment[];
   onAddAttachment: () => Promise<void>;
-  onAddAttachmentsFromPaths: (paths: string[]) => Promise<void>;
+  onAddAttachmentsFromPick: (token: string, fileIds: string[]) => Promise<void>;
   onDeleteAttachment: (attachmentId: string) => Promise<void>;
   onPreviewAttachment: (attachmentId: string) => Promise<void>;
   onDownloadAttachment: (attachmentId: string, defaultName: string) => Promise<void>;
@@ -220,12 +221,21 @@ export function useDetails({
     }
   }, [card, isTrashMode, refreshAttachments, showToast, t]);
 
-  const onAddAttachmentsFromPaths = useCallback(
-    async (paths: string[]) => {
-      if (!card || isTrashMode) return;
-      if (!paths.length) return;
+  const onAddAttachmentsFromPick = useCallback(
+    async (token: string, fileIds: string[]) => {
+      if (!token) return;
+
+      if (!card || isTrashMode || !fileIds.length) {
+        try {
+          await attachmentsDiscardPick(token);
+        } catch (err) {
+          console.error(err);
+        }
+        return;
+      }
+
       try {
-        const added = await addAttachmentsFromPaths(card.id, paths);
+        const added = await addAttachmentsFromPick(card.id, token, fileIds);
         if (!added.length) return;
         await refreshAttachments();
         showToast(t('toast.attachmentAddSuccess'), 'success');
@@ -332,7 +342,7 @@ export function useDetails({
     purgeCard,
     attachments,
     onAddAttachment,
-    onAddAttachmentsFromPaths,
+    onAddAttachmentsFromPick,
     onDeleteAttachment,
     onPreviewAttachment,
     onDownloadAttachment,

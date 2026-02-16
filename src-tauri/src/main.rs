@@ -29,10 +29,10 @@ mod data {
     pub mod sqlite {
         pub mod diagnostics;
         pub mod init;
+        pub mod repo_impl;
         pub mod schema_initialization;
         pub mod schema_migration;
         pub mod schema_validation;
-        pub mod repo_impl;
     }
 }
 mod error;
@@ -77,6 +77,11 @@ fn main() {
             WindowEvent::CloseRequested { .. } | WindowEvent::Destroyed => {
                 let app_state = window.state::<Arc<AppState>>().inner().clone();
                 let _ = security_service::auto_lock_cleanup(&app_state);
+            }
+            WindowEvent::DragDrop(drag_drop_event) => {
+                if let Err(err) = relay_attachments_drag_drop_event(window, drag_drop_event) {
+                    log::warn!("attachments drag-drop relay failed: {}", err);
+                }
             }
             _ => {}
         })
@@ -164,7 +169,6 @@ fn main() {
             attachments_discard_pick,
             add_attachments_from_pick,
             add_attachments_via_dialog,
-            add_attachments_from_paths,
             remove_attachment,
             purge_attachment,
             get_attachment_bytes_base64,
