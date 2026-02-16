@@ -2,7 +2,7 @@
 
 .vault-body {
   display: grid;
-  grid-template-columns: 330px minmax(0, 1.2fr) minmax(0, 1.3fr);
+  grid-template-columns: calc(330px + var(--scrollbar-size, 10px)) minmax(0, 1.2fr) minmax(0, 1.3fr);
   flex: 1;
   min-height: 0;
 }
