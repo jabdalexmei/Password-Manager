@@ -361,23 +361,15 @@ fn map_password_history_row(row: &rusqlite::Row) -> rusqlite::Result<PasswordHis
 
 const DEFAULT_ORDER_CLAUSE: &str = "ORDER BY updated_at DESC, title ASC";
 
-fn order_clause(sort_field: &str, sort_dir: &str) -> Option<&'static str> {
-    match (sort_field, sort_dir) {
-        ("updated_at", "DESC") => Some("ORDER BY updated_at DESC, title ASC"),
-        ("updated_at", "ASC") => Some("ORDER BY updated_at ASC, title ASC"),
-        ("created_at", "DESC") => Some("ORDER BY created_at DESC, title ASC"),
-        ("created_at", "ASC") => Some("ORDER BY created_at ASC, title ASC"),
-        ("title", "ASC") => Some("ORDER BY title ASC, updated_at DESC"),
-        ("title", "DESC") => Some("ORDER BY title DESC, updated_at DESC"),
-        _ => None,
-    }
-}
-
 fn safe_order_clause(sort_field: &str, sort_dir: &str) -> (&'static str, bool) {
-    if let Some(clause) = order_clause(sort_field, sort_dir) {
-        (clause, false)
-    } else {
-        (DEFAULT_ORDER_CLAUSE, true)
+    match (sort_field, sort_dir) {
+        ("updated_at", "DESC") => ("ORDER BY updated_at DESC, title ASC", false),
+        ("updated_at", "ASC") => ("ORDER BY updated_at ASC, title ASC", false),
+        ("created_at", "DESC") => ("ORDER BY created_at DESC, title ASC", false),
+        ("created_at", "ASC") => ("ORDER BY created_at ASC, title ASC", false),
+        ("title", "ASC") => ("ORDER BY title ASC, updated_at DESC", false),
+        ("title", "DESC") => ("ORDER BY title DESC, updated_at DESC", false),
+        _ => (DEFAULT_ORDER_CLAUSE, true),
     }
 }
 
