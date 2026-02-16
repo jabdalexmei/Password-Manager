@@ -17,6 +17,7 @@
   padding: 40px;
   overflow: auto;
   --sidebar-section-gap: 16px;
+  --sidebar-action-width: 170px;
 }
 
 .vault-sidebar-controls {
@@ -176,6 +177,7 @@
 .vault-sidebar-actions {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  justify-items: start;
   gap: 10px;
   margin-bottom: var(--sidebar-section-gap);
 }
@@ -191,9 +193,11 @@
 }
 
 .vault-sidebar-actions .btn {
-  width: 100%;
+  width: auto;
+  inline-size: var(--sidebar-action-width);
   min-width: 0;
   max-width: 100%;
+  justify-self: start;
   box-sizing: border-box;
   height: 40px;
   padding: 6px 10px;
@@ -233,10 +237,13 @@
   position: relative;
   flex: 1;
   overflow: visible;
+  justify-self: start;
 }
 
 .vault-sidebar-addmenu > .btn {
-  width: 100%;
+  width: auto;
+  inline-size: var(--sidebar-action-width);
+  max-width: 100%;
 }
 
 /* Keep dropdown menu inside the app/sidebar */
