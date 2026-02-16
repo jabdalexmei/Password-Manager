@@ -4,7 +4,7 @@
   "workspaces": "Доступные рабочие папки",
   "loading": "Загрузка рабочих папок...",
   "error": "Не удалось загрузить рабочие папки.",
-  "workspaceinfo": "No workspaces.",
+  "workspaceinfo": "Нет рабочих папок.",
   "chooseFolder": "Выбрать папку данных",
   "selectDataFolderDialogTitle": "Выберите папку для хранения данных",
   "openDataFolderDialogTitle": "Открыть папку данных",
