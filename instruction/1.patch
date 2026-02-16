@@ -1,33 +1,46 @@
---- a/src/features/Startup/Startup.tsx
-+++ b/src/features/Startup/Startup.tsx
-@@ -96,7 +96,7 @@
-           </button>
+--- a/src/shared/styles/screens/vault/sidebar.css
++++ b/src/shared/styles/screens/vault/sidebar.css
+@@ -17,6 +17,7 @@
+   padding: 40px;
+   overflow: auto;
+   --sidebar-section-gap: 16px;
++  --sidebar-action-width: 170px;
+ }
  
-           <button type="button" className="btn btn-primary" onClick={onCreate}>
-+            {t('create')}
--            {t('selectStorageFolder')}
-           </button>
-         </div>
-         <p className="startup-footnote">{t('footnote')}</p>
-
---- a/src/i18n/locales/en/Startup.json
-+++ b/src/i18n/locales/en/Startup.json
-@@ -3,6 +3,7 @@
-   "subtitle": "Choose an existing profile or create a new one to continue.",
-   "noProfiles": "No profiles",
-   "create": "Create new profile",
--  "selectStorageFolder": "Select storage folder",
-   "back": "Back",
-   "delete": "Delete",
-   "open": "Choose",
-
---- a/src/i18n/locales/ru/Startup.json
-+++ b/src/i18n/locales/ru/Startup.json
-@@ -3,6 +3,7 @@
-   "subtitle": "Выберите существующий профиль или создайте новый.",
-   "noProfiles": "Профили отсутствуют",
-   "create": "Создать профиль",
--  "selectStorageFolder": "Выбрать папку для хранения данных",
-   "back": "Назад",
-   "delete": "Удалить",
-   "open": "Выбрать",
+ .vault-sidebar-controls {
+@@ -176,6 +177,7 @@
+ .vault-sidebar-actions {
+   display: grid;
+   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
++  justify-items: start;
+   gap: 10px;
+   margin-bottom: var(--sidebar-section-gap);
+ }
+@@ -191,9 +193,11 @@
+ }
+ 
+ .vault-sidebar-actions .btn {
+-  width: 100%;
++  width: auto;
++  inline-size: var(--sidebar-action-width);
+   min-width: 0;
+   max-width: 100%;
++  justify-self: start;
+   box-sizing: border-box;
+   height: 40px;
+   padding: 6px 10px;
+@@ -233,10 +237,13 @@
+   position: relative;
+   flex: 1;
+   overflow: visible;
++  justify-self: start;
+ }
+ 
+ .vault-sidebar-addmenu > .btn {
+-  width: 100%;
++  width: auto;
++  inline-size: var(--sidebar-action-width);
++  max-width: 100%;
+ }
+ 
+ /* Keep dropdown menu inside the app/sidebar */
