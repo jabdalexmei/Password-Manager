@@ -15,6 +15,7 @@
   background: var(--color-surface-2);
   border-right: 1px solid var(--color-border);
   padding: 40px;
+  min-width: 0;
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-gutter: stable;
@@ -42,15 +43,19 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
 }
 
 .vault-search-row .vault-search {
   width: auto;
   flex: 1 1 auto;
+  min-width: 0;
 }
 
 .vault-search {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   padding: 12px 12px;
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
@@ -284,6 +289,11 @@
   font-weight: 700;
   color: var(--color-text);
   margin-bottom: 8px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .vault-folder-list {
@@ -293,6 +303,8 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .vault-folder-node {
@@ -303,6 +315,8 @@
   display: flex;
   align-items: center;
   padding-left: var(--folder-indent);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .vault-folder-tree-children {
@@ -312,6 +326,8 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .vault-folder-toggle {
@@ -363,6 +379,8 @@
 
 .vault-folder {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -372,6 +390,7 @@
   border-radius: var(--radius-sm);
   color: var(--color-text);
   cursor: pointer;
+  overflow: hidden;
 }
 
 .vault-folder:hover {
@@ -383,6 +402,7 @@
 
 .vault-folder--tree {
   flex: 1 1 auto;
+  min-width: 0;
 }
 
 .vault-folder:focus-visible {
@@ -398,6 +418,12 @@
 }
 
 .folder-name {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-weight: 600;
   color: var(--color-text);
 }
@@ -408,6 +434,9 @@
 }
 
 .folder-count {
+  flex: 0 0 auto;
+  white-space: nowrap;
   color: var(--color-text-muted);
   font-size: 13px;
+  margin-left: 8px;
 }
