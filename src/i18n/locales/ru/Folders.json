@@ -4,8 +4,8 @@
   "vaults.default": "по умолчанию",
   "vaults.systemDefaultName": "Хранилище по умолчанию",
   "category.title": "Категория",
-  "category.dataCards": "Карточки данных",
-  "category.bankCards": "Банковские карты",
+  "category.dataCards": "Карточка данных",
+  "category.bankCards": "Банковская карта",
   "nav.title": "Навигация",
   "nav.allItems": "Все элементы",
   "nav.favorites": "Избранное",
@@ -45,4 +45,3 @@
   "validation.folderNameRequired": "Требуется имя папки",
   "validation.vaultNameRequired": "Требуется имя хранилища"
 }
-
