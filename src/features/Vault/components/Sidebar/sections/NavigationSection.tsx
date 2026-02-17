@@ -25,7 +25,7 @@ export function NavigationSection({
     isActive: boolean
   ) => (
     <li className={isActive ? 'active' : ''}>
-      <button className="vault-folder" type="button" onClick={() => onSelectNav(key)}>
+      <button className="vault-folder vault-folder--with-count" type="button" onClick={() => onSelectNav(key)}>
         <span className="folder-name">{label}</span>
         <span className="folder-count">{count}</span>
       </button>

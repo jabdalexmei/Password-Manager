@@ -355,7 +355,7 @@ export function FoldersTreeSection({
           )}
 
           <button
-            className="vault-folder vault-folder--tree"
+            className="vault-folder vault-folder--tree vault-folder--with-count"
             type="button"
             onClick={() => onSelectNav(isActive ? 'all' : { folderId: folder.id })}
             onContextMenu={(event) => {

@@ -405,6 +405,14 @@
   min-width: 0;
 }
 
+.vault-folder--with-count {
+  display: grid;
+  grid-template-columns: 6ch minmax(0, 1fr) 6ch;
+  align-items: center;
+  justify-content: stretch;
+  column-gap: 8px;
+}
+
 .vault-folder:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
@@ -428,6 +436,12 @@
   color: var(--color-text);
 }
 
+.vault-folder--with-count .folder-name {
+  grid-column: 2;
+  flex: none;
+  text-align: center;
+}
+
 .folder-badge {
   color: var(--color-primary);
   margin-left: 6px;
@@ -439,4 +453,15 @@
   color: var(--color-text-muted);
   font-size: 13px;
   margin-left: 8px;
+}
+
+.vault-folder--with-count .folder-count {
+  grid-column: 3;
+  width: 6ch;
+  min-width: 0;
+  flex: none;
+  margin-left: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
 }
