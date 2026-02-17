@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Language } from '../../../../../../shared/lib/i18n';
-import { formatVaultDateTime } from '../../../../utils/dateTime';
 import type { BackendDateTimeFormat } from '../../../../types/backend';
 
 type TranslateFn = (key: string, params?: Record<string, string | number>) => string;
@@ -66,11 +65,6 @@ export function GeneralSection({
     const option = DATE_TIME_FORMAT_OPTIONS[selectedDateTimeFormatIndex] ?? DATE_TIME_FORMAT_OPTIONS[0];
     return tVault(option.labelKey);
   }, [selectedDateTimeFormatIndex, tVault]);
-
-  const previewValue = useMemo(
-    () => formatVaultDateTime(new Date(), dateTimeFormat, language),
-    [dateTimeFormat, language],
-  );
 
   const focusLanguageOption = useCallback((index: number) => {
     if (LANGUAGE_OPTIONS.length === 0) return;
@@ -365,9 +359,6 @@ export function GeneralSection({
               {tVault('settingsModal.general.dateTimeFormat.title')}
             </div>
             <div className="form-label">{tVault('settingsModal.general.dateTimeFormat.description')}</div>
-            <div className="settings-date-time-preview">
-              {tVault('settingsModal.general.dateTimeFormat.preview', { value: previewValue })}
-            </div>
           </div>
 
           <div className="settings-toggle-row__control">

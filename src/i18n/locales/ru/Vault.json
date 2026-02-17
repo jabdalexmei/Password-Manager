@@ -51,7 +51,6 @@
   "settingsModal.general.dateTimeFormat.option.auto": "Автоматически (по языку интерфейса)",
   "settingsModal.general.dateTimeFormat.option.ddmmyyyy_24h": "DD.MM.YYYY, 24h",
   "settingsModal.general.dateTimeFormat.option.mmddyyyy_12h_ampm": "MM/DD/YYYY, 12h (AM/PM)",
-  "settingsModal.general.dateTimeFormat.preview": "Пример: {{value}}",
   "settingsModal.appearanceTitle": "Внешний вид",
   "settingsModal.appearance.themes.title": "Темы",
   "settingsModal.appearance.themes.option.blue": "Синяя",

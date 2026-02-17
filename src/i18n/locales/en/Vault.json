@@ -51,7 +51,6 @@
   "settingsModal.general.dateTimeFormat.option.auto": "Automatic (by interface language)",
   "settingsModal.general.dateTimeFormat.option.ddmmyyyy_24h": "DD.MM.YYYY, 24h",
   "settingsModal.general.dateTimeFormat.option.mmddyyyy_12h_ampm": "MM/DD/YYYY, 12h (AM/PM)",
-  "settingsModal.general.dateTimeFormat.preview": "Example: {{value}}",
   "settingsModal.appearanceTitle": "Appearance",
   "settingsModal.appearance.themes.title": "Themes",
   "settingsModal.appearance.themes.option.blue": "Blue",
