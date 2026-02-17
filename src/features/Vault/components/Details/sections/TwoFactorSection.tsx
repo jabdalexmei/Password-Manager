@@ -21,7 +21,7 @@ export function TwoFactorSection({ totpUri, totpData, detailActions, t }: TwoFac
       <div className="detail-label">{t('label.totp')}</div>
 
       <div className="detail-value-box">
-        <div className="detail-value-text" style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
+        <div className="detail-value-text" style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', rowGap: 4 }}>
           <span style={{ fontSize: 20, fontWeight: 700, letterSpacing: 2 }}>
             {totpData ? totpData.token : t('totp.invalid')}
           </span>

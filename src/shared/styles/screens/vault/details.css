@@ -8,11 +8,19 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   padding: 14px 16px;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  min-width: 0;
+}
+
+.vault-detail-card .btn {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .detail-row {
@@ -21,6 +29,7 @@
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .detail-actions {
@@ -30,6 +39,7 @@
   gap: 8px;
   flex-wrap: wrap;
   justify-content: flex-end;
+  min-width: 0;
 }
 
 .detail-label {
@@ -42,6 +52,7 @@
   flex-direction: column;
   gap: 12px;
   flex: 1;
+  min-width: 0;
 }
 
 .detail-field-list {
@@ -54,6 +65,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
 }
 
 .detail-value-box {
@@ -67,13 +79,17 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .detail-value-text {
   color: var(--color-text);
   font-weight: 600;
   word-break: break-word;
+  overflow-wrap: anywhere;
   flex: 1;
+  min-width: 0;
 }
 
 .detail-value-text-monospace {
@@ -122,6 +138,10 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-left: auto;
+  min-width: 0;
 }
 
 .icon-button {
@@ -161,6 +181,7 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface-2);
+  min-width: 0;
 }
 
 .attachments-header {
@@ -169,6 +190,12 @@
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.attachments-header .btn {
+  max-width: 100%;
 }
 
 .attachments-title {
@@ -177,6 +204,7 @@
   gap: 8px;
   font-weight: 700;
   color: var(--color-text);
+  min-width: 0;
 }
 
 .attachments-title svg {
@@ -199,12 +227,14 @@
 .attachment-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   padding: 12px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   background: var(--color-surface-1);
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .attachment-info {
@@ -231,6 +261,10 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-left: auto;
+  min-width: 0;
 }
 
 .attachment-actions .icon-button {
