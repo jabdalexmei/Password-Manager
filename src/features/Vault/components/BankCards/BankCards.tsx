@@ -62,6 +62,7 @@ export function BankCards({
 }: BankCardsProps) {
   const { t } = useTranslation('BankCards');
   const { t: tCommon } = useTranslation('Common');
+  const { t: tTip } = useTranslation('Tooltips');
   const {
     cards: rawCards,
     selectedCardId,
@@ -458,6 +459,7 @@ export function BankCards({
                 className="btn btn-icon vault-actionbar"
                 type="button"
                 aria-label={tCommon('common.moreActions')}
+                title={tTip('action.moreActions')}
                 aria-haspopup="menu"
                 aria-expanded={isTrashActionsOpen}
                 onClick={() => setIsTrashActionsOpen((prev) => !prev)}

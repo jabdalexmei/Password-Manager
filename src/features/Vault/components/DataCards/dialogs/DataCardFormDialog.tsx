@@ -7,6 +7,7 @@ import {
   IconRename,
   IconTrash,
 } from '@/shared/icons/lucide/icons';
+import { useTranslation } from '../../../../../shared/lib/i18n';
 import { FolderSelect } from '../../shared/FolderSelect';
 import { generateTotpCode } from '../../../utils/totp';
 import type { DataCardFormState, DataCardsViewModel } from '../useDataCards';
@@ -97,6 +98,7 @@ export function DataCardFormDialog({
   t,
   tCommon,
 }: DataCardFormDialogProps) {
+  const { t: tTip } = useTranslation('Tooltips');
   if (!form) return null;
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -288,6 +290,7 @@ export function DataCardFormDialog({
                   type="button"
                   onClick={togglePasswordVisibility}
                   aria-label={t('action.togglePasswordVisibility')}
+                  title={showPassword ? tTip('action.hidePassword') : tTip('action.showPassword')}
                 >
                   {showPassword ? <IconPreviewOff /> : <IconPreview />}
                 </button>
@@ -297,6 +300,7 @@ export function DataCardFormDialog({
                   type="button"
                   onClick={openGenerator}
                   aria-label={t('action.openGenerator')}
+                  title={tTip('generator.open')}
                 >
                   <IconRegenerate />
                 </button>
@@ -374,7 +378,7 @@ export function DataCardFormDialog({
                       type="button"
                       className="icon-button"
                       aria-label={t('customFields.rename')}
-                      title={t('customFields.rename')}
+                      title={tTip('action.rename')}
                       onClick={() => {
                         setRenameTargetRowId(row.id);
                         setRenameTargetDialogId(dialogId);
@@ -389,7 +393,7 @@ export function DataCardFormDialog({
                       type="button"
                       className="icon-button icon-button-danger"
                       aria-label={t('customFields.delete')}
-                      title={t('customFields.delete')}
+                      title={tTip('action.delete')}
                       onClick={() => {
                         if (dialogId === 'datacard-create-dialog') {
                           viewModel.removeCreateCustomFieldById(row.id);

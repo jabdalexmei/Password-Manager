@@ -39,6 +39,7 @@ export function DataCardDialogActionMenu({
   t,
 }: DataCardDialogActionMenuProps) {
   const { t: tCommon } = useTranslation('Common');
+  const { t: tTip } = useTranslation('Tooltips');
 
   return (
     <>
@@ -46,7 +47,7 @@ export function DataCardDialogActionMenu({
         type="button"
         className="btn btn-icon dialog-actionbar"
         aria-label={tCommon('common.moreActions')}
-        title={tCommon('common.moreActions')}
+        title={tTip('action.moreActions')}
         onClick={() => {
           const isSameDialog = customFieldTargetDialogId === dialogId;
           setCustomFieldTargetDialogId(dialogId);

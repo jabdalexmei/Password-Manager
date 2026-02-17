@@ -1,5 +1,6 @@
 import React from 'react';
 import { IconCopy, IconHistory, IconPreview, IconPreviewOff } from '@/shared/icons/lucide/icons';
+import { useTranslation } from '../../../../../shared/lib/i18n';
 import type { DataCard } from '../../../types/ui';
 import type { DataCardCoreField } from '../../../lib/datacardCoreHiddenFields';
 import type { UseDetailsResult } from '../useDetails';
@@ -26,6 +27,7 @@ export function CoreFieldsSection({
   onOpenHistory,
   t,
 }: CoreFieldsSectionProps) {
+  const { t: tTip } = useTranslation('Tooltips');
   const hasValue = (value?: string | null) => Boolean(value?.trim());
   const hasTitle = hasValue(card.title);
   const hasUrl = hasValue(card.url);
@@ -57,6 +59,7 @@ export function CoreFieldsSection({
                 className="icon-button"
                 type="button"
                 aria-label={t('action.copy')}
+                title={tTip('action.copy')}
                 onClick={() => detailActions.copyToClipboard(card.url)}
               >
                 <IconCopy />
@@ -76,6 +79,7 @@ export function CoreFieldsSection({
                 className="icon-button"
                 type="button"
                 aria-label={t('action.copy')}
+                title={tTip('action.copy')}
                 onClick={() => detailActions.copyToClipboard(card.email)}
               >
                 <IconCopy />
@@ -95,6 +99,7 @@ export function CoreFieldsSection({
                 className="icon-button"
                 type="button"
                 aria-label={t('action.copy')}
+                title={tTip('action.copy')}
                 onClick={() => detailActions.copyToClipboard(card.recoveryEmail)}
               >
                 <IconCopy />
@@ -114,6 +119,7 @@ export function CoreFieldsSection({
                 className="icon-button"
                 type="button"
                 aria-label={t('action.copy')}
+                title={tTip('action.copy')}
                 onClick={() => detailActions.copyToClipboard(card.username)}
               >
                 <IconCopy />
@@ -133,6 +139,7 @@ export function CoreFieldsSection({
                 className="icon-button"
                 type="button"
                 aria-label={t('action.copy')}
+                title={tTip('action.copy')}
                 onClick={() => detailActions.copyToClipboard(card.mobilePhone)}
               >
                 <IconCopy />
@@ -152,6 +159,7 @@ export function CoreFieldsSection({
                 className="icon-button"
                 type="button"
                 aria-label={detailActions.showPassword ? t('action.hide') : t('action.reveal')}
+                title={detailActions.showPassword ? tTip('action.hide') : tTip('action.reveal')}
                 onClick={detailActions.togglePasswordVisibility}
               >
                 {detailActions.showPassword ? <IconPreviewOff /> : <IconPreview />}
@@ -160,11 +168,18 @@ export function CoreFieldsSection({
                 className="icon-button"
                 type="button"
                 aria-label={t('action.copy')}
+                title={tTip('action.copy')}
                 onClick={() => detailActions.copyToClipboard(card.password, { isSecret: true })}
               >
                 <IconCopy />
               </button>
-              <button className="icon-button" type="button" aria-label={t('action.passwordHistory')} onClick={onOpenHistory}>
+              <button
+                className="icon-button"
+                type="button"
+                aria-label={t('action.passwordHistory')}
+                title={tTip('action.passwordHistory')}
+                onClick={onOpenHistory}
+              >
                 <IconHistory />
               </button>
             </div>

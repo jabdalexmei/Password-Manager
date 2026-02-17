@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { IconMoreHorizontal } from '@/shared/icons/lucide/icons';
+import { useTranslation } from '../../../shared/lib/i18n';
 import { DataCards } from '../components/DataCards/DataCards';
 import { BankCards } from '../components/BankCards/BankCards';
 import type { VaultCategory } from '../components/Sidebar/sidebarTypes';
@@ -37,6 +38,7 @@ export function VaultCenterPane({
   tFolders,
   tCommon,
 }: VaultCenterPaneProps) {
+  const { t: tTip } = useTranslation('Tooltips');
   const [isGlobalTrashActionsOpen, setIsGlobalTrashActionsOpen] = useState(false);
 
   const hasVisibleDataCards = dataCardsViewModel.cards.length > 0;
@@ -62,6 +64,7 @@ export function VaultCenterPane({
                   className="btn btn-icon vault-actionbar"
                   type="button"
                   aria-label={tCommon('common.moreActions')}
+                  title={tTip('action.moreActions')}
                   aria-haspopup="menu"
                   aria-expanded={isGlobalTrashActionsOpen}
                   disabled={isGlobalTrashBulkSubmitting || isNavigationEmpty}

@@ -61,6 +61,7 @@ export function Details({
   const { t } = useTranslation('Details');
   const { t: tVault } = useTranslation('Vault');
   const { t: tCommon } = useTranslation('Common');
+  const { t: tTip } = useTranslation('Tooltips');
   const detailActions = useDetails({
     card,
     onDelete,
@@ -342,6 +343,7 @@ export function Details({
                       className="icon-button"
                       type="button"
                       aria-label={t('action.copy')}
+                      title={tTip('action.copy')}
                       onClick={() => detailActions.copyToClipboard(noteText)}
                     >
                       <IconCopy />

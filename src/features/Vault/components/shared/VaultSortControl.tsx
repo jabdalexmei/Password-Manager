@@ -16,6 +16,7 @@ export type VaultSortControlProps = {
 
 export function VaultSortControl({ value, onChange, disabled }: VaultSortControlProps) {
   const { t } = useTranslation('Common');
+  const { t: tTip } = useTranslation('Tooltips');
   const [open, setOpen] = useState(false);
 
   const options = useMemo<SortOption[]>(
@@ -40,6 +41,7 @@ export function VaultSortControl({ value, onChange, disabled }: VaultSortControl
         className="btn btn-icon vault-actionbar"
         type="button"
         aria-label={t('sort.aria.open')}
+        title={tTip('action.sort')}
         aria-haspopup="menu"
         aria-expanded={open}
         disabled={disabled}

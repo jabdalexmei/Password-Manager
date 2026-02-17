@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import ConfirmDialog from '../../../../../../shared/components/ConfirmDialog';
 import { IconPreview, IconPreviewOff } from '@/shared/icons/lucide/icons';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../../../../../../shared/ui/dialog';
+import { useTranslation } from '../../../../../../shared/lib/i18n';
 
 type TranslateFn = (key: string, params?: Record<string, string | number>) => string;
 
@@ -76,6 +77,7 @@ export function ProfileSection({
   tVault,
   tCommon,
 }: ProfileSectionProps) {
+  const { t: tTip } = useTranslation('Tooltips');
   const [isSetPasswordVisible, setIsSetPasswordVisible] = useState(false);
   const [isSetPasswordConfirmVisible, setIsSetPasswordConfirmVisible] = useState(false);
   const [isChangePasswordVisible, setIsChangePasswordVisible] = useState(false);
@@ -200,7 +202,7 @@ export function ProfileSection({
                     className="icon-button input-action-eye"
                     disabled={busy || isSettingPassword || profileHasPassword}
                     aria-label={isSetPasswordVisible ? tCommon('action.hidePassword') : tCommon('action.showPassword')}
-                    title={isSetPasswordVisible ? tCommon('action.hidePassword') : tCommon('action.showPassword')}
+                    title={isSetPasswordVisible ? tTip('action.hidePassword') : tTip('action.showPassword')}
                     onClick={() => setIsSetPasswordVisible((prev) => !prev)}
                   >
                     {isSetPasswordVisible ? <IconPreviewOff /> : <IconPreview />}
@@ -229,7 +231,7 @@ export function ProfileSection({
                     className="icon-button input-action-eye"
                     disabled={busy || isSettingPassword || profileHasPassword}
                     aria-label={isSetPasswordConfirmVisible ? tCommon('action.hidePassword') : tCommon('action.showPassword')}
-                    title={isSetPasswordConfirmVisible ? tCommon('action.hidePassword') : tCommon('action.showPassword')}
+                    title={isSetPasswordConfirmVisible ? tTip('action.hidePassword') : tTip('action.showPassword')}
                     onClick={() => setIsSetPasswordConfirmVisible((prev) => !prev)}
                   >
                     {isSetPasswordConfirmVisible ? <IconPreviewOff /> : <IconPreview />}
@@ -282,7 +284,7 @@ export function ProfileSection({
                     className="icon-button input-action-eye"
                     disabled={busy || isChangingPassword || !profileHasPassword}
                     aria-label={isChangePasswordVisible ? tCommon('action.hidePassword') : tCommon('action.showPassword')}
-                    title={isChangePasswordVisible ? tCommon('action.hidePassword') : tCommon('action.showPassword')}
+                    title={isChangePasswordVisible ? tTip('action.hidePassword') : tTip('action.showPassword')}
                     onClick={() => setIsChangePasswordVisible((prev) => !prev)}
                   >
                     {isChangePasswordVisible ? <IconPreviewOff /> : <IconPreview />}
@@ -311,7 +313,7 @@ export function ProfileSection({
                     className="icon-button input-action-eye"
                     disabled={busy || isChangingPassword || !profileHasPassword}
                     aria-label={isChangePasswordConfirmVisible ? tCommon('action.hidePassword') : tCommon('action.showPassword')}
-                    title={isChangePasswordConfirmVisible ? tCommon('action.hidePassword') : tCommon('action.showPassword')}
+                    title={isChangePasswordConfirmVisible ? tTip('action.hidePassword') : tTip('action.showPassword')}
                     onClick={() => setIsChangePasswordConfirmVisible((prev) => !prev)}
                   >
                     {isChangePasswordConfirmVisible ? <IconPreviewOff /> : <IconPreview />}

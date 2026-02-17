@@ -28,6 +28,7 @@ export const PasswordGeneratorModal: React.FC<PasswordGeneratorModalProps> = ({
 }) => {
   const { t } = useTranslation('DataCards');
   const { t: tCommon } = useTranslation('Common');
+  const { t: tTip } = useTranslation('Tooltips');
 
   if (!isOpen) return null;
 
@@ -95,11 +96,18 @@ export const PasswordGeneratorModal: React.FC<PasswordGeneratorModalProps> = ({
                   className="icon-button icon-button-primary"
                   type="button"
                   aria-label={t('generator.regenerate')}
+                  title={tTip('generator.regenerate')}
                   onClick={onRegenerate}
                 >
                   <IconRegenerate />
                 </button>
-                <button className="icon-button" type="button" aria-label={t('action.copy')} onClick={() => void onCopy()}>
+                <button
+                  className="icon-button"
+                  type="button"
+                  aria-label={t('action.copy')}
+                  title={tTip('action.copy')}
+                  onClick={() => void onCopy()}
+                >
                   <IconCopy />
                 </button>
               </div>

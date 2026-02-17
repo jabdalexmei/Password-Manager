@@ -34,6 +34,7 @@ export function DataCardsHeader({
   t,
 }: DataCardsHeaderProps) {
   const { t: tCommon } = useTranslation('Common');
+  const { t: tTip } = useTranslation('Tooltips');
 
   return (
     <div className="datacards-header">
@@ -48,6 +49,7 @@ export function DataCardsHeader({
               className="btn btn-icon vault-actionbar"
               type="button"
               aria-label={tCommon('common.moreActions')}
+              title={tTip('action.moreActions')}
               aria-haspopup="menu"
               aria-expanded={isTrashActionsOpen}
               onClick={() => setIsTrashActionsOpen((prev) => !prev)}

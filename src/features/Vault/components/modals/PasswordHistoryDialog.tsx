@@ -28,6 +28,7 @@ const PasswordHistoryDialog: React.FC<PasswordHistoryDialogProps> = ({
 }) => {
   const { t } = useTranslation('Details');
   const { t: tCommon } = useTranslation('Common');
+  const { t: tTip } = useTranslation('Tooltips');
   const { show: showToast } = useToaster();
   const [items, setItems] = useState<PasswordHistoryEntry[]>([]);
   const [showPasswords, setShowPasswords] = useState(false);
@@ -167,6 +168,7 @@ const PasswordHistoryDialog: React.FC<PasswordHistoryDialogProps> = ({
                 className="icon-button"
                 type="button"
                 aria-label={t('action.copy')}
+                title={tTip('action.copy')}
                 onClick={() => void copyPassword(entry.passwordValue)}
               >
                 <IconCopy />

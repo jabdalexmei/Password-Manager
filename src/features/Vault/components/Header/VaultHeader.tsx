@@ -24,6 +24,7 @@ export function VaultHeader({
   const { t: tVault } = useTranslation('Vault');
   const { t: tTip } = useTranslation('Tooltips');
   const lockLabel = isPasswordless ? tVault('logout') : tVault('lock');
+  const lockTitle = isPasswordless ? tTip('vault.logout') : tTip('vault.lock');
 
   return (
     <header className="vault-appbar">
@@ -55,7 +56,7 @@ export function VaultHeader({
           className="vault-action-button"
           type="button"
           aria-label={lockLabel}
-          title={lockLabel}
+          title={lockTitle}
           onClick={onLock}
         >
           <IconLock />

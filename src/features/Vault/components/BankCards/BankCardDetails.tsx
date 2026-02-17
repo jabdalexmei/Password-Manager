@@ -60,6 +60,7 @@ export function BankCardDetails({
   const { t } = useTranslation('BankCards');
   const { t: tVault } = useTranslation('Vault');
   const { t: tCommon } = useTranslation('Common');
+  const { t: tTip } = useTranslation('Tooltips');
   const detailActions = useBankCardDetails({
     card,
     onDelete,
@@ -290,6 +291,7 @@ export function BankCardDetails({
                     className="icon-button"
                     type="button"
                     aria-label={t('action.copy')}
+                    title={tTip('action.copy')}
                     onClick={() => detailActions.copyToClipboard(card.bankName)}
                   >
                     <IconCopy />
@@ -315,6 +317,7 @@ export function BankCardDetails({
                     className="icon-button"
                     type="button"
                     aria-label={t(`action.${showHolder ? 'hide' : 'reveal'}`)}
+                    title={showHolder ? tTip('action.hide') : tTip('action.reveal')}
                     onClick={detailActions.toggleHolderVisibility}
                   >
                     {showHolder ? <IconPreviewOff /> : <IconPreview />}
@@ -323,6 +326,7 @@ export function BankCardDetails({
                     className="icon-button"
                     type="button"
                     aria-label={t('action.copy')}
+                    title={tTip('action.copy')}
                     onClick={() => detailActions.copyToClipboard(card.holder, { isSecret: true })}
                   >
                     <IconCopy />
@@ -348,6 +352,7 @@ export function BankCardDetails({
                     className="icon-button"
                     type="button"
                     aria-label={t(`action.${showNumber ? 'hide' : 'reveal'}`)}
+                    title={showNumber ? tTip('action.hide') : tTip('action.reveal')}
                     onClick={detailActions.toggleNumberVisibility}
                   >
                     {showNumber ? <IconPreviewOff /> : <IconPreview />}
@@ -356,6 +361,7 @@ export function BankCardDetails({
                     className="icon-button"
                     type="button"
                     aria-label={t('action.copy')}
+                    title={tTip('action.copy')}
                     onClick={() => detailActions.copyToClipboard(card.number, { isSecret: true })}
                   >
                     <IconCopy />
@@ -384,6 +390,7 @@ export function BankCardDetails({
                     className="icon-button"
                     type="button"
                     aria-label={t(`action.${showCvc ? 'hide' : 'reveal'}`)}
+                    title={showCvc ? tTip('action.hide') : tTip('action.reveal')}
                     onClick={detailActions.toggleCvcVisibility}
                   >
                     {showCvc ? <IconPreviewOff /> : <IconPreview />}
@@ -392,6 +399,7 @@ export function BankCardDetails({
                     className="icon-button"
                     type="button"
                     aria-label={t('action.copy')}
+                    title={tTip('action.copy')}
                     onClick={() => detailActions.copyToClipboard(card.cvc, { isSecret: true })}
                   >
                     <IconCopy />
@@ -421,6 +429,7 @@ export function BankCardDetails({
                       className="icon-button"
                       type="button"
                       aria-label={t('action.copy')}
+                      title={tTip('action.copy')}
                       onClick={() => detailActions.copyToClipboard(noteText)}
                     >
                       <IconCopy />

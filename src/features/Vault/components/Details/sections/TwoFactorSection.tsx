@@ -1,5 +1,6 @@
 import React from 'react';
 import { IconCopy } from '@/shared/icons/lucide/icons';
+import { useTranslation } from '../../../../../shared/lib/i18n';
 import type { UseDetailsResult } from '../useDetails';
 
 type TranslateFn = (key: string, params?: Record<string, string | number>) => string;
@@ -12,6 +13,7 @@ type TwoFactorSectionProps = {
 };
 
 export function TwoFactorSection({ totpUri, totpData, detailActions, t }: TwoFactorSectionProps) {
+  const { t: tTip } = useTranslation('Tooltips');
   if (!totpUri) return null;
 
   return (
@@ -37,6 +39,7 @@ export function TwoFactorSection({ totpUri, totpData, detailActions, t }: TwoFac
               className="icon-button"
               type="button"
               aria-label={t('action.copy')}
+              title={tTip('action.copy')}
               onClick={() => detailActions.copyToClipboard(totpData.token, { isSecret: true })}
             >
               <IconCopy />

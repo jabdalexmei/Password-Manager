@@ -88,6 +88,7 @@ export function FoldersTreeSection({
 }: FoldersTreeSectionProps) {
   const { t } = useTranslation('Folders');
   const { t: tCommon } = useTranslation('Common');
+  const { t: tTip } = useTranslation('Tooltips');
   const nameInputRef = useRef<HTMLInputElement | null>(null);
   const renameInputRef = useRef<HTMLInputElement | null>(null);
   const [renameTargetId, setRenameTargetId] = useState<string | null>(null);
@@ -344,6 +345,7 @@ export function FoldersTreeSection({
               type="button"
               className="vault-folder-toggle"
               aria-label={isCollapsed ? t('action.expandFolder') : t('action.collapseFolder')}
+              title={isCollapsed ? tTip('folder.expand') : tTip('folder.collapse')}
               onClick={() => toggleFolderCollapsed(folder.id)}
             >
               <span aria-hidden="true">{isCollapsed ? '>' : 'v'}</span>

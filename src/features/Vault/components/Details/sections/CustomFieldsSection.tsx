@@ -1,5 +1,6 @@
 import React from 'react';
 import { IconCopy, IconPreview, IconPreviewOff } from '@/shared/icons/lucide/icons';
+import { useTranslation } from '../../../../../shared/lib/i18n';
 import type { CustomField } from '../../../types/ui';
 import type { UseDetailsResult } from '../useDetails';
 import { toCustomPreviewField, type DataCardCardPreviewField } from '../lib/previewTokens';
@@ -25,6 +26,7 @@ export function CustomFieldsSection({
   onOpenPreviewMenu,
   t,
 }: CustomFieldsSectionProps) {
+  const { t: tTip } = useTranslation('Tooltips');
   return (
     <>
       {(customFields ?? [])
@@ -50,6 +52,7 @@ export function CustomFieldsSection({
                     className="icon-button"
                     type="button"
                     aria-label={t('action.copy')}
+                    title={tTip('action.copy')}
                     onClick={() => detailActions.copyToClipboard(field.value, { isSecret })}
                   >
                     <IconCopy />
@@ -60,6 +63,7 @@ export function CustomFieldsSection({
                       className="icon-button"
                       type="button"
                       aria-label={isRevealed ? t('action.hide') : t('action.reveal')}
+                      title={isRevealed ? tTip('action.hide') : tTip('action.reveal')}
                       onClick={() => onToggleCustomFieldVisibility(fieldId)}
                     >
                       {isRevealed ? <IconPreviewOff /> : <IconPreview />}
