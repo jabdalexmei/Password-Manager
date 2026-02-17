@@ -122,7 +122,7 @@ export function VaultCenterPane({
         <DataCards
           profileId={profileId}
           viewModel={dataCardsViewModel}
-          sectionTitle={tFolders('category.dataCards')}
+          sectionTitle={tFolders('category.dataCard')}
           activeFolderId={selectedFolderId}
           clipboardAutoClearEnabled={settings?.clipboard_auto_clear_enabled}
           clipboardClearTimeoutSeconds={settings?.clipboard_clear_timeout_seconds}
@@ -134,7 +134,7 @@ export function VaultCenterPane({
         <BankCards
           profileId={profileId}
           viewModel={bankCardsViewModel}
-          sectionTitle={tFolders('category.bankCards')}
+          sectionTitle={tFolders('category.bankCard')}
           folders={folders}
           fillHeight={false}
           showTrashActions={!isGlobalTrashMode}
@@ -149,7 +149,7 @@ export function VaultCenterPane({
       <DataCards
         profileId={profileId}
         viewModel={dataCardsViewModel}
-        sectionTitle={tFolders('category.dataCards')}
+        sectionTitle={tFolders('category.dataCard')}
         activeFolderId={selectedFolderId}
         clipboardAutoClearEnabled={settings?.clipboard_auto_clear_enabled}
         clipboardClearTimeoutSeconds={settings?.clipboard_clear_timeout_seconds}
@@ -161,7 +161,7 @@ export function VaultCenterPane({
     <BankCards
       profileId={profileId}
       viewModel={bankCardsViewModel}
-      sectionTitle={tFolders('category.bankCards')}
+      sectionTitle={tFolders('category.bankCard')}
       folders={folders}
     />
   );

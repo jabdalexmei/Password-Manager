@@ -30,7 +30,7 @@ export function CategorySection({
         {categoryCounts && (
           <li className={selectedCategory === 'data_cards' ? 'active' : ''}>
             <button className="vault-folder" type="button" onClick={() => onSelectCategory('data_cards')}>
-              <span className="folder-name">{t('category.dataCards')}</span>
+              <span className="folder-name">{t('category.dataCard')}</span>
               <span className="folder-count">{categoryCounts.dataCards}</span>
             </button>
           </li>
@@ -45,7 +45,7 @@ export function CategorySection({
               setOpenMenu({ type: 'category', x: event.clientX, y: event.clientY });
             }}
           >
-            <span className="folder-name">{t('category.bankCards')}</span>
+            <span className="folder-name">{t('category.bankCard')}</span>
             <span className="folder-count">{categoryCounts?.bankCards ?? counts.all}</span>
           </button>
         </li>

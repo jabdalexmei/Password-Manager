@@ -91,7 +91,7 @@ export function VaultSidebarPane({
                       onOpenDataCardCreate();
                     }}
                   >
-                    {tFolders('category.dataCards')}
+                    {tFolders('category.dataCard')}
                   </button>
                   <button
                     className="vault-actionmenu-item"
@@ -101,7 +101,7 @@ export function VaultSidebarPane({
                       onOpenBankCardCreate();
                     }}
                   >
-                    {tFolders('category.bankCards')}
+                    {tFolders('category.bankCard')}
                   </button>
                 </div>
               </>
