@@ -2,7 +2,7 @@
 import { getSettings } from '../../api/vaultApi';
 import { clipboardClearAll, lockVault } from '../../../../shared/lib/tauri';
 import { useToaster } from '../../../../shared/components/Toaster';
-import { useTranslation } from '../../../../shared/lib/i18n';
+import { useI18n, useTranslation } from '../../../../shared/lib/i18n';
 import { sortCards } from '../../types/sort';
 import type { DataCardSummary } from '../../types/ui';
 import { mapErrorMessage } from './lib/errors';
@@ -13,11 +13,13 @@ import { useVaultSettings } from './useVaultSettings';
 import { useVaultFolders } from './useVaultFolders';
 import { useVaultCards } from './useVaultCards';
 import { DEFAULT_ACTIVE_VAULT_ID, type SelectedNav, type VaultError, type VaultFilters } from './types';
+import { createVaultDateTimeFormatter } from '../../utils/dateTime';
 
 export type { SelectedNav, VaultError, VaultFilters };
 
 export function useVault(profileId: string, onLocked: () => void) {
   const { show: showToast } = useToaster();
+  const { language } = useI18n();
   const { t: tCommon } = useTranslation('Common');
   const { t: tVault } = useTranslation('Vault');
 
@@ -57,8 +59,8 @@ export function useVault(profileId: string, onLocked: () => void) {
   const selectedFolderId = typeof selectedNav === 'object' ? selectedNav.folderId : null;
 
   const dtf = useMemo(
-    () => new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'short' }),
-    []
+    () => createVaultDateTimeFormatter(settings?.date_time_format ?? 'auto', language),
+    [language, settings?.date_time_format]
   );
 
   const sortCardsWithSettings = useCallback(

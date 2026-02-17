@@ -95,6 +95,15 @@ fn normalize_sort_direction(raw: &str) -> Option<&'static str> {
     }
 }
 
+fn normalize_date_time_format(raw: &str) -> Option<&'static str> {
+    match raw.trim().to_ascii_lowercase().as_str() {
+        "auto" => Some("auto"),
+        "ddmmyyyy_24h" => Some("ddmmyyyy_24h"),
+        "mmddyyyy_12h_ampm" => Some("mmddyyyy_12h_ampm"),
+        _ => None,
+    }
+}
+
 fn validate_settings(settings: &UserSettings) -> Result<()> {
     let in_range = |value: i64, min: i64, max: i64| (min..=max).contains(&value);
 
@@ -121,6 +130,7 @@ fn validate_settings(settings: &UserSettings) -> Result<()> {
     let valid_sort_field = normalize_sort_field(&settings.default_sort_field).is_some();
     let valid_sort_direction = normalize_sort_direction(&settings.default_sort_direction).is_some();
     let valid_active_vault_id = !settings.active_vault_id.trim().is_empty();
+    let valid_date_time_format = normalize_date_time_format(&settings.date_time_format).is_some();
 
     if valid_values
         && valid_trash_retention_days
@@ -129,6 +139,7 @@ fn validate_settings(settings: &UserSettings) -> Result<()> {
         && valid_sort_field
         && valid_sort_direction
         && valid_active_vault_id
+        && valid_date_time_format
     {
         Ok(())
     } else {
@@ -151,6 +162,13 @@ fn repair_settings(mut settings: UserSettings) -> (UserSettings, bool) {
         .unwrap_or(defaults.default_sort_direction.as_str());
     if settings.default_sort_direction != normalized_sort_direction {
         settings.default_sort_direction = normalized_sort_direction.to_string();
+        changed = true;
+    }
+
+    let normalized_date_time_format = normalize_date_time_format(&settings.date_time_format)
+        .unwrap_or(defaults.date_time_format.as_str());
+    if settings.date_time_format != normalized_date_time_format {
+        settings.date_time_format = normalized_date_time_format.to_string();
         changed = true;
     }
 
@@ -218,6 +236,9 @@ pub fn update_settings(
         normalize_sort_direction(&new_settings.default_sort_direction)
             .unwrap_or(defaults.default_sort_direction.as_str())
             .to_string();
+    new_settings.date_time_format = normalize_date_time_format(&new_settings.date_time_format)
+        .unwrap_or(defaults.date_time_format.as_str())
+        .to_string();
 
     validate_settings(&new_settings)?;
     let path = user_settings_path(sp, profile_id)?;
@@ -339,5 +360,27 @@ mod tests {
             repaired.default_sort_direction,
             settings.default_sort_direction
         );
+    }
+
+    #[test]
+    fn repair_settings_fixes_invalid_date_time_format_to_default() {
+        let mut settings = UserSettings::default();
+        settings.date_time_format = "INVALID".to_string();
+
+        let (repaired, changed) = repair_settings(settings);
+
+        assert!(changed);
+        assert_eq!(repaired.date_time_format, "auto");
+    }
+
+    #[test]
+    fn repair_settings_canonicalizes_date_time_format() {
+        let mut settings = UserSettings::default();
+        settings.date_time_format = "  MMDDYYYY_12H_AMPM ".to_string();
+
+        let (repaired, changed) = repair_settings(settings);
+
+        assert!(changed);
+        assert_eq!(repaired.date_time_format, "mmddyyyy_12h_ampm");
     }
 }

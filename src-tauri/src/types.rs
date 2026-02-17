@@ -353,6 +353,8 @@ pub struct UserSettings {
     pub multiply_vaults_enabled: bool,
     #[serde(default = "default_active_vault_id")]
     pub active_vault_id: String,
+    #[serde(default = "default_date_time_format")]
+    pub date_time_format: String,
 }
 
 impl Default for UserSettings {
@@ -376,6 +378,7 @@ impl Default for UserSettings {
             mask_password_by_default: true,
             multiply_vaults_enabled: default_multiply_vaults_enabled(),
             active_vault_id: default_active_vault_id(),
+            date_time_format: default_date_time_format(),
         }
     }
 }
@@ -414,6 +417,10 @@ fn default_trash_auto_cleanup_enabled() -> bool {
 
 fn default_active_vault_id() -> String {
     "default".to_string()
+}
+
+fn default_date_time_format() -> String {
+    "auto".to_string()
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

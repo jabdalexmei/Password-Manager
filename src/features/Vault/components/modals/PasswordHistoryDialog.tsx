@@ -1,17 +1,19 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
-import { useTranslation } from '../../../../shared/lib/i18n';
+import { useI18n, useTranslation } from '../../../../shared/lib/i18n';
 import { useToaster } from '../../../../shared/components/Toaster';
 import { clearPasswordHistory, deletePasswordHistoryEntry, getPasswordHistory } from '../../api/vaultApi';
 import { PasswordHistoryEntry } from '../../types/ui';
 import { IconCopy, IconPreview, IconPreviewOff } from '@/shared/icons/lucide/icons';
 import { clipboardClearAll } from '../../../../shared/lib/tauri';
 import { formatVaultDateTime } from '../../utils/dateTime';
+import type { BackendDateTimeFormat } from '../../types/backend';
 
 type PasswordHistoryDialogProps = {
   isOpen: boolean;
   datacardId: string;
   onClose: () => void;
+  dateTimeFormat?: BackendDateTimeFormat;
   clipboardAutoClearEnabled?: boolean;
   clipboardClearTimeoutSeconds?: number;
 };
@@ -22,12 +24,15 @@ const PasswordHistoryDialog: React.FC<PasswordHistoryDialogProps> = ({
   isOpen,
   datacardId,
   onClose,
+  dateTimeFormat,
   clipboardAutoClearEnabled,
   clipboardClearTimeoutSeconds,
 }) => {
+  const { language } = useI18n();
   const { t } = useTranslation('Details');
   const { t: tCommon } = useTranslation('Common');
   const { t: tTip } = useTranslation('Tooltips');
+  const effectiveDateTimeFormat = dateTimeFormat ?? 'auto';
   const { show: showToast } = useToaster();
   const [items, setItems] = useState<PasswordHistoryEntry[]>([]);
   const [showPasswords, setShowPasswords] = useState(false);
@@ -160,7 +165,9 @@ const PasswordHistoryDialog: React.FC<PasswordHistoryDialogProps> = ({
               setContextMenu({ x: event.clientX, y: event.clientY, entryId: entry.id });
             }}
           >
-            <div className="password-history-meta">{formatVaultDateTime(entry.createdAt)}</div>
+            <div className="password-history-meta">
+              {formatVaultDateTime(entry.createdAt, effectiveDateTimeFormat, language)}
+            </div>
             <div className="password-history-value">{showPasswords ? entry.passwordValue : MASKED_PASSWORD}</div>
             <div className="password-history-actions">
               <button
@@ -177,7 +184,7 @@ const PasswordHistoryDialog: React.FC<PasswordHistoryDialogProps> = ({
         ))}
       </div>
     );
-  }, [copyPassword, items, showPasswords, t]);
+  }, [copyPassword, effectiveDateTimeFormat, items, language, showPasswords, t]);
 
   if (!isOpen) return null;
 

@@ -1,11 +1,15 @@
-﻿import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Language } from '../../../../../../shared/lib/i18n';
+import { formatVaultDateTime } from '../../../../utils/dateTime';
+import type { BackendDateTimeFormat } from '../../../../types/backend';
 
 type TranslateFn = (key: string, params?: Record<string, string | number>) => string;
 
 type GeneralSectionProps = {
   language: Language;
+  dateTimeFormat: BackendDateTimeFormat;
   onLanguageChange: (language: Language) => void;
+  onDateTimeFormatChange: (format: BackendDateTimeFormat) => void;
   tVault: TranslateFn;
   disabled?: boolean;
 };
@@ -15,54 +19,111 @@ const LANGUAGE_OPTIONS: Array<{ value: Language; labelKey: string }> = [
   { value: 'ru', labelKey: 'settingsModal.general.language.option.ru' },
 ];
 
-export function GeneralSection({ language, onLanguageChange, tVault, disabled = false }: GeneralSectionProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement | null>(null);
-  const triggerRef = useRef<HTMLButtonElement | null>(null);
-  const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const listboxId = useId();
+const DATE_TIME_FORMAT_OPTIONS: Array<{ value: BackendDateTimeFormat; labelKey: string }> = [
+  { value: 'auto', labelKey: 'settingsModal.general.dateTimeFormat.option.auto' },
+  { value: 'ddmmyyyy_24h', labelKey: 'settingsModal.general.dateTimeFormat.option.ddmmyyyy_24h' },
+  { value: 'mmddyyyy_12h_ampm', labelKey: 'settingsModal.general.dateTimeFormat.option.mmddyyyy_12h_ampm' },
+];
 
-  const selectedIndex = useMemo(
+export function GeneralSection({
+  language,
+  dateTimeFormat,
+  onLanguageChange,
+  onDateTimeFormatChange,
+  tVault,
+  disabled = false,
+}: GeneralSectionProps) {
+  const [isLanguageOpen, setIsLanguageOpen] = useState(false);
+  const [isDateTimeOpen, setIsDateTimeOpen] = useState(false);
+
+  const languageDropdownRef = useRef<HTMLDivElement | null>(null);
+  const languageTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const languageOptionRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  const dateTimeDropdownRef = useRef<HTMLDivElement | null>(null);
+  const dateTimeTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const dateTimeOptionRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  const languageListboxId = useId();
+  const dateTimeListboxId = useId();
+
+  const selectedLanguageIndex = useMemo(
     () => LANGUAGE_OPTIONS.findIndex((option) => option.value === language),
     [language],
   );
 
-  const selectedLabel = useMemo(() => {
-    const option = LANGUAGE_OPTIONS[selectedIndex] ?? LANGUAGE_OPTIONS[0];
-    return tVault(option.labelKey);
-  }, [selectedIndex, tVault]);
+  const selectedDateTimeFormatIndex = useMemo(
+    () => DATE_TIME_FORMAT_OPTIONS.findIndex((option) => option.value === dateTimeFormat),
+    [dateTimeFormat],
+  );
 
-  const focusOption = useCallback((index: number) => {
+  const selectedLanguageLabel = useMemo(() => {
+    const option = LANGUAGE_OPTIONS[selectedLanguageIndex] ?? LANGUAGE_OPTIONS[0];
+    return tVault(option.labelKey);
+  }, [selectedLanguageIndex, tVault]);
+
+  const selectedDateTimeFormatLabel = useMemo(() => {
+    const option = DATE_TIME_FORMAT_OPTIONS[selectedDateTimeFormatIndex] ?? DATE_TIME_FORMAT_OPTIONS[0];
+    return tVault(option.labelKey);
+  }, [selectedDateTimeFormatIndex, tVault]);
+
+  const previewValue = useMemo(
+    () => formatVaultDateTime(new Date(), dateTimeFormat, language),
+    [dateTimeFormat, language],
+  );
+
+  const focusLanguageOption = useCallback((index: number) => {
     if (LANGUAGE_OPTIONS.length === 0) return;
     const normalizedIndex = ((index % LANGUAGE_OPTIONS.length) + LANGUAGE_OPTIONS.length) % LANGUAGE_OPTIONS.length;
-    optionRefs.current[normalizedIndex]?.focus();
+    languageOptionRefs.current[normalizedIndex]?.focus();
   }, []);
 
-  const closeMenu = useCallback(() => {
-    setIsOpen(false);
+  const focusDateTimeOption = useCallback((index: number) => {
+    if (DATE_TIME_FORMAT_OPTIONS.length === 0) return;
+    const normalizedIndex =
+      ((index % DATE_TIME_FORMAT_OPTIONS.length) + DATE_TIME_FORMAT_OPTIONS.length) % DATE_TIME_FORMAT_OPTIONS.length;
+    dateTimeOptionRefs.current[normalizedIndex]?.focus();
   }, []);
 
-  const closeMenuAndFocusTrigger = useCallback(() => {
-    setIsOpen(false);
+  const closeLanguageMenu = useCallback(() => {
+    setIsLanguageOpen(false);
+  }, []);
+
+  const closeDateTimeMenu = useCallback(() => {
+    setIsDateTimeOpen(false);
+  }, []);
+
+  const closeLanguageMenuAndFocusTrigger = useCallback(() => {
+    setIsLanguageOpen(false);
     requestAnimationFrame(() => {
-      triggerRef.current?.focus();
+      languageTriggerRef.current?.focus();
     });
   }, []);
 
-  const openMenu = useCallback(() => {
-    if (disabled) return;
-    setIsOpen(true);
-  }, [disabled]);
+  const closeDateTimeMenuAndFocusTrigger = useCallback(() => {
+    setIsDateTimeOpen(false);
+    requestAnimationFrame(() => {
+      dateTimeTriggerRef.current?.focus();
+    });
+  }, []);
 
-  const handleSelect = useCallback(
+  const handleLanguageSelect = useCallback(
     (nextLanguage: Language) => {
       onLanguageChange(nextLanguage);
-      closeMenuAndFocusTrigger();
+      closeLanguageMenuAndFocusTrigger();
     },
-    [closeMenuAndFocusTrigger, onLanguageChange],
+    [closeLanguageMenuAndFocusTrigger, onLanguageChange],
   );
 
-  const handleTriggerKeyDown = useCallback(
+  const handleDateTimeFormatSelect = useCallback(
+    (nextFormat: BackendDateTimeFormat) => {
+      onDateTimeFormatChange(nextFormat);
+      closeDateTimeMenuAndFocusTrigger();
+    },
+    [closeDateTimeMenuAndFocusTrigger, onDateTimeFormatChange],
+  );
+
+  const handleLanguageTriggerKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLButtonElement>) => {
       if (disabled) return;
 
@@ -72,7 +133,8 @@ export function GeneralSection({ language, onLanguageChange, tVault, disabled = 
         case 'Enter':
         case ' ': {
           event.preventDefault();
-          setIsOpen(true);
+          setIsDateTimeOpen(false);
+          setIsLanguageOpen(true);
           break;
         }
         default:
@@ -82,55 +144,119 @@ export function GeneralSection({ language, onLanguageChange, tVault, disabled = 
     [disabled],
   );
 
-  const handleMenuKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLDivElement>) => {
-      const currentIndex = optionRefs.current.findIndex((option) => option === document.activeElement);
+  const handleDateTimeTriggerKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLButtonElement>) => {
+      if (disabled) return;
 
       switch (event.key) {
-        case 'Escape': {
+        case 'ArrowDown':
+        case 'ArrowUp':
+        case 'Enter':
+        case ' ': {
           event.preventDefault();
-          closeMenuAndFocusTrigger();
-          break;
-        }
-        case 'ArrowDown': {
-          event.preventDefault();
-          focusOption(currentIndex < 0 ? 0 : currentIndex + 1);
-          break;
-        }
-        case 'ArrowUp': {
-          event.preventDefault();
-          focusOption(currentIndex < 0 ? LANGUAGE_OPTIONS.length - 1 : currentIndex - 1);
-          break;
-        }
-        case 'Home': {
-          event.preventDefault();
-          focusOption(0);
-          break;
-        }
-        case 'End': {
-          event.preventDefault();
-          focusOption(LANGUAGE_OPTIONS.length - 1);
-          break;
-        }
-        case 'Tab': {
-          closeMenu();
+          setIsLanguageOpen(false);
+          setIsDateTimeOpen(true);
           break;
         }
         default:
           break;
       }
     },
-    [closeMenu, closeMenuAndFocusTrigger, focusOption],
+    [disabled],
+  );
+
+  const handleLanguageMenuKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      const currentIndex = languageOptionRefs.current.findIndex((option) => option === document.activeElement);
+
+      switch (event.key) {
+        case 'Escape': {
+          event.preventDefault();
+          closeLanguageMenuAndFocusTrigger();
+          break;
+        }
+        case 'ArrowDown': {
+          event.preventDefault();
+          focusLanguageOption(currentIndex < 0 ? 0 : currentIndex + 1);
+          break;
+        }
+        case 'ArrowUp': {
+          event.preventDefault();
+          focusLanguageOption(currentIndex < 0 ? LANGUAGE_OPTIONS.length - 1 : currentIndex - 1);
+          break;
+        }
+        case 'Home': {
+          event.preventDefault();
+          focusLanguageOption(0);
+          break;
+        }
+        case 'End': {
+          event.preventDefault();
+          focusLanguageOption(LANGUAGE_OPTIONS.length - 1);
+          break;
+        }
+        case 'Tab': {
+          closeLanguageMenu();
+          break;
+        }
+        default:
+          break;
+      }
+    },
+    [closeLanguageMenu, closeLanguageMenuAndFocusTrigger, focusLanguageOption],
+  );
+
+  const handleDateTimeMenuKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      const currentIndex = dateTimeOptionRefs.current.findIndex((option) => option === document.activeElement);
+
+      switch (event.key) {
+        case 'Escape': {
+          event.preventDefault();
+          closeDateTimeMenuAndFocusTrigger();
+          break;
+        }
+        case 'ArrowDown': {
+          event.preventDefault();
+          focusDateTimeOption(currentIndex < 0 ? 0 : currentIndex + 1);
+          break;
+        }
+        case 'ArrowUp': {
+          event.preventDefault();
+          focusDateTimeOption(currentIndex < 0 ? DATE_TIME_FORMAT_OPTIONS.length - 1 : currentIndex - 1);
+          break;
+        }
+        case 'Home': {
+          event.preventDefault();
+          focusDateTimeOption(0);
+          break;
+        }
+        case 'End': {
+          event.preventDefault();
+          focusDateTimeOption(DATE_TIME_FORMAT_OPTIONS.length - 1);
+          break;
+        }
+        case 'Tab': {
+          closeDateTimeMenu();
+          break;
+        }
+        default:
+          break;
+      }
+    },
+    [closeDateTimeMenu, closeDateTimeMenuAndFocusTrigger, focusDateTimeOption],
   );
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isLanguageOpen && !isDateTimeOpen) return;
 
     const onPointerDown = (event: MouseEvent) => {
       const target = event.target as Node | null;
       if (!target) return;
-      if (!dropdownRef.current?.contains(target)) {
-        setIsOpen(false);
+
+      if (!languageDropdownRef.current?.contains(target) && !dateTimeDropdownRef.current?.contains(target)) {
+        setIsLanguageOpen(false);
+        setIsDateTimeOpen(false);
       }
     };
 
@@ -138,16 +264,25 @@ export function GeneralSection({ language, onLanguageChange, tVault, disabled = 
     return () => {
       document.removeEventListener('mousedown', onPointerDown);
     };
-  }, [isOpen]);
+  }, [isDateTimeOpen, isLanguageOpen]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isLanguageOpen) return;
 
-    const indexToFocus = selectedIndex >= 0 ? selectedIndex : 0;
+    const indexToFocus = selectedLanguageIndex >= 0 ? selectedLanguageIndex : 0;
     requestAnimationFrame(() => {
-      focusOption(indexToFocus);
+      focusLanguageOption(indexToFocus);
     });
-  }, [focusOption, isOpen, selectedIndex]);
+  }, [focusLanguageOption, isLanguageOpen, selectedLanguageIndex]);
+
+  useEffect(() => {
+    if (!isDateTimeOpen) return;
+
+    const indexToFocus = selectedDateTimeFormatIndex >= 0 ? selectedDateTimeFormatIndex : 0;
+    requestAnimationFrame(() => {
+      focusDateTimeOption(indexToFocus);
+    });
+  }, [focusDateTimeOption, isDateTimeOpen, selectedDateTimeFormatIndex]);
 
   return (
     <>
@@ -165,37 +300,38 @@ export function GeneralSection({ language, onLanguageChange, tVault, disabled = 
           </div>
 
           <div className="settings-toggle-row__control">
-            <div ref={dropdownRef} className="settings-language-dropdown">
+            <div ref={languageDropdownRef} className="settings-language-dropdown">
               <button
-                ref={triggerRef}
+                ref={languageTriggerRef}
                 id="language-select-trigger"
                 type="button"
                 className="settings-language-dropdown__trigger"
                 aria-labelledby="language-label language-select-trigger"
                 aria-haspopup="listbox"
-                aria-controls={listboxId}
-                aria-expanded={isOpen}
-                data-open={isOpen ? 'true' : 'false'}
+                aria-controls={languageListboxId}
+                aria-expanded={isLanguageOpen}
+                data-open={isLanguageOpen ? 'true' : 'false'}
                 disabled={disabled}
                 onClick={() => {
                   if (disabled) return;
-                  setIsOpen((value) => !value);
+                  setIsDateTimeOpen(false);
+                  setIsLanguageOpen((value) => !value);
                 }}
-                onKeyDown={handleTriggerKeyDown}
+                onKeyDown={handleLanguageTriggerKeyDown}
               >
-                <span className="settings-language-dropdown__value">{selectedLabel}</span>
+                <span className="settings-language-dropdown__value">{selectedLanguageLabel}</span>
                 <span className="settings-language-dropdown__chevron" aria-hidden="true">
                   ▾
                 </span>
               </button>
 
-              {isOpen && (
+              {isLanguageOpen && (
                 <div
-                  id={listboxId}
+                  id={languageListboxId}
                   role="listbox"
                   aria-labelledby="language-label"
                   className="settings-language-dropdown__menu"
-                  onKeyDown={handleMenuKeyDown}
+                  onKeyDown={handleLanguageMenuKeyDown}
                 >
                   {LANGUAGE_OPTIONS.map((option, index) => {
                     const isSelected = option.value === language;
@@ -203,15 +339,86 @@ export function GeneralSection({ language, onLanguageChange, tVault, disabled = 
                       <button
                         key={option.value}
                         ref={(element) => {
-                          optionRefs.current[index] = element;
+                          languageOptionRefs.current[index] = element;
                         }}
-                        id={`${listboxId}-${option.value}`}
+                        id={`${languageListboxId}-${option.value}`}
                         type="button"
                         role="option"
                         aria-selected={isSelected}
                         className="settings-language-dropdown__item"
                         data-selected={isSelected ? 'true' : 'false'}
-                        onClick={() => handleSelect(option.value)}
+                        onClick={() => handleLanguageSelect(option.value)}
+                      >
+                        {tVault(option.labelKey)}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="form-field settings-toggle-row settings-date-time-row">
+          <div>
+            <div className="form-label settings-subheader" id="date-time-format-label">
+              {tVault('settingsModal.general.dateTimeFormat.title')}
+            </div>
+            <div className="form-label">{tVault('settingsModal.general.dateTimeFormat.description')}</div>
+            <div className="settings-date-time-preview">
+              {tVault('settingsModal.general.dateTimeFormat.preview', { value: previewValue })}
+            </div>
+          </div>
+
+          <div className="settings-toggle-row__control">
+            <div ref={dateTimeDropdownRef} className="settings-language-dropdown settings-date-time-dropdown">
+              <button
+                ref={dateTimeTriggerRef}
+                id="date-time-format-select-trigger"
+                type="button"
+                className="settings-language-dropdown__trigger"
+                aria-labelledby="date-time-format-label date-time-format-select-trigger"
+                aria-haspopup="listbox"
+                aria-controls={dateTimeListboxId}
+                aria-expanded={isDateTimeOpen}
+                data-open={isDateTimeOpen ? 'true' : 'false'}
+                disabled={disabled}
+                onClick={() => {
+                  if (disabled) return;
+                  setIsLanguageOpen(false);
+                  setIsDateTimeOpen((value) => !value);
+                }}
+                onKeyDown={handleDateTimeTriggerKeyDown}
+              >
+                <span className="settings-language-dropdown__value">{selectedDateTimeFormatLabel}</span>
+                <span className="settings-language-dropdown__chevron" aria-hidden="true">
+                  ▾
+                </span>
+              </button>
+
+              {isDateTimeOpen && (
+                <div
+                  id={dateTimeListboxId}
+                  role="listbox"
+                  aria-labelledby="date-time-format-label"
+                  className="settings-language-dropdown__menu"
+                  onKeyDown={handleDateTimeMenuKeyDown}
+                >
+                  {DATE_TIME_FORMAT_OPTIONS.map((option, index) => {
+                    const isSelected = option.value === dateTimeFormat;
+                    return (
+                      <button
+                        key={option.value}
+                        ref={(element) => {
+                          dateTimeOptionRefs.current[index] = element;
+                        }}
+                        id={`${dateTimeListboxId}-${option.value}`}
+                        type="button"
+                        role="option"
+                        aria-selected={isSelected}
+                        className="settings-language-dropdown__item"
+                        data-selected={isSelected ? 'true' : 'false'}
+                        onClick={() => handleDateTimeFormatSelect(option.value)}
                       >
                         {tVault(option.labelKey)}
                       </button>

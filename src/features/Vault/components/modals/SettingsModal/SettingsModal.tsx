@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { BackendUserSettings } from '../../../types/backend';
+import { BackendDateTimeFormat, BackendUserSettings } from '../../../types/backend';
 import { Language, useI18n, useTranslation } from '../../../../../shared/lib/i18n';
 import { useToaster } from '../../../../../shared/components/Toaster';
 import {
@@ -67,6 +67,7 @@ export function SettingsModal({
   const [theme, setTheme] = useState<AppTheme>('blueTheme');
   const [didTouchTheme, setDidTouchTheme] = useState(false);
   const [draftLanguage, setDraftLanguage] = useState<Language>('en');
+  const [draftDateTimeFormat, setDraftDateTimeFormat] = useState<BackendDateTimeFormat>('auto');
   const [renameProfileOpen, setRenameProfileOpen] = useState(false);
   const [renameProfileValue, setRenameProfileValue] = useState('');
   const [isRenamingProfile, setIsRenamingProfile] = useState(false);
@@ -94,6 +95,7 @@ export function SettingsModal({
     setTrashAutoCleanupEnabled(settings.trash_auto_cleanup_enabled);
     setTrashRetentionDays(String(settings.trash_retention_days));
     setMultiplyVaultsEnabled(settings.multiply_vaults_enabled);
+    setDraftDateTimeFormat(settings.date_time_format ?? 'auto');
   }, [open, settings]);
 
   useEffect(() => {
@@ -295,6 +297,7 @@ export function SettingsModal({
       auto_backup_interval_minutes: Math.round(interval),
       backup_max_copies: Math.round(max),
       multiply_vaults_enabled: multiplyVaultsEnabled,
+      date_time_format: draftDateTimeFormat,
     });
 
     if (!saved) return;
@@ -361,6 +364,10 @@ export function SettingsModal({
     [],
   );
 
+  const handleDateTimeFormatChange = useCallback((nextFormat: BackendDateTimeFormat) => {
+    setDraftDateTimeFormat(nextFormat);
+  }, []);
+
   const handleThemeChange = useCallback(
     (nextTheme: AppTheme) => {
       setTheme(nextTheme);
@@ -382,7 +389,14 @@ export function SettingsModal({
 
             <section className="settings-content">
               {activeSection === 'general' && (
-                <GeneralSection language={draftLanguage} onLanguageChange={handleLanguageChange} tVault={tVault} disabled={busy} />
+                <GeneralSection
+                  language={draftLanguage}
+                  dateTimeFormat={draftDateTimeFormat}
+                  onLanguageChange={handleLanguageChange}
+                  onDateTimeFormatChange={handleDateTimeFormatChange}
+                  tVault={tVault}
+                  disabled={busy}
+                />
               )}
 
               {activeSection === 'appearance' && (

@@ -1,6 +1,6 @@
 ﻿import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { DataCard, Folder } from '../../types/ui';
-import { useTranslation } from '../../../../shared/lib/i18n';
+import { useI18n, useTranslation } from '../../../../shared/lib/i18n';
 import { useDetails } from './useDetails';
 import { wasActuallyUpdated } from '../../utils/updatedAt';
 import { IconCopy } from '@/shared/icons/lucide/icons';
@@ -17,6 +17,7 @@ import { TwoFactorSection } from './sections/TwoFactorSection';
 import { CustomFieldsSection } from './sections/CustomFieldsSection';
 import { AttachmentsSection } from './sections/AttachmentsSection';
 import { formatVaultDateTime } from '../../utils/dateTime';
+import type { BackendDateTimeFormat } from '../../types/backend';
 
 const LazyAttachmentPreviewModal = React.lazy(() =>
   import('../modals/AttachmentPreviewModal').then((m) => ({ default: m.default })),
@@ -32,6 +33,7 @@ export type DetailsProps = {
   card: DataCard | null;
   folders: Folder[];
   activeFolderId?: string | null;
+  dateTimeFormat?: BackendDateTimeFormat;
   onEdit: (card: DataCard) => void;
   onDelete: (id: string) => void;
   onRestore: (id: string) => void;
@@ -48,6 +50,7 @@ export function Details({
   card,
   folders,
   activeFolderId,
+  dateTimeFormat,
   onEdit,
   onDelete,
   onRestore,
@@ -59,10 +62,12 @@ export function Details({
   clipboardAutoClearEnabled,
   clipboardClearTimeoutSeconds,
 }: DetailsProps) {
+  const { language } = useI18n();
   const { t } = useTranslation('Details');
   const { t: tVault } = useTranslation('Vault');
   const { t: tCommon } = useTranslation('Common');
   const { t: tTip } = useTranslation('Tooltips');
+  const effectiveDateTimeFormat = dateTimeFormat ?? 'auto';
   const detailActions = useDetails({
     card,
     onDelete,
@@ -153,9 +158,11 @@ export function Details({
   }
 
   const isFavorite = card.isFavorite;
-  const createdText = `${t('label.created')}: ${formatVaultDateTime(card.createdAt)}`;
+  const createdText = `${t('label.created')}: ${formatVaultDateTime(card.createdAt, effectiveDateTimeFormat, language)}`;
   const showUpdated = wasActuallyUpdated(card.createdAt, card.updatedAt);
-  const updatedText = showUpdated ? `${t('label.updated')}: ${formatVaultDateTime(card.updatedAt)}` : '';
+  const updatedText = showUpdated
+    ? `${t('label.updated')}: ${formatVaultDateTime(card.updatedAt, effectiveDateTimeFormat, language)}`
+    : '';
   const hasValue = (value?: string | null) => Boolean(value?.trim());
   const hasNote = hasValue(card.note);
   const hasTags = Array.isArray(card.tags) && card.tags.length > 0;
@@ -444,6 +451,7 @@ export function Details({
             isOpen={historyOpen}
             datacardId={card.id}
             onClose={() => setHistoryOpen(false)}
+            dateTimeFormat={effectiveDateTimeFormat}
             clipboardAutoClearEnabled={clipboardAutoClearEnabled}
             clipboardClearTimeoutSeconds={clipboardClearTimeoutSeconds}
           />

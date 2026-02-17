@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useTranslation } from '../../../../shared/lib/i18n';
+import { useI18n, useTranslation } from '../../../../shared/lib/i18n';
 import { BankCardItem } from '../../types/ui';
 import { useBankCardDetails } from './useBankCardDetails';
 import { IconCopy, IconPreview, IconPreviewOff } from '@/shared/icons/lucide/icons';
 import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
 import { wasActuallyUpdated } from '../../utils/updatedAt';
 import { formatVaultDateTime } from '../../utils/dateTime';
+import type { BackendDateTimeFormat } from '../../types/backend';
 import { setBankCardPreviewFieldsForCard } from '../../api/vaultApi';
 import {
   loadBankCardPreviewFields,
@@ -21,6 +22,7 @@ import {
 
 export type BankCardDetailsProps = {
   card: BankCardItem | null;
+  dateTimeFormat?: BackendDateTimeFormat;
   onEdit: (card: BankCardItem) => void;
   onReloadCard?: (id: string) => Promise<void> | void;
   onDelete: (id: string) => void;
@@ -48,6 +50,7 @@ const maskHolder = (value?: string | null) => {
 
 export function BankCardDetails({
   card,
+  dateTimeFormat,
   onEdit,
   onReloadCard,
   onDelete,
@@ -58,10 +61,12 @@ export function BankCardDetails({
   clipboardAutoClearEnabled,
   clipboardClearTimeoutSeconds,
 }: BankCardDetailsProps) {
+  const { language } = useI18n();
   const { t } = useTranslation('BankCards');
   const { t: tVault } = useTranslation('Vault');
   const { t: tCommon } = useTranslation('Common');
   const { t: tTip } = useTranslation('Tooltips');
+  const effectiveDateTimeFormat = dateTimeFormat ?? 'auto';
   const detailActions = useBankCardDetails({
     card,
     onDelete,
@@ -155,9 +160,11 @@ export function BankCardDetails({
   }
 
   const isFavorite = card.isFavorite;
-  const createdText = `${t('label.created')}: ${formatVaultDateTime(card.createdAt)}`;
+  const createdText = `${t('label.created')}: ${formatVaultDateTime(card.createdAt, effectiveDateTimeFormat, language)}`;
   const showUpdated = wasActuallyUpdated(card.createdAt, card.updatedAt);
-  const updatedText = showUpdated ? `${t('label.updated')}: ${formatVaultDateTime(card.updatedAt)}` : '';
+  const updatedText = showUpdated
+    ? `${t('label.updated')}: ${formatVaultDateTime(card.updatedAt, effectiveDateTimeFormat, language)}`
+    : '';
   const hasValue = (value?: string | null) => {
     const trimmed = value?.trim();
     return Boolean(trimmed);

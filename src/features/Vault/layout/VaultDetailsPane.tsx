@@ -34,6 +34,7 @@ export function VaultDetailsPane({
     return (
       <BankCardDetails
         card={bankCards.selectedCard}
+        dateTimeFormat={bankCards.settings?.date_time_format ?? 'auto'}
         onEdit={(card) => bankCardsViewModel.openEditModal(card)}
         onDelete={bankCards.deleteCard}
         onRestore={bankCards.restoreCard}
@@ -53,6 +54,7 @@ export function VaultDetailsPane({
           card={vault.selectedCard}
           folders={foldersForCards}
           activeFolderId={vault.selectedFolderId}
+          dateTimeFormat={vault.settings?.date_time_format ?? 'auto'}
           onAttachmentPresenceChange={vault.setCardHasAttachments}
           onEdit={(card) => dataCardsViewModel.openEditModal(card)}
           onDelete={vault.deleteCard}

@@ -175,6 +175,11 @@ export type BackendAttachmentPreviewPayload = {
   base64_data: string;
 };
 
+export type BackendDateTimeFormat =
+  | "auto"
+  | "ddmmyyyy_24h"
+  | "mmddyyyy_12h_ampm";
+
 export type BackendUserSettings = {
   auto_hide_secret_timeout_seconds: number;
   auto_lock_enabled: boolean;
@@ -194,6 +199,7 @@ export type BackendUserSettings = {
   mask_password_by_default: boolean;
   multiply_vaults_enabled: boolean;
   active_vault_id: string;
+  date_time_format: BackendDateTimeFormat;
 };
 
 export type BackendTrashCleanupResult = {
