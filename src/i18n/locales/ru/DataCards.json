@@ -65,7 +65,7 @@
   "generator.uppercase": "Заглавные буквы (A-Z)",
   "generator.numbers": "Цифры (0-9)",
   "generator.symbols": "Символы (!@#$%...)",
-  "generator.excludeSimilar": "Исключить похожие символы (O, 0, I, 1, l)",
+  "generator.similarSymbols": "Похожие символы (O, 0, I, 1, l)",
   "generator.use": "Использовать",
   "generator.strengthLabel": "Сильный ({{bits}} бит)",
   "toast.copySuccess": "Скопировано",

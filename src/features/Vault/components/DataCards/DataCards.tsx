@@ -112,7 +112,7 @@ export function DataCards({
     uppercase: true,
     numbers: true,
     symbols: true,
-    excludeSimilar: false,
+    similarSymbols: false,
   });
   const [generatedPassword, setGeneratedPassword] = useState('');
   const [charsetSize, setCharsetSize] = useState(0);

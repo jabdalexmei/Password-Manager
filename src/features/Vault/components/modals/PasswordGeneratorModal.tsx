@@ -157,8 +157,8 @@ export const PasswordGeneratorModal: React.FC<PasswordGeneratorModalProps> = ({
               <span>{t('generator.symbols')}</span>
             </label>
             <label className="checkbox">
-              <input type="checkbox" checked={options.excludeSimilar} onChange={handleCheckboxChange('excludeSimilar')} />
-              <span>{t('generator.excludeSimilar')}</span>
+              <input type="checkbox" checked={options.similarSymbols} onChange={handleCheckboxChange('similarSymbols')} />
+              <span>{t('generator.similarSymbols')}</span>
             </label>
           </div>
         </div>
