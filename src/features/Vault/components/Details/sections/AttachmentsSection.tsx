@@ -18,12 +18,6 @@ type AttachmentsSectionProps = {
   t: TranslateFn;
 };
 
-const formatSize = (bytes: number) => {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-};
-
 export function AttachmentsSection({
   attachments,
   isTrashMode,
@@ -56,9 +50,6 @@ export function AttachmentsSection({
           <div key={attachment.id} className="attachment-row">
             <div className="attachment-info">
               <div className="attachment-name">{attachment.fileName}</div>
-              <div className="attachment-meta">
-                {(attachment.mimeType ?? 'application/octet-stream') + ' / ' + formatSize(attachment.byteSize)}
-              </div>
             </div>
             {!isTrashMode && (
               <div className="attachment-actions">

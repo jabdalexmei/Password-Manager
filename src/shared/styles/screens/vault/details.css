@@ -252,11 +252,6 @@
   white-space: nowrap;
 }
 
-.attachment-meta {
-  color: var(--color-text-muted);
-  font-size: 12px;
-}
-
 .attachment-actions {
   display: flex;
   align-items: center;
