@@ -67,7 +67,8 @@
 
   /* prevent clipping of hover transform + focus-visible outline */
   padding: 4px;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   scrollbar-gutter: stable;
   flex: 1;
   display: flex;
@@ -81,6 +82,9 @@
 }
 .vault-datacard {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   text-align: left;
   padding: 10px 12px;
   background: var(--color-surface-1);
@@ -129,21 +133,33 @@
 
 .datacard-top {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto);
   align-items: center;
   gap: 12px;
+  min-width: 0;
+  max-width: 100%;
   min-height: 26px; /* Reserve badge row height to avoid card jump when pills appear */
 }
 
 .datacard-badges {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: flex-end;
   align-content: flex-start;
   align-items: center;
   gap: 8px;
-  flex: 0 0 auto;
-  max-width: 220px;
+  flex: 0 1 auto;
+  overflow: hidden;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.datacard-badges .pill {
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .datacard-favorite {
@@ -164,6 +180,8 @@
 
 .datacard-meta > span {
   display: block;
+  min-width: 0;
+  flex: 1 1 auto;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -178,6 +196,12 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.datacard-meta {
+  max-width: 100%;
 }
 
 .vault-datacard.active .datacard-title {
