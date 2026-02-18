@@ -121,7 +121,7 @@
   --fd-input-disabled-text: #9ca3c7;
   --fd-input-disabled-placeholder: #9ca3c7;
 
-  --fd-card-bg: #0b1222;
+   --fd-card-bg: #0b1222b4;
   --fd-card-border: rgba(255, 255, 255, 0.08);
   --fd-card-text: #e5e7eb;
   --fd-card-muted: #9ca3c7;
@@ -136,3 +136,5 @@
   --fd-card-focus-ring-color: #2563eb;
   --fd-card-focus-ring-offset: 2px;
 }
+
+
