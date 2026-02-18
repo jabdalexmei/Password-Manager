@@ -12,7 +12,7 @@
 
 /*
    =========================================================================
-   Removed autoâ€‘hide scrollbar styles
+   Removed auto-hide scrollbar styles
    -------------------------------------------------------------------------
    The previous version of this file defined custom scrollbar variables and
    rules that hid the scroll thumb until the user scrolled. Those rules
@@ -113,7 +113,7 @@
 }
 
 .auth-panel {
-  /* Layout container only (no â€œcard within cardâ€ look). */
+  /* Layout container only (no nested-card look). */
   background: transparent;
   border: none;
   border-radius: 0;

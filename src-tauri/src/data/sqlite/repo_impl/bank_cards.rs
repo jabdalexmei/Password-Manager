@@ -66,10 +66,10 @@ WHERE b.vault_id = ?1
                     blob.push('\n');
                 }
 
-                // Ð’ÐÐ–ÐÐž: Ð½Ð°Ð¼ÐµÑ€ÐµÐ½Ð½Ð¾ ÐÐ• Ð²ÐºÐ»ÑŽÑ‡Ð°ÐµÐ¼ Ð² Ð¿Ð¾Ð¸ÑÐº:
+                // IMPORTANT: intentionally excluded from search:
                 // - cvc (CVV)
                 // - expiry_mm_yy (Expiry)
-                // - pin (ÐµÑÐ»Ð¸ Ð´Ð¾Ð±Ð°Ð²Ð¸ÑˆÑŒ Ð² Ð±ÑƒÐ´ÑƒÑ‰ÐµÐ¼)
+                // - pin (if added in the future)
                 Ok((id, blob))
             })
             .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;

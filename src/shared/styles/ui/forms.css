@@ -116,7 +116,7 @@
 .form-textarea {
   width: 100%;
   border-radius: var(--radius-sm);
-  border: 1px solid transparent; /* reduce â€œborder noiseâ€ globally */
+  border: 1px solid transparent; /* Reduce border noise globally */
   background: var(--input-surface);
   color: var(--color-text);
   padding: 10px 12px;

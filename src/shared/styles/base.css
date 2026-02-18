@@ -1,5 +1,5 @@
 :root {
-  /* цвет текста и фон по умолчанию берём из темы */
+  /* Use theme tokens for default text and background colors. */
   color: var(--color-text);
   background-color: var(--color-bg);
   font-family: var(--font-body);
@@ -24,7 +24,7 @@
   --spacing-between-navigation-field-label-text-and-input-field: 10px;
 }
 
-/* нормальный box-sizing для всего */
+/* Apply standard box-sizing globally. */
 * {
   box-sizing: border-box;
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
@@ -69,7 +69,7 @@ body,
   min-height: 100vh;
 }
 
-/* общий фон приложения */
+/* Shared application background. */
 body {
   background: var(--bg-screen, var(--bg-app));
   color: var(--color-text);

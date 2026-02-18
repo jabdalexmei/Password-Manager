@@ -51,7 +51,7 @@
 
 /* Secondary action button (neutral) */
 .btn-secondary {
-  /* Solid fill (no gradient) â€” matches the old/demo look */
+  /* Solid fill (no gradient) - matches the old/demo look */
   background: var(--btn-secondary-bg, var(--surface-container));
   color: var(--btn-secondary-text, var(--color-text));
   border-color: var(--btn-secondary-border, var(--border-subtle));
@@ -112,7 +112,7 @@
    - If you standardize on ".btn" variants everywhere, consider removing it later,
      but only after confirming no components still use ".primary".
    ========================================================================== */
-/* ÐœÐ°Ð»ÐµÐ½ÑŒÐºÐ°Ñ ÐºÑ€Ð°ÑÐ½Ð°Ñ ÐºÐ½Ð¾Ð¿ÐºÐ° Ð½Ð° Ð±Ð°Ð·Ðµ .primary */
+/* Small danger button based on .primary */
 .primary.primary-danger {
   background-color: var(--color-danger);
   color: var(--color-on-primary);

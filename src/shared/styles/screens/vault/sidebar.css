@@ -8,7 +8,7 @@
 }
 
 /* =======================================================================
-   LEFT SIDEBAR â€” 1:1 ÑÑ‚Ð¸Ð»ÑŒ ÐºÐ°Ðº Ð² oldthemegood (Ð¸ Ð±ÐµÐ· ÐºÐ¾Ð½Ñ„Ð»Ð¸ÐºÑ‚Ð¾Ð²)
+   LEFT SIDEBAR - 1:1 style parity with oldthemegood (without conflicts)
    ======================================================================= */
 
 .vault-sidebar {
@@ -373,8 +373,8 @@
 }
 
 
-/* !!! ÐšÐ›Ð®Ð§Ð•Ð’ÐžÐ• Ð˜Ð¡ÐŸÐ ÐÐ’Ð›Ð•ÐÐ˜Ð•: ÐÐ• Ð¡Ð‘Ð ÐÐ¡Ð«Ð’ÐÐ•Ðœ Ð¡Ð¢Ð˜Ð›Ð˜ Ð”Ð›Ð¯ li button !!!
-   Ð¸Ð½Ð°Ñ‡Ðµ .vault-folder ÑÑ‚Ð°Ð½Ð¾Ð²Ð¸Ñ‚ÑÑ Ð¿Ñ€Ð¾Ð·Ñ€Ð°Ñ‡Ð½Ñ‹Ð¼ Ð¸ â€œÐºÑ€Ð¸Ð²Ñ‹Ð¼â€
+/* !!! CRITICAL FIX: DO NOT RESET STYLES FOR li button !!!
+   Otherwise .vault-folder becomes transparent and visually broken.
 */
 
 .vault-folder {

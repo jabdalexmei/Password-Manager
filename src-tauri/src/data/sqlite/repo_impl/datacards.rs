@@ -133,7 +133,7 @@ WHERE d.vault_id = ?1
                     blob.push('\n');
                 }
 
-                // Ð’ÐÐ–ÐÐž: Ð½Ð°Ð¼ÐµÑ€ÐµÐ½Ð½Ð¾ ÐÐ• Ð²ÐºÐ»ÑŽÑ‡Ð°ÐµÐ¼ Ð² Ð¿Ð¾Ð¸ÑÐº:
+                // IMPORTANT: intentionally excluded from search:
                 // - seed_phrase_value
                 // - totp_uri
                 Ok(DataCardSearchRow {
