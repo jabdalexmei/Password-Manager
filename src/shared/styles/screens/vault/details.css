@@ -1,5 +1,5 @@
 ﻿/* Details */
-.vault-details {
+.vault-information {
   border-left: 1px solid var(--sem-border-default);
 }
 
@@ -336,4 +336,3 @@
   font-size: 14px;
   line-height: 18px;
 }
-

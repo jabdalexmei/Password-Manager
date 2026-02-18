@@ -2,8 +2,8 @@
    CENTER (CARDS) + RIGHT (DETAILS)
    ======================================================================= */
 
-.vault-datacards,
-.vault-details {
+.vault-allcards,
+.vault-information {
   background: var(--sem-surface-panel); /* match .vault-sidebar */
   padding: 16px 20px;
   overflow: hidden;
@@ -222,4 +222,3 @@
 .muted {
   color: var(--cmp-card-muted);
 }
-

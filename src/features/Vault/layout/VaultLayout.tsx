@@ -15,8 +15,8 @@ export function VaultLayout({ header, sidebar, centerPane, detailsPane, overlays
 
       <div className="vault-body">
         <aside className="vault-sidebar">{sidebar}</aside>
-        <section className="vault-datacards">{centerPane}</section>
-        <section className="vault-details">{detailsPane}</section>
+        <section className="vault-allcards">{centerPane}</section>
+        <section className="vault-information">{detailsPane}</section>
       </div>
 
       {overlays}
