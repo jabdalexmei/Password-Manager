@@ -127,8 +127,7 @@
   --fd-card-muted: #b3b3b3;
   --fd-card-hover-bg: #2b2b2b;
   --fd-card-hover-border: rgba(139, 108, 239, 0.45);
-  --fd-card-active-bg-start: #313131;
-  --fd-card-active-bg-end: #252525;
+  --fd-card-active-bg: #313131;
   --fd-card-active-border: #8b6cef;
   --fd-card-pill-bg: #313131;
   --fd-card-pill-border: rgba(255, 255, 255, 0.10);

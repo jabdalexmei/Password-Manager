@@ -19,6 +19,7 @@ const REQUIRED_FOUNDATION_TOKENS = [
   "fd-category-navigation-folders-buttons-active-border",
   "fd-category-navigation-folders-buttons-active-text",
   "fd-category-navigation-folders-buttons-count",
+  "fd-card-active-bg",
 ];
 const REQUIRED_SEMANTIC_TOKENS = [
   "sem-bg-screens-workspace-create-login-select",
@@ -31,6 +32,7 @@ const REQUIRED_SEMANTIC_TOKENS = [
   "sem-category-navigation-folders-buttons-active-border",
   "sem-category-navigation-folders-buttons-active-text",
   "sem-category-navigation-folders-buttons-count",
+  "sem-card-active-bg",
 ];
 const REQUIRED_COMPONENT_TOKENS = [
   "cmp-category-navigation-folders-buttons-bg",
@@ -42,6 +44,7 @@ const REQUIRED_COMPONENT_TOKENS = [
   "cmp-category-navigation-folders-buttons-active-border",
   "cmp-category-navigation-folders-buttons-active-text",
   "cmp-category-navigation-folders-buttons-count",
+  "cmp-card-active-bg",
 ];
 const FORBIDDEN_PRE_VAULT_BG_TOKENS = [
   "--fd-bg-startup",
@@ -101,6 +104,14 @@ const FORBIDDEN_SIDEBAR_BUTTON_TOKENS = [
   "--cmp-nav-folder-active-bg-start",
   "--cmp-nav-folder-active-bg-end",
   "--cmp-nav-folder-active-border",
+];
+const FORBIDDEN_CARD_ACTIVE_GRADIENT_TOKENS = [
+  `--fd-card-active-bg-${"start"}`,
+  `--fd-card-active-bg-${"end"}`,
+  `--sem-card-active-bg-${"start"}`,
+  `--sem-card-active-bg-${"end"}`,
+  `--cmp-card-active-bg-${"start"}`,
+  `--cmp-card-active-bg-${"end"}`,
 ];
 
 const LEGACY_TOKEN_RE = /--(?:color-|surface-|btn-secondary|greycolorsecondary|blueprimarycolor|input-surface|border-subtle|focus-ring|focus-border|primary-soft-bg|success-soft-bg|danger-soft-bg|danger-border-weak|danger-hover-bg|bg-screen)/;
@@ -284,6 +295,12 @@ for (const file of walk(path.resolve("src"))) {
     for (const forbidden of FORBIDDEN_SIDEBAR_BUTTON_TOKENS) {
       if (hasExactToken(lines[i], forbidden)) {
         errors.push(`${rel}:${i + 1}: forbidden sidebar button token detected: ${forbidden}`);
+      }
+    }
+
+    for (const forbidden of FORBIDDEN_CARD_ACTIVE_GRADIENT_TOKENS) {
+      if (hasExactToken(lines[i], forbidden)) {
+        errors.push(`${rel}:${i + 1}: forbidden card active gradient token detected: ${forbidden}`);
       }
     }
   }

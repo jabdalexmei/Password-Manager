@@ -111,7 +111,7 @@
 
 .vault-datacard.active {
   border-color: var(--cmp-card-active-border);
-  background: linear-gradient(90deg, var(--cmp-card-active-bg-start) 0%, var(--cmp-card-active-bg-end) 70%);
+  background: var(--cmp-card-active-bg);
 }
 
 .datacard-title {

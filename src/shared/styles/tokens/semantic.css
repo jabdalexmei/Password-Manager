@@ -123,8 +123,7 @@
   --sem-card-muted: var(--fd-card-muted);
   --sem-card-hover-bg: var(--fd-card-hover-bg);
   --sem-card-hover-border: var(--fd-card-hover-border);
-  --sem-card-active-bg-start: var(--fd-card-active-bg-start);
-  --sem-card-active-bg-end: var(--fd-card-active-bg-end);
+  --sem-card-active-bg: var(--fd-card-active-bg);
   --sem-card-active-border: var(--fd-card-active-border);
   --sem-card-pill-bg: var(--fd-card-pill-bg);
   --sem-card-pill-border: var(--fd-card-pill-border);

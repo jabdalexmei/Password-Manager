@@ -127,8 +127,7 @@
   --fd-card-muted: #9ca3c7;
   --fd-card-hover-bg: #0f172a;
   --fd-card-hover-border: rgba(59, 130, 246, 0.45);
-  --fd-card-active-bg-start: #111827;
-  --fd-card-active-bg-end: #0b1222;
+  --fd-card-active-bg: #111827;
   --fd-card-active-border: #2563eb;
   --fd-card-pill-bg: #111827;
   --fd-card-pill-border: rgba(255, 255, 255, 0.08);
@@ -136,5 +135,4 @@
   --fd-card-focus-ring-color: #2563eb;
   --fd-card-focus-ring-offset: 2px;
 }
-
 

@@ -122,8 +122,7 @@
   --cmp-card-muted: var(--sem-card-muted);
   --cmp-card-hover-bg: var(--sem-card-hover-bg);
   --cmp-card-hover-border: var(--sem-card-hover-border);
-  --cmp-card-active-bg-start: var(--sem-card-active-bg-start);
-  --cmp-card-active-bg-end: var(--sem-card-active-bg-end);
+  --cmp-card-active-bg: var(--sem-card-active-bg);
   --cmp-card-active-border: var(--sem-card-active-border);
   --cmp-card-pill-bg: var(--sem-card-pill-bg);
   --cmp-card-pill-border: var(--sem-card-pill-border);
