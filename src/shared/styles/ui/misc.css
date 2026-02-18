@@ -60,19 +60,7 @@
   align-items: center;
   justify-content: center;
   padding: 32px;
-  background: var(--sem-bg-screen);
-}
-
-.screen-shell--startup {
-  --sem-bg-screen: var(--sem-bg-screen-startup);
-}
-
-.screen-shell--profile-create {
-  --sem-bg-screen: var(--sem-bg-screen-profile-create);
-}
-
-.screen-shell--login {
-  --sem-bg-screen: var(--sem-bg-screen-login);
+  background: var(--sem-bg-screens-workspace-create-login-select);
 }
 
 .screen-card {

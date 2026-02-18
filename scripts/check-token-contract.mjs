@@ -8,6 +8,17 @@ const THEME_FILES = [
 ];
 const SEMANTIC_FILE = path.resolve("src/shared/styles/tokens/semantic.css");
 const COMPONENTS_FILE = path.resolve("src/shared/styles/tokens/components.css");
+const REQUIRED_FOUNDATION_TOKENS = ["fd-bg-screens-workspace-create-login-select"];
+const REQUIRED_SEMANTIC_TOKENS = ["sem-bg-screens-workspace-create-login-select"];
+const FORBIDDEN_PRE_VAULT_BG_TOKENS = [
+  "--fd-bg-startup",
+  "--fd-bg-login",
+  "--fd-bg-profile-create",
+  "--sem-bg-screen-startup",
+  "--sem-bg-screen-login",
+  "--sem-bg-screen-profile-create",
+  "--sem-bg-screen",
+];
 
 const LEGACY_TOKEN_RE = /--(?:color-|surface-|btn-secondary|greycolorsecondary|blueprimarycolor|input-surface|border-subtle|focus-ring|focus-border|primary-soft-bg|success-soft-bg|danger-soft-bg|danger-border-weak|danger-hover-bg|bg-screen)/;
 const COLOR_LITERAL_RE = /#[0-9a-fA-F]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)/;
@@ -43,6 +54,15 @@ function getVarRefs(text) {
 
 function unique(list) {
   return [...new Set(list)];
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function hasExactToken(line, token) {
+  const re = new RegExp(`${escapeRegExp(token)}(?![a-z0-9-])`);
+  return re.test(line);
 }
 
 function walk(dir) {
@@ -83,6 +103,12 @@ for (const file of THEME_FILES) {
     errors.push(`${rel}: found non-foundation tokens: ${nonFdProps.map((name) => `--${name}`).join(", ")}`);
   }
 
+  for (const required of REQUIRED_FOUNDATION_TOKENS) {
+    if (!props.includes(required)) {
+      errors.push(`${rel}: missing required foundation token --${required}`);
+    }
+  }
+
   themePropSets.push(new Set(props.filter((name) => name.startsWith("fd-"))));
 }
 
@@ -109,6 +135,12 @@ if (themePropSets.length === 2) {
     const nonSemProps = unique(props.filter((name) => !name.startsWith("sem-")));
     if (nonSemProps.length) {
       errors.push(`${rel}: found non-semantic tokens: ${nonSemProps.map((name) => `--${name}`).join(", ")}`);
+    }
+
+    for (const required of REQUIRED_SEMANTIC_TOKENS) {
+      if (!props.includes(required)) {
+        errors.push(`${rel}: missing required semantic token --${required}`);
+      }
     }
 
     const refs = getVarRefs(text);
@@ -152,6 +184,12 @@ for (const file of walk(path.resolve("src"))) {
   for (let i = 0; i < lines.length; i++) {
     if (LEGACY_TOKEN_RE.test(lines[i])) {
       errors.push(`${rel}:${i + 1}: legacy token usage detected: ${lines[i].trim()}`);
+    }
+
+    for (const forbidden of FORBIDDEN_PRE_VAULT_BG_TOKENS) {
+      if (hasExactToken(lines[i], forbidden)) {
+        errors.push(`${rel}:${i + 1}: forbidden pre-vault bg token detected: ${forbidden}`);
+      }
     }
   }
 }

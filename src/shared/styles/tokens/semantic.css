@@ -12,10 +12,7 @@
   --sem-shadow-popover: var(--fd-shadow-popover);
 
   --sem-bg-app: var(--fd-bg-app);
-  --sem-bg-screen-startup: var(--fd-bg-startup);
-  --sem-bg-screen-profile-create: var(--fd-bg-profile-create);
-  --sem-bg-screen-login: var(--fd-bg-login);
-  --sem-bg-screen: var(--fd-bg-startup);
+  --sem-bg-screens-workspace-create-login-select: var(--fd-bg-screens-workspace-create-login-select);
 
   --sem-overlay-backdrop: var(--fd-overlay-backdrop);
 

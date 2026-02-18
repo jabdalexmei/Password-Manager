@@ -12,15 +12,9 @@
   --fd-shadow-popover: 0 12px 30px rgba(0, 0, 0, 0.45);
 
   --fd-bg-app: linear-gradient(135deg, #0b1222 0%, #0f172a 60%, #0f172a 100%);
-  --fd-bg-startup: radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.12), transparent 35%),
+  --fd-bg-screens-workspace-create-login-select: radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.12), transparent 35%),
     radial-gradient(circle at 80% 10%, rgba(37, 99, 235, 0.08), transparent 30%),
-    linear-gradient(135deg, rgba(37, 99, 235, 0.06), rgba(37, 99, 235, 0.02));
-  --fd-bg-profile-create: radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.10), transparent 35%),
-    radial-gradient(circle at 80% 10%, rgba(37, 99, 235, 0.06), transparent 30%),
-    linear-gradient(135deg, rgba(37, 99, 235, 0.04), rgba(37, 99, 235, 0.02));
-  --fd-bg-login: radial-gradient(circle at 10% 0%, rgba(37, 99, 235, 0.10), transparent 35%),
-    radial-gradient(circle at 90% 0%, rgba(37, 99, 235, 0.05), transparent 30%),
-    linear-gradient(135deg, rgba(37, 99, 235, 0.04), rgba(15, 23, 42, 0.9));
+    linear-gradient(135deg, #0b1222 0%, #0f172a 62%, #0f172a 100%);
 
   --fd-overlay-backdrop: rgba(0, 0, 0, 0.45);
 

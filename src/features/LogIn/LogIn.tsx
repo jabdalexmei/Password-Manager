@@ -42,7 +42,7 @@ const LogIn: React.FC<LogInProps> = ({
   }
 
   return (
-    <div className="screen-shell screen-shell--login">
+    <div className="screen-shell">
       <div className="screen-card screen-card--borderless login-card">
         <header className="login-header">
           <h1 className="login-title">{t('title')}</h1>

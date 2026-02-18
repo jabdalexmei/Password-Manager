@@ -28,7 +28,7 @@ const ProfileCreate: React.FC<ProfileCreateProps> = ({ onCreated, onProfileCreat
   };
 
   return (
-    <div className="screen-shell screen-shell--profile-create">
+    <div className="screen-shell">
       <div className="screen-card profile-create-card">
         <header className="profile-create-header">
           <h1 className="profile-create-title">{t('title')}</h1>

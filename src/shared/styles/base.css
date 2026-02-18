@@ -46,6 +46,6 @@ body,
 }
 
 body {
-  background: var(--sem-bg-screen);
+  background: var(--sem-bg-app);
   color: var(--sem-text-primary);
 }
