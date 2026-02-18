@@ -163,9 +163,9 @@
 
   padding: var(--filter-chip-pad-y) var(--filter-chip-pad-x);
   border-radius: var(--sem-radius-pill);
-  border: 1px solid var(--cmp-nav-chip-border);
-  background: var(--cmp-nav-chip-bg);
-  color: var(--cmp-nav-chip-text);
+  border: 1px solid var(--cmp-category-navigation-folders-buttons-border);
+  background: var(--cmp-category-navigation-folders-buttons-bg);
+  color: var(--cmp-category-navigation-folders-buttons-text);
   font-size: var(--filter-chip-font-size);
   line-height: 1;
   cursor: pointer;
@@ -174,7 +174,8 @@
 }
 
 .filter-chip:hover {
-  border-color: var(--cmp-nav-chip-hover-border);
+  border-color: var(--cmp-category-navigation-folders-buttons-hover-border);
+  background: var(--cmp-category-navigation-folders-buttons-hover-bg);
 }
 
 .filter-chip:active {
@@ -182,9 +183,9 @@
 }
 
 .filter-chip.is-active {
-  background: var(--cmp-nav-chip-active-bg);
-  border-color: var(--cmp-nav-chip-active-border);
-  color: var(--cmp-nav-chip-active-text);
+  background: var(--cmp-category-navigation-folders-buttons-active-bg);
+  border-color: var(--cmp-category-navigation-folders-buttons-active-border);
+  color: var(--cmp-category-navigation-folders-buttons-active-text);
 }
 
 .filter-chip:focus-visible {
@@ -293,7 +294,7 @@
 
 .vault-sidebar-title {
   font-weight: 700;
-  color: var(--cmp-nav-folder-text);
+  color: var(--cmp-category-navigation-folders-buttons-text);
   margin-bottom: 8px;
   min-width: 0;
   max-width: 100%;
@@ -389,17 +390,17 @@
   align-items: center;
   justify-content: space-between;
   padding: 10px 12px;
-  background: var(--cmp-nav-folder-bg);
-  border: 1px solid var(--cmp-nav-folder-border);
+  background: var(--cmp-category-navigation-folders-buttons-bg);
+  border: 1px solid var(--cmp-category-navigation-folders-buttons-border);
   border-radius: var(--sem-radius-sm);
-  color: var(--cmp-nav-folder-text);
+  color: var(--cmp-category-navigation-folders-buttons-text);
   cursor: pointer;
   overflow: hidden;
 }
 
 .vault-folder:hover {
-  border-color: var(--cmp-nav-folder-hover-border);
-  background: var(--cmp-nav-folder-hover-bg);
+  border-color: var(--cmp-category-navigation-folders-buttons-hover-border);
+  background: var(--cmp-category-navigation-folders-buttons-hover-bg);
   transform: translateY(-1px);
   transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
 }
@@ -425,8 +426,9 @@
 .vault-folder-list li.active > .vault-folder,
 .vault-folder-list li.active > .vault-folder-node > .vault-folder,
 .vault-folder-tree-children li.active > .vault-folder-node > .vault-folder {
-  background: linear-gradient(90deg, var(--cmp-nav-folder-active-bg-start) 0%, var(--cmp-nav-folder-active-bg-end) 100%);
-  border-color: var(--cmp-nav-folder-active-border);
+  background: var(--cmp-category-navigation-folders-buttons-active-bg);
+  border-color: var(--cmp-category-navigation-folders-buttons-active-border);
+  color: var(--cmp-category-navigation-folders-buttons-active-text);
 }
 
 .folder-name {
@@ -437,7 +439,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-weight: 600;
-  color: var(--cmp-nav-folder-text);
+  color: var(--cmp-category-navigation-folders-buttons-text);
 }
 
 .vault-folder--with-count .folder-name {
@@ -447,14 +449,14 @@
 }
 
 .folder-badge {
-  color: var(--cmp-nav-chip-active-border);
+  color: var(--cmp-category-navigation-folders-buttons-active-border);
   margin-left: 6px;
 }
 
 .folder-count {
   flex: 0 0 auto;
   white-space: nowrap;
-  color: var(--cmp-nav-folder-count);
+  color: var(--cmp-category-navigation-folders-buttons-count);
   font-size: 13px;
   margin-left: 8px;
 }

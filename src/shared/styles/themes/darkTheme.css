@@ -58,23 +58,15 @@
   --fd-nav-control-text: #e6e6e6;
   --fd-nav-control-hover-border: rgba(139, 108, 239, 0.45);
 
-  --fd-nav-chip-bg: #2b2b2b;
-  --fd-nav-chip-border: rgba(255, 255, 255, 0.10);
-  --fd-nav-chip-text: #e6e6e6;
-  --fd-nav-chip-hover-border: rgba(139, 108, 239, 0.45);
-  --fd-nav-chip-active-bg: #8b6cef;
-  --fd-nav-chip-active-border: #8b6cef;
-  --fd-nav-chip-active-text: #ffffff;
-
-  --fd-nav-folder-bg: #252525;
-  --fd-nav-folder-border: rgba(255, 255, 255, 0.10);
-  --fd-nav-folder-text: #e6e6e6;
-  --fd-nav-folder-count: #b3b3b3;
-  --fd-nav-folder-hover-bg: #2b2b2b;
-  --fd-nav-folder-hover-border: rgba(139, 108, 239, 0.45);
-  --fd-nav-folder-active-bg-start: #2b2b2b;
-  --fd-nav-folder-active-bg-end: #313131;
-  --fd-nav-folder-active-border: #8b6cef;
+  --fd-category-navigation-folders-buttons-bg: #252525;
+  --fd-category-navigation-folders-buttons-border: rgba(255, 255, 255, 0.10);
+  --fd-category-navigation-folders-buttons-text: #e6e6e6;
+  --fd-category-navigation-folders-buttons-hover-bg: #2b2b2b;
+  --fd-category-navigation-folders-buttons-hover-border: rgba(139, 108, 239, 0.45);
+  --fd-category-navigation-folders-buttons-active-bg: #2b2b2b;
+  --fd-category-navigation-folders-buttons-active-border: #8b6cef;
+  --fd-category-navigation-folders-buttons-active-text: #e6e6e6;
+  --fd-category-navigation-folders-buttons-count: #b3b3b3;
 
   --fd-nav-toggle-bg: transparent;
   --fd-nav-toggle-border: rgba(255, 255, 255, 0.10);

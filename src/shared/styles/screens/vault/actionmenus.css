@@ -85,7 +85,7 @@
 
 .vault-sortmenu-check {
   flex: 0 0 auto;
-  color: var(--cmp-nav-chip-active-border);
+  color: var(--cmp-category-navigation-folders-buttons-active-border);
 }
 
 .vault-sortmenu-check-spacer {
