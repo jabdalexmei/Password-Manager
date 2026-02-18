@@ -58,12 +58,12 @@
   --fd-nav-control-text: #e5e7eb;
   --fd-nav-control-hover-border: rgba(59, 130, 246, 0.45);
 
-  --fd-category-navigation-folders-buttons-bg: rgb(31, 41, 55);
+  --fd-category-navigation-folders-buttons-bg: rgba(37, 46, 63, 0.5);
   --fd-category-navigation-folders-buttons-border: rgba(255, 255, 255, 0.08);
   --fd-category-navigation-folders-buttons-text: #e5e7eb;
-  --fd-category-navigation-folders-buttons-hover-bg: rgb(41, 49, 61);
+  --fd-category-navigation-folders-buttons-hover-bg: rgb(37, 46, 63);
   --fd-category-navigation-folders-buttons-hover-border: rgba(59, 130, 246, 0.45);
-  --fd-category-navigation-folders-buttons-active-bg: rgb(31, 41, 55);
+  --fd-category-navigation-folders-buttons-active-bg: rgba(37, 46, 63, 0.5);
   --fd-category-navigation-folders-buttons-active-border: #2563eb;
   --fd-category-navigation-folders-buttons-active-text: #e5e7eb;
   --fd-category-navigation-folders-buttons-count: #9ca3c7;
