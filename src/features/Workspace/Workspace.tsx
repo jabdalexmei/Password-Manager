@@ -354,7 +354,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
 
             <button
               type="button"
-              className="btn btn-secondary workspace-cta-secondary"
+              className="btn btn-primary workspace-cta"
               onClick={handleOpenDataFolder}
               disabled={busy}
             >
