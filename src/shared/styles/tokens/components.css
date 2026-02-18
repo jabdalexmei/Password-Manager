@@ -1,6 +1,11 @@
 :root {
   --cmp-vault-columns-bg: var(--sem-vault-columns-bg);
   --cmp-dialog-panel-bg: var(--sem-dialog-panel-bg);
+  --cmp-toast-panel-bg: var(--sem-toast-panel-bg);
+  --cmp-toast-success-bg: var(--sem-toast-success-bg);
+  --cmp-toast-success-border: var(--sem-toast-success-border);
+  --cmp-toast-error-bg: var(--sem-toast-error-bg);
+  --cmp-toast-error-border: var(--sem-toast-error-border);
   --cmp-nav-sidebar-border: var(--sem-nav-sidebar-border);
   --cmp-nav-control-bg: var(--sem-nav-control-bg);
   --cmp-nav-control-border: var(--sem-nav-control-border);

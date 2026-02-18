@@ -19,6 +19,7 @@
   --sem-surface-page: var(--fd-surface-page);
   --sem-surface-panel: var(--fd-surface-panel);
   --sem-dialog-panel-bg: var(--fd-dialog-panel-bg);
+  --sem-toast-panel-bg: var(--fd-toast-panel-bg);
   --sem-surface-elevated: var(--fd-surface-elevated);
   --sem-surface-subtle: var(--fd-surface-subtle);
   --sem-surface-subtle-strong: var(--fd-surface-subtle-strong);
@@ -39,6 +40,10 @@
   --sem-state-primary-soft: var(--fd-state-primary-soft);
   --sem-state-success-soft: var(--fd-state-success-soft);
   --sem-state-danger-soft: var(--fd-state-danger-soft);
+  --sem-toast-success-bg: var(--fd-toast-success-bg);
+  --sem-toast-success-border: var(--fd-toast-success-border);
+  --sem-toast-error-bg: var(--fd-toast-error-bg);
+  --sem-toast-error-border: var(--fd-toast-error-border);
   --sem-state-danger-border-weak: var(--fd-state-danger-border-weak);
   --sem-state-danger-hover-bg: var(--fd-state-danger-hover-bg);
 

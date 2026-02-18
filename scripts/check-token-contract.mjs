@@ -9,9 +9,15 @@ const THEME_FILES = [
 const SEMANTIC_FILE = path.resolve("src/shared/styles/tokens/semantic.css");
 const COMPONENTS_FILE = path.resolve("src/shared/styles/tokens/components.css");
 const DIALOGS_FILE = path.resolve("src/shared/styles/ui/dialogs.css");
+const TOASTS_FILE = path.resolve("src/shared/styles/ui/toasts.css");
 const REQUIRED_FOUNDATION_TOKENS = [
   "fd-bg-screens-workspace-create-login-select",
   "fd-dialog-panel-bg",
+  "fd-toast-panel-bg",
+  "fd-toast-success-bg",
+  "fd-toast-success-border",
+  "fd-toast-error-bg",
+  "fd-toast-error-border",
   "fd-vault-columns-bg",
   "fd-category-navigation-folders-buttons-bg",
   "fd-category-navigation-folders-buttons-border",
@@ -27,6 +33,11 @@ const REQUIRED_FOUNDATION_TOKENS = [
 const REQUIRED_SEMANTIC_TOKENS = [
   "sem-bg-screens-workspace-create-login-select",
   "sem-dialog-panel-bg",
+  "sem-toast-panel-bg",
+  "sem-toast-success-bg",
+  "sem-toast-success-border",
+  "sem-toast-error-bg",
+  "sem-toast-error-border",
   "sem-vault-columns-bg",
   "sem-category-navigation-folders-buttons-bg",
   "sem-category-navigation-folders-buttons-border",
@@ -41,6 +52,11 @@ const REQUIRED_SEMANTIC_TOKENS = [
 ];
 const REQUIRED_COMPONENT_TOKENS = [
   "cmp-dialog-panel-bg",
+  "cmp-toast-panel-bg",
+  "cmp-toast-success-bg",
+  "cmp-toast-success-border",
+  "cmp-toast-error-bg",
+  "cmp-toast-error-border",
   "cmp-vault-columns-bg",
   "cmp-category-navigation-folders-buttons-bg",
   "cmp-category-navigation-folders-buttons-border",
@@ -298,6 +314,28 @@ if (themePropSets.length === 2) {
     for (let i = 0; i < lines.length; i++) {
       if (lines[i].includes("var(--sem-surface-panel)")) {
         errors.push(`${rel}:${i + 1}: dialogs must not reference var(--sem-surface-panel); use var(--cmp-dialog-panel-bg)`);
+      }
+    }
+  }
+}
+
+{
+  const rel = path.relative(ROOT, TOASTS_FILE);
+  const text = readFile(TOASTS_FILE);
+  if (text) {
+    const forbiddenVars = [
+      "var(--sem-surface-panel)",
+      "var(--sem-state-success-soft)",
+      "var(--sem-state-danger-soft)",
+      "var(--sem-accent-success)",
+      "var(--sem-accent-danger)",
+    ];
+    const lines = text.split(/\r?\n/);
+    for (let i = 0; i < lines.length; i++) {
+      for (const forbidden of forbiddenVars) {
+        if (lines[i].includes(forbidden)) {
+          errors.push(`${rel}:${i + 1}: toasts must not reference ${forbidden}; use toast cmp tokens`);
+        }
       }
     }
   }

@@ -21,6 +21,7 @@
   --fd-surface-page: #0b1222;
   --fd-surface-panel: #0f172a;
   --fd-dialog-panel-bg: #0f172a;
+  --fd-toast-panel-bg: #0f172a;
   --fd-surface-elevated: #111827;
   --fd-surface-subtle: rgba(255, 255, 255, 0.02);
   --fd-surface-subtle-strong: rgba(255, 255, 255, 0.08);
@@ -40,6 +41,10 @@
   --fd-state-primary-soft: rgba(37, 99, 235, 0.08);
   --fd-state-success-soft: rgba(34, 197, 94, 0.12);
   --fd-state-danger-soft: rgba(239, 68, 68, 0.12);
+  --fd-toast-success-bg: rgba(34, 197, 94, 0.12);
+  --fd-toast-success-border: #22c55e;
+  --fd-toast-error-bg: rgba(239, 68, 68, 0.12);
+  --fd-toast-error-border: #ef4444;
   --fd-state-danger-border-weak: rgba(239, 68, 68, 0.4);
   --fd-state-danger-hover-bg: rgba(239, 68, 68, 0.08);
 

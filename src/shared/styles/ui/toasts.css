@@ -16,7 +16,7 @@
 
 .toast {
   min-width: 240px;
-  background: var(--sem-surface-panel);
+  background: var(--cmp-toast-panel-bg);
   border: 1px solid var(--sem-border-default);
   border-radius: var(--sem-radius-sm);
   padding: 12px 34px 12px 14px;
@@ -76,12 +76,11 @@
 
 /* Toast variants */
 .toast-success {
-  border-color: var(--sem-accent-success);
-  background: var(--sem-state-success-soft);
+  border-color: var(--cmp-toast-success-border);
+  background: var(--cmp-toast-success-bg);
 }
 
 .toast-error {
-  border-color: var(--sem-accent-danger);
-  background: var(--sem-state-danger-soft);
+  border-color: var(--cmp-toast-error-border);
+  background: var(--cmp-toast-error-bg);
 }
-
