@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from '../../../../shared/lib/i18n';
 import { normalizeTotpInput } from '../../utils/totp';
 import { decodeQrFromCanvas, decodeQrFromImageFile } from '../../../../shared/lib/zxingLoader';
@@ -372,7 +372,7 @@ export const Add2FAModal: React.FC<Props> = ({
                   <div
                     style={{
                       position: 'relative',
-                      border: '1px solid var(--color-border)',
+                      border: '1px solid var(--sem-border-default)',
                       borderRadius: 8,
                       overflow: 'hidden',
                       cursor: selectionMode ? 'crosshair' : 'default',
@@ -395,8 +395,8 @@ export const Add2FAModal: React.FC<Props> = ({
                           top: selection.y,
                           width: selection.width,
                           height: selection.height,
-                          border: '2px solid var(--color-primary)',
-                          background: 'rgba(59, 130, 246, 0.2)',
+                          border: '2px solid var(--sem-accent-primary)',
+                          background: 'var(--sem-state-primary-soft)',
                           pointerEvents: 'none',
                         }}
                       />
@@ -422,7 +422,7 @@ export const Add2FAModal: React.FC<Props> = ({
               {qrMessage && (
                 <div
                   className={qrMessage.type === 'error' ? 'form-error' : 'muted'}
-                  style={qrMessage.type === 'success' ? { color: 'var(--color-success)' } : undefined}
+                  style={qrMessage.type === 'success' ? { color: 'var(--sem-accent-success)' } : undefined}
                 >
                   {qrMessage.text}
                 </div>
@@ -455,3 +455,4 @@ export const Add2FAModal: React.FC<Props> = ({
     </div>
   );
 };
+

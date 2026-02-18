@@ -96,12 +96,12 @@
 .form-label {
   font-size: 12px;
   line-height: 16px;
-  color: var(--color-text-muted);
+  color: var(--sem-text-muted);
 }
 
 /* Settings modal: make selected "toggle titles" look like headers (white, not muted) */
 .form-label.settings-subheader {
-  color: var(--color-text);
+  color: var(--sem-text-primary);
   font-weight: 700;
   font-size: 13px;
   line-height: 16px;
@@ -115,11 +115,49 @@
 .form-field textarea,
 .form-textarea {
   width: 100%;
-  border-radius: var(--radius-sm);
-  border: 1px solid transparent; /* Reduce border noise globally */
-  background: var(--input-surface);
-  color: var(--color-text);
+  border-radius: var(--sem-radius-sm);
+  border: 1px solid var(--cmp-input-border);
+  background: var(--cmp-input-bg);
+  color: var(--cmp-input-text);
   padding: 10px 12px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.input::placeholder,
+.textarea::placeholder,
+.form-field input::placeholder,
+.form-field textarea::placeholder,
+.form-textarea::placeholder {
+  color: var(--cmp-input-placeholder);
+}
+
+.input:hover,
+.textarea:hover,
+.form-field input:hover,
+.form-field select:hover,
+.form-field textarea:hover,
+.form-textarea:hover {
+  background: var(--cmp-input-hover-bg);
+  border-color: var(--cmp-input-hover-border);
+}
+
+.input:disabled,
+.textarea:disabled,
+.form-field input:disabled,
+.form-field select:disabled,
+.form-field textarea:disabled,
+.form-textarea:disabled {
+  background: var(--cmp-input-disabled-bg);
+  border-color: var(--cmp-input-disabled-border);
+  color: var(--cmp-input-disabled-text);
+}
+
+.input:disabled::placeholder,
+.textarea:disabled::placeholder,
+.form-field input:disabled::placeholder,
+.form-field textarea:disabled::placeholder,
+.form-textarea:disabled::placeholder {
+  color: var(--cmp-input-disabled-placeholder);
 }
 
 /* Disable browser-native password reveal/clear controls.
@@ -157,19 +195,19 @@ select:-internal-autofill-selected,
 input:-internal-autofill-previewed,
 textarea:-internal-autofill-previewed,
 select:-internal-autofill-previewed {
-  -webkit-text-fill-color: var(--color-text) !important;
-  caret-color: var(--color-text) !important;
-  background-color: var(--input-surface) !important;
-  -webkit-box-shadow: 0 0 0 1000px var(--input-surface) inset !important;
-  box-shadow: 0 0 0 1000px var(--input-surface) inset !important;
+  -webkit-text-fill-color: var(--cmp-input-text) !important;
+  caret-color: var(--cmp-input-text) !important;
+  background-color: var(--cmp-input-bg) !important;
+  -webkit-box-shadow: 0 0 0 1000px var(--cmp-input-bg) inset !important;
+  box-shadow: 0 0 0 1000px var(--cmp-input-bg) inset !important;
 }
 
 /* Modern standard selector (supported widely since 2023) */
 input:autofill,
 textarea:autofill,
 select:autofill {
-  box-shadow: 0 0 0 1000px var(--input-surface) inset !important;
-  caret-color: var(--color-text) !important;
+  box-shadow: 0 0 0 1000px var(--cmp-input-bg) inset !important;
+  caret-color: var(--cmp-input-text) !important;
 }
 
 /* Textareas - minimum height + allow resize */
@@ -187,9 +225,10 @@ select:autofill {
 .form-field select:focus-visible,
 .form-field textarea:focus-visible,
 .form-textarea:focus-visible {
-  outline: var(--focus-ring);
-  outline-offset: var(--focus-ring-offset);
-  border-color: transparent;
+  outline: var(--cmp-input-focus-ring);
+  outline-offset: var(--cmp-input-focus-ring-offset);
+  border-color: var(--cmp-input-focus-border);
+  background: var(--cmp-input-focus-bg);
 }
 
 /* Notes textarea - larger than default */
@@ -200,7 +239,7 @@ select:autofill {
 
 /* Form validation/error text */
 .form-error {
-  color: var(--color-danger);
+  color: var(--sem-accent-danger);
   font-size: 12px;
   line-height: 16px;
 }
@@ -210,16 +249,23 @@ select:autofill {
   display: flex;
   align-items: center;
   width: 100%;
-  border-radius: var(--radius-sm);
-  border: 1px solid transparent;
-  background: var(--input-surface);
+  border-radius: var(--sem-radius-sm);
+  border: 1px solid var(--cmp-input-border);
+  background: var(--cmp-input-bg);
   overflow: hidden;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.input-with-actions:hover {
+  background: var(--cmp-input-hover-bg);
+  border-color: var(--cmp-input-hover-border);
 }
 
 .input-with-actions:focus-within {
-  outline: var(--focus-ring);
-  outline-offset: var(--focus-ring-offset);
-  border-color: transparent;
+  outline: var(--cmp-input-focus-ring);
+  outline-offset: var(--cmp-input-focus-ring-offset);
+  border-color: var(--cmp-input-focus-border);
+  background: var(--cmp-input-focus-bg);
 }
 
 .input-with-actions .input {
@@ -228,6 +274,7 @@ select:autofill {
   border: 0;
   border-radius: 0;
   background: transparent;
+  color: var(--cmp-input-text);
 }
 
 .input-with-actions .input:focus-visible {
@@ -252,7 +299,7 @@ select:autofill {
 .input-actions .icon-button:not(.icon-button-primary):not(.icon-button-danger) {
   border: 1px solid transparent;
   background: transparent;
-  color: var(--color-text-muted);
+  color: var(--sem-text-muted);
 }
 
 .input-actions .icon-button.icon-button-primary {
@@ -260,9 +307,9 @@ select:autofill {
 }
 
 .input-actions .icon-button:not(.icon-button-primary):not(.icon-button-danger):hover:not(:disabled) {
-  border-color: var(--border-subtle);
-  background: var(--surface-tint-02);
-  color: var(--color-text);
+  border-color: var(--sem-border-default);
+  background: var(--sem-surface-subtle);
+  color: var(--sem-text-primary);
 }
 
 .input-actions .icon-button:disabled {
@@ -274,7 +321,7 @@ select:autofill {
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
-  color: var(--color-text-muted);
+  color: var(--sem-text-muted);
   opacity: 0.88;
   transition: color 0.15s ease, opacity 0.15s ease;
 }
@@ -283,22 +330,23 @@ select:autofill {
 .input-actions .input-action-eye:focus-visible {
   border: 0 !important;
   background: transparent !important;
-  color: var(--color-text);
+  color: var(--sem-text-primary);
   opacity: 1;
 }
 
 /* Selected profile info block (summary panel) */
 .profile-selected {
   border: none;
-  border-radius: var(--radius-md);
-  background: var(--surface-block);
+  border-radius: var(--sem-radius-md);
+  background: var(--sem-surface-subtle);
   padding: 12px;
 }
 
 /* Small uppercase label style (section headings inside panels) */
 .profile-label {
   text-transform: uppercase;
-  color: var(--color-text-muted);
+  color: var(--sem-text-muted);
   font-size: 12px;
   letter-spacing: 0.08em;
 }
+

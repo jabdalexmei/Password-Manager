@@ -1,0 +1,144 @@
+:root {
+  --sem-font-body: var(--fd-font-body);
+  --sem-font-mono: var(--fd-font-mono);
+
+  --sem-radius-sm: var(--fd-radius-sm);
+  --sem-radius-md: var(--fd-radius-md);
+  --sem-radius-lg: var(--fd-radius-lg);
+  --sem-radius-pill: var(--fd-radius-pill);
+
+  --sem-shadow-card: var(--fd-shadow-card);
+  --sem-shadow-lg: var(--fd-shadow-lg);
+  --sem-shadow-popover: var(--fd-shadow-popover);
+
+  --sem-bg-app: var(--fd-bg-app);
+  --sem-bg-screen-startup: var(--fd-bg-startup);
+  --sem-bg-screen-profile-create: var(--fd-bg-profile-create);
+  --sem-bg-screen-login: var(--fd-bg-login);
+  --sem-bg-screen: var(--fd-bg-startup);
+
+  --sem-overlay-backdrop: var(--fd-overlay-backdrop);
+
+  --sem-surface-page: var(--fd-surface-page);
+  --sem-surface-panel: var(--fd-surface-panel);
+  --sem-surface-elevated: var(--fd-surface-elevated);
+  --sem-surface-subtle: var(--fd-surface-subtle);
+  --sem-surface-subtle-strong: var(--fd-surface-subtle-strong);
+  --sem-surface-subtle-alt: var(--fd-surface-subtle-strong);
+
+  --sem-border-default: var(--fd-border-default);
+
+  --sem-text-primary: var(--fd-text-primary);
+  --sem-text-muted: var(--fd-text-muted);
+  --sem-text-on-accent: var(--fd-text-on-accent);
+
+  --sem-accent-primary: var(--fd-accent-primary);
+  --sem-accent-primary-strong: var(--fd-accent-primary-strong);
+  --sem-accent-success: var(--fd-accent-success);
+  --sem-accent-danger: var(--fd-accent-danger);
+  --sem-accent-danger-strong: var(--fd-accent-danger-strong);
+
+  --sem-state-primary-soft: var(--fd-state-primary-soft);
+  --sem-state-success-soft: var(--fd-state-success-soft);
+  --sem-state-danger-soft: var(--fd-state-danger-soft);
+  --sem-state-danger-border-weak: var(--fd-state-danger-border-weak);
+  --sem-state-danger-hover-bg: var(--fd-state-danger-hover-bg);
+
+  --sem-focus-border: var(--fd-focus-border);
+  --sem-focus-border-strong: var(--fd-focus-border-strong);
+  --sem-focus-ring: 2px solid var(--fd-focus-ring-color);
+  --sem-focus-ring-offset: 2px;
+
+  --sem-scrollbar-size: var(--fd-scrollbar-size);
+  --sem-scrollbar-track: var(--fd-scrollbar-track);
+  --sem-scrollbar-thumb: var(--fd-scrollbar-thumb);
+  --sem-scrollbar-thumb-hover: var(--fd-scrollbar-thumb-hover);
+
+  --sem-nav-sidebar-bg: var(--fd-nav-sidebar-bg);
+  --sem-nav-sidebar-border: var(--fd-nav-sidebar-border);
+  --sem-nav-control-bg: var(--fd-nav-control-bg);
+  --sem-nav-control-border: var(--fd-nav-control-border);
+  --sem-nav-control-text: var(--fd-nav-control-text);
+  --sem-nav-control-hover-border: var(--fd-nav-control-hover-border);
+  --sem-nav-chip-bg: var(--fd-nav-chip-bg);
+  --sem-nav-chip-border: var(--fd-nav-chip-border);
+  --sem-nav-chip-text: var(--fd-nav-chip-text);
+  --sem-nav-chip-hover-border: var(--fd-nav-chip-hover-border);
+  --sem-nav-chip-active-bg: var(--fd-nav-chip-active-bg);
+  --sem-nav-chip-active-border: var(--fd-nav-chip-active-border);
+  --sem-nav-chip-active-text: var(--fd-nav-chip-active-text);
+  --sem-nav-folder-bg: var(--fd-nav-folder-bg);
+  --sem-nav-folder-border: var(--fd-nav-folder-border);
+  --sem-nav-folder-text: var(--fd-nav-folder-text);
+  --sem-nav-folder-count: var(--fd-nav-folder-count);
+  --sem-nav-folder-hover-bg: var(--fd-nav-folder-hover-bg);
+  --sem-nav-folder-hover-border: var(--fd-nav-folder-hover-border);
+  --sem-nav-folder-active-bg-start: var(--fd-nav-folder-active-bg-start);
+  --sem-nav-folder-active-bg-end: var(--fd-nav-folder-active-bg-end);
+  --sem-nav-folder-active-border: var(--fd-nav-folder-active-border);
+  --sem-nav-toggle-bg: var(--fd-nav-toggle-bg);
+  --sem-nav-toggle-border: var(--fd-nav-toggle-border);
+  --sem-nav-toggle-text: var(--fd-nav-toggle-text);
+  --sem-nav-toggle-hover-bg: var(--fd-nav-toggle-hover-bg);
+  --sem-nav-toggle-hover-border: var(--fd-nav-toggle-hover-border);
+  --sem-nav-toggle-hover-text: var(--fd-nav-toggle-hover-text);
+  --sem-nav-menu-bg: var(--fd-nav-menu-bg);
+  --sem-nav-menu-border: var(--fd-nav-menu-border);
+  --sem-nav-menu-shadow: var(--fd-nav-menu-shadow);
+  --sem-nav-menu-item-text: var(--fd-nav-menu-item-text);
+  --sem-nav-menu-item-hover-bg: var(--fd-nav-menu-item-hover-bg);
+  --sem-nav-menu-item-hover-border: var(--fd-nav-menu-item-hover-border);
+  --sem-nav-menu-item-danger-text: var(--fd-nav-menu-item-danger-text);
+
+  --sem-create-primary-bg: var(--fd-create-primary-bg);
+  --sem-create-primary-border: var(--fd-create-primary-border);
+  --sem-create-primary-text: var(--fd-create-primary-text);
+  --sem-create-primary-hover-bg: var(--fd-create-primary-hover-bg);
+  --sem-create-primary-hover-border: var(--fd-create-primary-hover-border);
+  --sem-create-primary-active-bg: var(--fd-create-primary-active-bg);
+  --sem-create-primary-active-border: var(--fd-create-primary-active-border);
+  --sem-create-primary-disabled-bg: var(--fd-create-primary-disabled-bg);
+  --sem-create-primary-disabled-border: var(--fd-create-primary-disabled-border);
+  --sem-create-primary-disabled-text: var(--fd-create-primary-disabled-text);
+  --sem-create-secondary-bg: var(--fd-create-secondary-bg);
+  --sem-create-secondary-border: var(--fd-create-secondary-border);
+  --sem-create-secondary-text: var(--fd-create-secondary-text);
+  --sem-create-secondary-hover-bg: var(--fd-create-secondary-hover-bg);
+  --sem-create-secondary-hover-border: var(--fd-create-secondary-hover-border);
+  --sem-create-secondary-active-bg: var(--fd-create-secondary-active-bg);
+  --sem-create-secondary-active-border: var(--fd-create-secondary-active-border);
+  --sem-create-secondary-disabled-bg: var(--fd-create-secondary-disabled-bg);
+  --sem-create-secondary-disabled-border: var(--fd-create-secondary-disabled-border);
+  --sem-create-secondary-disabled-text: var(--fd-create-secondary-disabled-text);
+  --sem-create-focus-ring-color: var(--fd-create-focus-ring-color);
+
+  --sem-input-bg: var(--fd-input-bg);
+  --sem-input-border: var(--fd-input-border);
+  --sem-input-text: var(--fd-input-text);
+  --sem-input-placeholder: var(--fd-input-placeholder);
+  --sem-input-hover-bg: var(--fd-input-hover-bg);
+  --sem-input-hover-border: var(--fd-input-hover-border);
+  --sem-input-focus-bg: var(--fd-input-focus-bg);
+  --sem-input-focus-border: var(--fd-input-focus-border);
+  --sem-input-focus-ring-color: var(--fd-input-focus-ring-color);
+  --sem-input-focus-ring-offset: var(--fd-input-focus-ring-offset);
+  --sem-input-disabled-bg: var(--fd-input-disabled-bg);
+  --sem-input-disabled-border: var(--fd-input-disabled-border);
+  --sem-input-disabled-text: var(--fd-input-disabled-text);
+  --sem-input-disabled-placeholder: var(--fd-input-disabled-placeholder);
+
+  --sem-card-bg: var(--fd-card-bg);
+  --sem-card-border: var(--fd-card-border);
+  --sem-card-text: var(--fd-card-text);
+  --sem-card-muted: var(--fd-card-muted);
+  --sem-card-hover-bg: var(--fd-card-hover-bg);
+  --sem-card-hover-border: var(--fd-card-hover-border);
+  --sem-card-active-bg-start: var(--fd-card-active-bg-start);
+  --sem-card-active-bg-end: var(--fd-card-active-bg-end);
+  --sem-card-active-border: var(--fd-card-active-border);
+  --sem-card-pill-bg: var(--fd-card-pill-bg);
+  --sem-card-pill-border: var(--fd-card-pill-border);
+  --sem-card-pill-text: var(--fd-card-pill-text);
+  --sem-card-focus-ring-color: var(--fd-card-focus-ring-color);
+  --sem-card-focus-ring-offset: var(--fd-card-focus-ring-offset);
+}

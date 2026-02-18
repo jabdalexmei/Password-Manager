@@ -10,9 +10,9 @@
    ========================================================================== */
 .tile,
 .profile-card {
-  background: var(--surface-block);
+  background: var(--sem-surface-subtle);
   border: 1px solid transparent;
-  border-radius: var(--radius-md);
+  border-radius: var(--sem-radius-md);
   padding: 14px 16px;
   transition:
     border-color 0.15s ease,
@@ -22,7 +22,7 @@
 
 .tile:hover,
 .profile-card:hover {
-  border-color: var(--border-subtle);
+  border-color: var(--sem-border-default);
 }
 
 .tile--selectable {
@@ -30,11 +30,12 @@
 }
 
 .tile--selectable:hover {
-  border-color: var(--color-primary);
+  border-color: var(--sem-accent-primary);
 }
 
 .tile--selected {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px var(--primary-soft-bg);
+  border-color: var(--sem-accent-primary);
+  box-shadow: 0 0 0 2px var(--sem-state-primary-soft);
 }
+
 

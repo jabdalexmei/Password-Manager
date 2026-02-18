@@ -3,7 +3,7 @@
    --------------------------------------------------------------------------
    Purpose:
    - App-level UI building blocks (layouts, forms, buttons, dialogs, toasts).
-   - Uses CSS variables (var(--color-*), --radius-*, --shadow-*) coming from theme(s).
+   - Uses semantic/component tokens (`--sem-*`, `--cmp-*`) provided by the active theme.
    Conventions:
    - "btn" = base button, "btn-*" = variants.
    - "dialog-*" = modal/dialog UI blocks.
@@ -60,15 +60,27 @@
   align-items: center;
   justify-content: center;
   padding: 32px;
-  background: var(--bg-screen);
+  background: var(--sem-bg-screen);
+}
+
+.screen-shell--startup {
+  --sem-bg-screen: var(--sem-bg-screen-startup);
+}
+
+.screen-shell--profile-create {
+  --sem-bg-screen: var(--sem-bg-screen-profile-create);
+}
+
+.screen-shell--login {
+  --sem-bg-screen: var(--sem-bg-screen-login);
 }
 
 .screen-card {
   width: min(980px, 100%);
-  background: var(--surface-page);
-  border: 1px solid var(--border-subtle);
-  box-shadow: var(--shadow-card);
-  border-radius: var(--radius-lg);
+  background: var(--sem-surface-page);
+  border: 1px solid var(--sem-border-default);
+  box-shadow: var(--sem-shadow-card);
+  border-radius: var(--sem-radius-lg);
   padding: 32px 36px 28px;
   display: flex;
   flex-direction: column;
@@ -127,3 +139,4 @@
   justify-content: space-between;
   gap: 10px;
 }
+

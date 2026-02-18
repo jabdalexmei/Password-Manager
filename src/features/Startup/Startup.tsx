@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import ConfirmDialog from '../../shared/components/ConfirmDialog';
 import { useTranslation } from '../../shared/lib/i18n';
 import { ProfileMeta, setActiveProfile } from '../../shared/lib/tauri';
@@ -81,7 +81,7 @@ const Startup: React.FC<StartupProps> = ({ onCreate, onOpen, onBack }) => {
   }, [error, loading, onOpen, profiles, t]);
 
   return (
-    <div className="screen-shell">
+    <div className="screen-shell screen-shell--startup">
       <div className="screen-card">
         <header className="startup-header">
           <h1 className="startup-title">{t('title')}</h1>
@@ -122,3 +122,4 @@ const Startup: React.FC<StartupProps> = ({ onCreate, onOpen, onBack }) => {
 };
 
 export default Startup;
+

@@ -20,12 +20,13 @@
 }
 
 .icon-button-danger {
-  color: var(--color-danger);
-  border-color: var(--danger-border-weak);
+  color: var(--cmp-button-danger-bg);
+  border-color: var(--cmp-button-danger-border-weak);
 }
 
 .icon-button-danger:hover {
-  border-color: var(--color-danger);
-  background: var(--danger-hover-bg);
+  border-color: var(--cmp-button-danger-border);
+  background: var(--cmp-button-danger-hover-soft-bg);
 }
+
 

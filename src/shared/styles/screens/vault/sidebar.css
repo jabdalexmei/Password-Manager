@@ -2,7 +2,7 @@
 
 .vault-body {
   display: grid;
-  grid-template-columns: calc(330px + var(--scrollbar-size, 10px)) minmax(0, 1.2fr) minmax(0, 1.3fr);
+  grid-template-columns: calc(330px + var(--sem-scrollbar-size, 10px)) minmax(0, 1.2fr) minmax(0, 1.3fr);
   flex: 1;
   min-height: 0;
 }
@@ -12,8 +12,8 @@
    ======================================================================= */
 
 .vault-sidebar {
-  background: var(--color-surface-2);
-  border-right: 1px solid var(--color-border);
+  background: var(--cmp-nav-sidebar-bg);
+  border-right: 1px solid var(--cmp-nav-sidebar-border);
   padding: 40px;
   min-width: 0;
   overflow-y: auto;
@@ -57,27 +57,33 @@
   max-width: 100%;
   min-width: 0;
   padding: 12px 12px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-  background: var(--color-input-bg);
-  color: var(--color-text);
+  border-radius: var(--sem-radius-md);
+  border: 1px solid var(--cmp-input-border);
+  background: var(--cmp-input-bg);
+  color: var(--cmp-input-text);
+}
+
+.vault-search:hover {
+  border-color: var(--cmp-input-hover-border);
+  background: var(--cmp-input-hover-bg);
 }
 
 .vault-search:focus-visible {
-  outline: 2px solid var(--color-primary);
-  border-color: transparent;
+  outline: var(--cmp-input-focus-ring);
+  outline-offset: var(--cmp-input-focus-ring-offset);
+  border-color: var(--cmp-input-focus-border);
+  background: var(--cmp-input-focus-bg);
 }
 
 .vault-filter-btn {
-  /* only shape matches top buttons */
+  /* Keep shape aligned with the action row buttons. */
   width: 40px;
   height: 40px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--sem-radius-sm);
 
-  /* keep existing colors/behavior */
-  border: 1px solid var(--greycolorsecondaryborder);
-  background: var(--greycolorsecondary);
-  color: var(--color-text);
+  border: 1px solid var(--cmp-nav-control-border);
+  background: var(--cmp-nav-control-bg);
+  color: var(--cmp-nav-control-text);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -86,7 +92,7 @@
 }
 
 .vault-filter-btn:hover {
-  border-color: var(--focus-border);
+  border-color: var(--cmp-nav-control-hover-border);
 }
 
 .vault-filter-btn:active {
@@ -94,8 +100,8 @@
 }
 
 .vault-filter-btn:focus-visible {
-  outline: var(--focus-ring);
-  outline-offset: var(--focus-ring-offset);
+  outline: var(--cmp-nav-focus-ring);
+  outline-offset: var(--cmp-nav-focus-ring-offset);
 }
 
 .vault-filter-backdrop {
@@ -115,10 +121,10 @@
   width: fit-content;
   max-width: 100%;
   padding: 8px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface-2);
-  box-shadow: var(--shadow-popover);
+  border-radius: var(--sem-radius-md);
+  border: 1px solid var(--cmp-nav-menu-border);
+  background: var(--cmp-nav-menu-bg);
+  box-shadow: var(--cmp-nav-menu-shadow);
 
   /* Filter chips edit size */
   --filter-chip-width: 100px;
@@ -129,7 +135,7 @@
 .vault-filter-panel__title {
   font-size: 12px;
   font-weight: 600;
-  color: var(--color-text);
+  color: var(--cmp-nav-menu-item-text);
   margin-bottom: 10px;
 }
 
@@ -156,10 +162,10 @@
   text-align: center;
 
   padding: var(--filter-chip-pad-y) var(--filter-chip-pad-x);
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--greycolorsecondaryborder);
-  background: var(--greycolorsecondary);
-  color: var(--color-text);
+  border-radius: var(--sem-radius-pill);
+  border: 1px solid var(--cmp-nav-chip-border);
+  background: var(--cmp-nav-chip-bg);
+  color: var(--cmp-nav-chip-text);
   font-size: var(--filter-chip-font-size);
   line-height: 1;
   cursor: pointer;
@@ -168,7 +174,7 @@
 }
 
 .filter-chip:hover {
-  border-color: var(--focus-border);
+  border-color: var(--cmp-nav-chip-hover-border);
 }
 
 .filter-chip:active {
@@ -176,14 +182,14 @@
 }
 
 .filter-chip.is-active {
-  background: var(--blueprimarycolor);
-  border-color: var(--blueprimarycolor);
-  color: var(--color-on-primary);
+  background: var(--cmp-nav-chip-active-bg);
+  border-color: var(--cmp-nav-chip-active-border);
+  color: var(--cmp-nav-chip-active-text);
 }
 
 .filter-chip:focus-visible {
-  outline: var(--focus-ring);
-  outline-offset: var(--focus-ring-offset);
+  outline: var(--cmp-nav-focus-ring);
+  outline-offset: var(--cmp-nav-focus-ring-offset);
 }
 
 .vault-sidebar-actions {
@@ -287,7 +293,7 @@
 
 .vault-sidebar-title {
   font-weight: 700;
-  color: var(--color-text);
+  color: var(--cmp-nav-folder-text);
   margin-bottom: 8px;
   min-width: 0;
   max-width: 100%;
@@ -334,10 +340,10 @@
   flex: 0 0 24px;
   width: 24px;
   height: 24px;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--cmp-nav-toggle-border);
   border-radius: 6px;
-  background: transparent;
-  color: var(--color-text-muted);
+  background: var(--cmp-nav-toggle-bg);
+  color: var(--cmp-nav-toggle-text);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -351,9 +357,9 @@
 
 .vault-folder-toggle:hover,
 .vault-folder-toggle:focus-visible {
-  color: var(--color-text);
-  border-color: var(--focus-border);
-  background: var(--color-surface-2);
+  color: var(--cmp-nav-toggle-hover-text);
+  border-color: var(--cmp-nav-toggle-hover-border);
+  background: var(--cmp-nav-toggle-hover-bg);
   outline: none;
 }
 
@@ -373,9 +379,7 @@
 }
 
 
-/* !!! CRITICAL FIX: DO NOT RESET STYLES FOR li button !!!
-   Otherwise .vault-folder becomes transparent and visually broken.
-*/
+/* Keep list item buttons styled to avoid transparent folder rows. */
 
 .vault-folder {
   width: 100%;
@@ -385,17 +389,17 @@
   align-items: center;
   justify-content: space-between;
   padding: 10px 12px;
-  background: var(--color-surface-1);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  color: var(--color-text);
+  background: var(--cmp-nav-folder-bg);
+  border: 1px solid var(--cmp-nav-folder-border);
+  border-radius: var(--sem-radius-sm);
+  color: var(--cmp-nav-folder-text);
   cursor: pointer;
   overflow: hidden;
 }
 
 .vault-folder:hover {
-  border-color: var(--focus-border);
-  background: var(--color-surface-2);
+  border-color: var(--cmp-nav-folder-hover-border);
+  background: var(--cmp-nav-folder-hover-bg);
   transform: translateY(-1px);
   transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
 }
@@ -414,15 +418,15 @@
 }
 
 .vault-folder:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
+  outline: var(--cmp-nav-focus-ring);
+  outline-offset: var(--cmp-nav-focus-ring-offset);
 }
 
 .vault-folder-list li.active > .vault-folder,
 .vault-folder-list li.active > .vault-folder-node > .vault-folder,
 .vault-folder-tree-children li.active > .vault-folder-node > .vault-folder {
-  background: linear-gradient(90deg, var(--color-surface-2) 0%, var(--color-surface-3) 100%);
-  border-color: var(--color-primary);
+  background: linear-gradient(90deg, var(--cmp-nav-folder-active-bg-start) 0%, var(--cmp-nav-folder-active-bg-end) 100%);
+  border-color: var(--cmp-nav-folder-active-border);
 }
 
 .folder-name {
@@ -433,7 +437,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-weight: 600;
-  color: var(--color-text);
+  color: var(--cmp-nav-folder-text);
 }
 
 .vault-folder--with-count .folder-name {
@@ -443,14 +447,14 @@
 }
 
 .folder-badge {
-  color: var(--color-primary);
+  color: var(--cmp-nav-chip-active-border);
   margin-left: 6px;
 }
 
 .folder-count {
   flex: 0 0 auto;
   white-space: nowrap;
-  color: var(--color-text-muted);
+  color: var(--cmp-nav-folder-count);
   font-size: 13px;
   margin-left: 8px;
 }
@@ -465,3 +469,4 @@
   font-variant-numeric: tabular-nums;
   overflow: hidden;
 }
+

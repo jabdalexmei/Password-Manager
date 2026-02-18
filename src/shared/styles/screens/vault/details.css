@@ -1,12 +1,12 @@
 ﻿/* Details */
 .vault-details {
-  border-left: 1px solid var(--color-border);
+  border-left: 1px solid var(--sem-border-default);
 }
 
 .vault-detail-card {
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  background: var(--sem-surface-panel);
+  border: 1px solid var(--sem-border-default);
+  border-radius: var(--sem-radius-sm);
   padding: 14px 16px;
   overflow-y: auto;
   overflow-x: hidden;
@@ -43,7 +43,7 @@
 }
 
 .detail-label {
-  color: var(--color-text-muted);
+  color: var(--sem-text-muted);
   font-size: 13px;
 }
 
@@ -69,11 +69,11 @@
 }
 
 .detail-value-box {
-  background: var(--color-surface-1);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  background: var(--sem-surface-page);
+  border: 1px solid var(--sem-border-default);
+  border-radius: var(--sem-radius-sm);
   padding: 10px 12px;
-  color: var(--color-text);
+  color: var(--sem-text-primary);
   min-height: 44px;
   display: flex;
   align-items: center;
@@ -84,7 +84,7 @@
 }
 
 .detail-value-text {
-  color: var(--color-text);
+  color: var(--sem-text-primary);
   font-weight: 600;
   word-break: break-word;
   overflow-wrap: anywhere;
@@ -150,37 +150,37 @@
   justify-content: center;
   width: 34px;
   height: 34px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface-3);
-  color: var(--color-text);
+  border-radius: var(--sem-radius-sm);
+  border: 1px solid var(--sem-border-default);
+  background: var(--sem-surface-elevated);
+  color: var(--sem-text-primary);
   cursor: pointer;
   transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .icon-button-primary {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: var(--color-on-primary);
+  background: var(--sem-accent-primary);
+  border-color: var(--sem-accent-primary);
+  color: var(--sem-text-on-accent);
 }
 
 .icon-button-primary:hover {
-  background: var(--color-primary-strong);
-  border-color: var(--color-primary-strong);
+  background: var(--sem-accent-primary-strong);
+  border-color: var(--sem-accent-primary-strong);
 }
 
 .icon-button:not(.icon-button-primary):not(.icon-button-danger):hover {
-  border-color: var(--focus-border-strong);
-  background: var(--color-surface-3);
+  border-color: var(--sem-focus-border-strong);
+  background: var(--sem-surface-elevated);
 }
 
 
 .attachments-panel {
   margin-top: 12px;
   padding: 12px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-2);
+  border: 1px solid var(--sem-border-default);
+  border-radius: var(--sem-radius-md);
+  background: var(--sem-surface-panel);
   min-width: 0;
 }
 
@@ -203,7 +203,7 @@
   align-items: center;
   gap: 8px;
   font-weight: 700;
-  color: var(--color-text);
+  color: var(--sem-text-primary);
   min-width: 0;
 }
 
@@ -219,9 +219,9 @@
 }
 
 .attachments-body.drag-over {
-  outline: 2px dashed var(--focus-border-strong);
+  outline: 2px dashed var(--sem-focus-border-strong);
   outline-offset: 4px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--sem-radius-sm);
 }
 
 .attachment-row {
@@ -230,9 +230,9 @@
   align-items: center;
   gap: 12px;
   padding: 12px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-1);
+  border: 1px solid var(--sem-border-default);
+  border-radius: var(--sem-radius-sm);
+  background: var(--sem-surface-page);
   flex-wrap: wrap;
   min-width: 0;
 }
@@ -284,9 +284,9 @@
   width: 100%;
   max-height: 60vh;
   overflow: auto;
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  background: var(--sem-surface-panel);
+  border: 1px solid var(--sem-border-default);
+  border-radius: var(--sem-radius-sm);
   padding: 12px;
   white-space: pre-wrap;
   text-align: left;
@@ -296,7 +296,7 @@
   width: 100%;
   height: 60vh;
   border: none;
-  background: var(--color-surface-1);
+  background: var(--sem-surface-page);
 }
 
 .attachment-preview-unsupported {
@@ -307,12 +307,12 @@
 }
 
 .icon-button:focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--sem-accent-primary);
   outline-offset: 2px;
 }
 
 .vault-empty {
-  color: var(--color-text-muted);
+  color: var(--sem-text-muted);
   text-align: center;
   padding: 24px;
 }
@@ -336,3 +336,4 @@
   font-size: 14px;
   line-height: 18px;
 }
+

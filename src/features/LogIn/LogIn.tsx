@@ -1,4 +1,4 @@
-import React, { FormEvent, useEffect, useState } from 'react';
+﻿import React, { FormEvent, useEffect, useState } from 'react';
 import { IconPreview, IconPreviewOff } from '@/shared/icons/lucide/icons';
 import { useTranslation } from '../../shared/lib/i18n';
 import { useLogIn } from './hooks/useLogIn';
@@ -42,7 +42,7 @@ const LogIn: React.FC<LogInProps> = ({
   }
 
   return (
-    <div className="screen-shell">
+    <div className="screen-shell screen-shell--login">
       <div className="screen-card screen-card--borderless login-card">
         <header className="login-header">
           <h1 className="login-title">{t('title')}</h1>
@@ -125,3 +125,4 @@ const LogIn: React.FC<LogInProps> = ({
 };
 
 export default LogIn;
+

@@ -4,7 +4,7 @@
 
 .vault-datacards,
 .vault-details {
-  background: var(--color-surface-2); /* match .vault-sidebar */
+  background: var(--sem-surface-panel); /* match .vault-sidebar */
   padding: 16px 20px;
   overflow: hidden;
   display: flex;
@@ -19,7 +19,7 @@
   gap: 8px;
   font-weight: 700;
   letter-spacing: 0.2px;
-  color: var(--color-text);
+  color: var(--sem-text-primary);
 }
 
 .vault-folder-title {
@@ -87,10 +87,10 @@
   box-sizing: border-box;
   text-align: left;
   padding: 10px 12px;
-  background: var(--color-surface-1);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  color: var(--color-text);
+  background: var(--cmp-card-bg);
+  border: 1px solid var(--cmp-card-border);
+  border-radius: var(--sem-radius-sm);
+  color: var(--cmp-card-text);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -98,27 +98,27 @@
 }
 
 .vault-datacard:hover {
-  border-color: var(--focus-border); /* primary hint */
-  background: var(--color-surface-2);
+  border-color: var(--cmp-card-hover-border);
+  background: var(--cmp-card-hover-bg);
   transform: translateY(-1px);
   transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
 }
 
 .vault-datacard:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
+  outline: var(--cmp-card-focus-ring);
+  outline-offset: var(--cmp-card-focus-ring-offset);
 }
 
 .vault-datacard.active {
-  border-color: var(--color-primary);
-  background: linear-gradient(90deg, var(--color-surface-3) 0%, var(--color-surface-1) 70%);
+  border-color: var(--cmp-card-active-border);
+  background: linear-gradient(90deg, var(--cmp-card-active-bg-start) 0%, var(--cmp-card-active-bg-end) 70%);
 }
 
 .datacard-title {
   font-size: 14px;
   line-height: 18px;
   font-weight: 700;
-  color: var(--color-text);
+  color: var(--cmp-card-text);
   flex: 1 1 auto;
   min-width: 0;
   white-space: nowrap;
@@ -127,7 +127,7 @@
 }
 
 .datacard-title--placeholder {
-  color: var(--color-text-muted);
+  color: var(--cmp-card-muted);
   font-style: italic;
 }
 
@@ -172,7 +172,7 @@
   flex-wrap: nowrap;
   gap: 10px;
   align-items: center;
-  color: var(--color-text-muted);
+  color: var(--cmp-card-muted);
   font-size: 12px;
   line-height: 16px;
   min-width: 0;
@@ -205,20 +205,21 @@
 }
 
 .vault-datacard.active .datacard-title {
-  color: var(--color-text);
+  color: var(--cmp-card-text);
 }
 
 .pill {
   display: inline-flex;
   align-items: center;
   padding: 4px 8px;
-  border-radius: var(--radius-pill);
-  background: var(--color-surface-3);
-  border: 1px solid var(--color-border);
-  color: var(--color-text);
+  border-radius: var(--sem-radius-pill);
+  background: var(--cmp-card-pill-bg);
+  border: 1px solid var(--cmp-card-pill-border);
+  color: var(--cmp-card-pill-text);
   font-size: 12px;
 }
 
 .muted {
-  color: var(--color-text-muted);
+  color: var(--cmp-card-muted);
 }
+

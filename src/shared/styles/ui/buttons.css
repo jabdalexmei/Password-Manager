@@ -1,10 +1,4 @@
-﻿/* ==========================================================================
-   Buttons
-   --------------------------------------------------------------------------
-   - Base button: sizing, alignment, transitions, disabled state.
-   - Variants: primary / secondary / danger / ghost / outline.
-   - Icon-only buttons: fixed square.
-   ========================================================================== */
+﻿/* Shared button base */
 .btn {
   cursor: pointer;
   display: inline-flex;
@@ -13,112 +7,193 @@
   gap: 8px;
   padding: 12px 14px;
   font-weight: 600;
-  border-radius: var(--radius-sm);
+  border-radius: var(--sem-radius-sm);
   border: 1px solid transparent;
-  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-/* Icon button (square) */
 .btn-icon {
   width: 38px;
   height: 38px;
   padding: 0;
 }
 
-/* Compact button (used for small inline actions like "Open" in Details) */
 .btn-compact {
   padding: 8px 12px;
   min-height: 34px;
 }
 
-/* Disabled buttons: dimmed + no pointer/transform */
 .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
 }
 
-/* Primary action button (main call-to-action) */
 .btn-primary {
-  background: var(--color-primary);
-  color: var(--color-on-primary);
-  border-color: var(--color-primary);
+  background: var(--cmp-create-primary-bg);
+  color: var(--cmp-create-primary-text);
+  border-color: var(--cmp-create-primary-border);
 }
 
 .btn-primary:not(:disabled):hover {
-  background: var(--color-primary-strong);
+  background: var(--cmp-create-primary-hover-bg);
+  border-color: var(--cmp-create-primary-hover-border);
 }
 
-/* Secondary action button (neutral) */
+.btn-primary:not(:disabled):active {
+  background: var(--cmp-create-primary-active-bg);
+  border-color: var(--cmp-create-primary-active-border);
+}
+
+.btn-primary:focus-visible {
+  outline: var(--cmp-create-focus-ring);
+  outline-offset: var(--cmp-create-focus-ring-offset);
+}
+
+.btn-primary:disabled {
+  background: var(--cmp-create-primary-disabled-bg);
+  border-color: var(--cmp-create-primary-disabled-border);
+  color: var(--cmp-create-primary-disabled-text);
+}
+
 .btn-secondary {
-  /* Solid fill (no gradient) - matches the old/demo look */
-  background: var(--btn-secondary-bg, var(--surface-container));
-  color: var(--btn-secondary-text, var(--color-text));
-  border-color: var(--btn-secondary-border, var(--border-subtle));
+  background: var(--cmp-create-secondary-bg);
+  color: var(--cmp-create-secondary-text);
+  border-color: var(--cmp-create-secondary-border);
 }
 
 .btn-secondary:not(:disabled):hover {
-  border-color: var(--color-primary);
+  background: var(--cmp-create-secondary-hover-bg);
+  border-color: var(--cmp-create-secondary-hover-border);
 }
 
-/* Destructive action button */
+.btn-secondary:not(:disabled):active {
+  background: var(--cmp-create-secondary-active-bg);
+  border-color: var(--cmp-create-secondary-active-border);
+}
+
+.btn-secondary:focus-visible {
+  outline: var(--cmp-create-focus-ring);
+  outline-offset: var(--cmp-create-focus-ring-offset);
+}
+
+.btn-secondary:disabled {
+  background: var(--cmp-create-secondary-disabled-bg);
+  border-color: var(--cmp-create-secondary-disabled-border);
+  color: var(--cmp-create-secondary-disabled-text);
+}
+
 .btn-danger {
-  background: var(--color-danger);
-  color: var(--color-on-primary);
-  border-color: var(--color-danger);
+  background: var(--cmp-button-danger-bg);
+  color: var(--cmp-button-danger-text);
+  border-color: var(--cmp-button-danger-border);
 }
 
 .btn-danger:not(:disabled):hover {
-  background: var(--color-danger-strong);
+  background: var(--cmp-button-danger-hover-bg);
+  border-color: var(--cmp-button-danger-hover-border);
 }
 
-/* Ghost button (looks like secondary now; keep name for semantic usage) */
+.btn-danger:not(:disabled):active {
+  background: var(--cmp-button-danger-active-bg);
+  border-color: var(--cmp-button-danger-active-border);
+}
+
+.btn-danger:focus-visible {
+  outline: var(--cmp-button-danger-focus-ring);
+  outline-offset: var(--cmp-button-danger-focus-ring-offset);
+}
+
+.btn-danger:disabled {
+  background: var(--cmp-button-danger-disabled-bg);
+  border-color: var(--cmp-button-danger-disabled-border);
+  color: var(--cmp-button-danger-disabled-text);
+}
+
 .btn-ghost {
-  background: var(--surface-container);
-  color: var(--color-text);
-  border-color: var(--border-subtle);
+  background: var(--cmp-button-ghost-bg);
+  color: var(--cmp-button-ghost-text);
+  border-color: var(--cmp-button-ghost-border);
 }
 
 .btn-ghost:not(:disabled):hover {
-  border-color: var(--color-primary);
+  background: var(--cmp-button-ghost-hover-bg);
+  color: var(--cmp-button-ghost-hover-text);
+  border-color: var(--cmp-button-ghost-hover-border);
 }
 
-/* Outline button (transparent background) */
+.btn-ghost:not(:disabled):active {
+  background: var(--cmp-button-ghost-active-bg);
+  color: var(--cmp-button-ghost-active-text);
+  border-color: var(--cmp-button-ghost-active-border);
+}
+
+.btn-ghost:focus-visible {
+  outline: var(--cmp-button-ghost-focus-ring);
+  outline-offset: var(--cmp-button-ghost-focus-ring-offset);
+}
+
+.btn-ghost:disabled {
+  background: var(--cmp-button-ghost-disabled-bg);
+  color: var(--cmp-button-ghost-disabled-text);
+  border-color: var(--cmp-button-ghost-disabled-border);
+}
+
 .btn-outline {
-  background: transparent;
-  color: var(--color-text);
-  border-color: var(--border-subtle);
+  background: var(--cmp-button-outline-bg);
+  color: var(--cmp-button-outline-text);
+  border-color: var(--cmp-button-outline-border);
 }
 
-/* Link-styled button (text-only action) */
+.btn-outline:not(:disabled):hover {
+  background: var(--cmp-button-outline-hover-bg);
+  color: var(--cmp-button-outline-hover-text);
+  border-color: var(--cmp-button-outline-hover-border);
+}
+
+.btn-outline:not(:disabled):active {
+  background: var(--cmp-button-outline-active-bg);
+  color: var(--cmp-button-outline-active-text);
+  border-color: var(--cmp-button-outline-active-border);
+}
+
+.btn-outline:focus-visible {
+  outline: var(--cmp-button-outline-focus-ring);
+  outline-offset: var(--cmp-button-outline-focus-ring-offset);
+}
+
+.btn-outline:disabled {
+  color: var(--cmp-button-outline-disabled-text);
+  border-color: var(--cmp-button-outline-disabled-border);
+}
+
 .link-button {
   background: none;
   border: none;
-  color: var(--color-primary);
+  color: var(--cmp-button-link-text);
   font-weight: 600;
   cursor: pointer;
   text-decoration: none;
 }
 
 .link-button:hover {
+  color: var(--cmp-button-link-hover-text);
   text-decoration: underline;
 }
 
+.link-button:disabled {
+  color: var(--cmp-button-link-disabled-text);
+  cursor: not-allowed;
+}
 
-/* ==========================================================================
-   Legacy / compatibility styles
-   --------------------------------------------------------------------------
-   - There is still a ".primary.primary-danger" rule here.
-   - If you standardize on ".btn" variants everywhere, consider removing it later,
-     but only after confirming no components still use ".primary".
-   ========================================================================== */
-/* Small danger button based on .primary */
+/* Legacy class kept until all usages are removed from TSX */
 .primary.primary-danger {
-  background-color: var(--color-danger);
-  color: var(--color-on-primary);
-  border-color: var(--color-danger);
+  background-color: var(--cmp-button-danger-bg);
+  color: var(--cmp-button-danger-text);
+  border-color: var(--cmp-button-danger-border);
 }
 
 .primary.primary-danger:not(:disabled):hover {
-  background-color: var(--color-danger-strong);
+  background-color: var(--cmp-button-danger-hover-bg);
+  border-color: var(--cmp-button-danger-hover-border);
 }

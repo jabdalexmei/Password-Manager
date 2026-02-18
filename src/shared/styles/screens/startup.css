@@ -1,4 +1,4 @@
-.startup-footer {
+﻿.startup-footer {
   margin-top: 18px;
   display: flex;
   align-items: center;
@@ -15,19 +15,19 @@
   margin: 0;
   font-size: 28px;
   font-weight: 700;
-  color: var(--color-text);
+  color: var(--sem-text-primary);
 }
 
 .startup-subtitle {
   margin: 6px 0 0 0;
-  color: var(--color-text-muted);
+  color: var(--sem-text-muted);
   font-size: 15px;
 }
 
 .startup-footnote {
   margin-top: 20px;
   text-align: center;
-  color: var(--color-text-muted);
+  color: var(--sem-text-muted);
   font-size: 12px;
 }
 
@@ -41,3 +41,4 @@
     align-items: stretch;
   }
 }
+

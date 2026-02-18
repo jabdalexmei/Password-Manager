@@ -48,12 +48,15 @@ export const PasswordGeneratorModal: React.FC<PasswordGeneratorModalProps> = ({
   const normalizedStrength = Math.min(1, Math.max(0, (bits - minBitsForMeter) / (maxBitsForMeter - minBitsForMeter)));
 
   // Make the early part of the scale visually "redder" (gamma curve).
-  // hue: 0 = red, 120 = green (passing through orange in the middle).
-  const strengthHue = Math.round(Math.pow(normalizedStrength, 1.6) * 120);
+  const strengthToneClass =
+    bits < 40
+      ? 'generator-strength-fill--weak'
+      : bits < 80
+        ? 'generator-strength-fill--medium'
+        : 'generator-strength-fill--strong';
 
   const strengthFillStyle: React.CSSProperties = {
     width: `${normalizedStrength * 100}%`,
-    backgroundColor: `hsl(${strengthHue}, 85%, 45%)`,
   };
 
   const handleCheckboxChange = (key: keyof PasswordGeneratorOptions) => (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -121,7 +124,7 @@ export const PasswordGeneratorModal: React.FC<PasswordGeneratorModalProps> = ({
             </div>
 
             <div className="generator-strength-bar">
-              <div className="generator-strength-fill" style={strengthFillStyle} />
+              <div className={`generator-strength-fill ${strengthToneClass}`} style={strengthFillStyle} />
             </div>
           </div>
 

@@ -1,64 +1,40 @@
 :root {
-  /* Use theme tokens for default text and background colors. */
-  color: var(--color-text);
-  background-color: var(--color-bg);
-  font-family: var(--font-body);
+  color: var(--sem-text-primary);
+  background-color: var(--sem-bg-app);
+  font-family: var(--sem-font-body);
 
-  /* -----------------------------------------------------------------------
-     Extra semantic tokens for custom UI controls (filters chips, etc.)
-     - keep them as aliases so themes can override in one place
-     --------------------------------------------------------------------- */
-  --greycolorsecondary: var(--btn-secondary-bg, var(--surface-container, var(--color-surface-2)));
-  --greycolorsecondaryborder: var(--btn-secondary-border, var(--border-subtle, var(--color-border)));
-  --blueprimarycolor: var(--color-primary);
-  --blueprimarycolorstrong: var(--color-primary-strong);
-
-  /* Consistent app scrollbar (dark gray) */
-  --scrollbar-size: 10px;
-  --scrollbar-track: var(--color-surface-2);
-  --scrollbar-thumb: var(--color-border);
-  --scrollbar-thumb-hover: color-mix(in srgb, var(--color-surface-1) 90%, var(--color-border) 10%);
-
-  /* Spacing between a form field label text and its input field */
   --spacing-between-form-field-label-text-and-input-field: 6px;
   --spacing-between-navigation-field-label-text-and-input-field: 10px;
 }
 
-/* Apply standard box-sizing globally. */
 * {
   box-sizing: border-box;
-  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  scrollbar-color: var(--sem-scrollbar-thumb) var(--sem-scrollbar-track);
   scrollbar-width: thin;
 }
 
 *::-webkit-scrollbar {
-  width: var(--scrollbar-size);
-  height: var(--scrollbar-size);
+  width: var(--sem-scrollbar-size);
+  height: var(--sem-scrollbar-size);
 }
 
 *::-webkit-scrollbar-track {
-  background: var(--scrollbar-track);
+  background: var(--sem-scrollbar-track);
   border-radius: 999px;
 }
 
 *::-webkit-scrollbar-thumb {
-  background: var(--scrollbar-thumb);
+  background: var(--sem-scrollbar-thumb);
   border-radius: 999px;
-  border: 2px solid var(--scrollbar-track);
+  border: 2px solid var(--sem-scrollbar-track);
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: var(--scrollbar-thumb-hover);
-}
-
-@supports not (color: color-mix(in srgb, black 50%, white 50%)) {
-  :root {
-    --scrollbar-thumb-hover: var(--color-surface-1);
-  }
+  background: var(--sem-scrollbar-thumb-hover);
 }
 
 *::-webkit-scrollbar-corner {
-  background: var(--scrollbar-track);
+  background: var(--sem-scrollbar-track);
 }
 
 html,
@@ -69,8 +45,7 @@ body,
   min-height: 100vh;
 }
 
-/* Shared application background. */
 body {
-  background: var(--bg-screen, var(--bg-app));
-  color: var(--color-text);
+  background: var(--sem-bg-screen);
+  color: var(--sem-text-primary);
 }

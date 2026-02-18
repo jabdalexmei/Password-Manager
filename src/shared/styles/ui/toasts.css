@@ -16,12 +16,12 @@
 
 .toast {
   min-width: 240px;
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  background: var(--sem-surface-panel);
+  border: 1px solid var(--sem-border-default);
+  border-radius: var(--sem-radius-sm);
   padding: 12px 34px 12px 14px;
-  color: var(--color-text);
-  box-shadow: var(--shadow-card);
+  color: var(--sem-text-primary);
+  box-shadow: var(--sem-shadow-card);
   position: relative;
 
   display: flex;
@@ -50,7 +50,7 @@
 
   border: 0;
   background: transparent;
-  color: var(--color-text-muted);
+  color: var(--sem-text-muted);
   cursor: pointer;
   font-size: 16px;
   font-weight: 700;
@@ -59,7 +59,7 @@
 }
 
 .toast-close:hover {
-  color: var(--color-text);
+  color: var(--sem-text-primary);
   opacity: 1;
 }
 
@@ -70,17 +70,18 @@
 
 .toast-description {
   margin: 0;
-  color: var(--color-text-muted);
+  color: var(--sem-text-muted);
   font-size: 14px;
 }
 
 /* Toast variants */
 .toast-success {
-  border-color: var(--color-success);
-  background: var(--success-soft-bg);
+  border-color: var(--sem-accent-success);
+  background: var(--sem-state-success-soft);
 }
 
 .toast-error {
-  border-color: var(--color-danger);
-  background: var(--danger-soft-bg);
+  border-color: var(--sem-accent-danger);
+  background: var(--sem-state-danger-soft);
 }
+

@@ -23,13 +23,13 @@
 
 .profile-name {
   font-weight: 600;
-  color: var(--color-text);
+  color: var(--sem-text-primary);
   margin: 0;
   word-break: break-word;
 }
 
 .profile-id {
-  color: var(--color-text-muted);
+  color: var(--sem-text-muted);
   font-size: 13px;
   margin-top: 4px;
   word-break: break-all;
@@ -39,15 +39,16 @@
 /* Selected profile info block (summary panel) */
 .profile-selected {
   border: none;
-  border-radius: var(--radius-md);
-  background: var(--surface-block);
+  border-radius: var(--sem-radius-md);
+  background: var(--sem-surface-subtle);
   padding: 12px;
 }
 
 /* Small uppercase label style (section headings inside panels) */
 .profile-label {
   text-transform: uppercase;
-  color: var(--color-text-muted);
+  color: var(--sem-text-muted);
   font-size: 12px;
   letter-spacing: 0.08em;
 }
+
