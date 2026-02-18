@@ -4,7 +4,7 @@
 
 .vault-allcards,
 .vault-information {
-  background: var(--sem-surface-panel); /* match .vault-sidebar */
+  background: var(--cmp-vault-columns-bg); /* match .vault-sidebar */
   padding: 16px 20px;
   overflow: hidden;
   display: flex;

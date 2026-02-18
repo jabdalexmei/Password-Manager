@@ -51,7 +51,7 @@
   --fd-scrollbar-thumb: rgba(255, 255, 255, 0.08);
   --fd-scrollbar-thumb-hover: rgba(255, 255, 255, 0.16);
 
-  --fd-nav-sidebar-bg: #0f172a;
+  --fd-vault-columns-bg: #0f172a;
   --fd-nav-sidebar-border: rgba(255, 255, 255, 0.08);
   --fd-nav-control-bg: #1f2937;
   --fd-nav-control-border: #374151;
@@ -135,4 +135,3 @@
   --fd-card-focus-ring-color: #2563eb;
   --fd-card-focus-ring-offset: 2px;
 }
-

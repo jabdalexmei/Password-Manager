@@ -10,6 +10,7 @@ const SEMANTIC_FILE = path.resolve("src/shared/styles/tokens/semantic.css");
 const COMPONENTS_FILE = path.resolve("src/shared/styles/tokens/components.css");
 const REQUIRED_FOUNDATION_TOKENS = [
   "fd-bg-screens-workspace-create-login-select",
+  "fd-vault-columns-bg",
   "fd-category-navigation-folders-buttons-bg",
   "fd-category-navigation-folders-buttons-border",
   "fd-category-navigation-folders-buttons-text",
@@ -23,6 +24,7 @@ const REQUIRED_FOUNDATION_TOKENS = [
 ];
 const REQUIRED_SEMANTIC_TOKENS = [
   "sem-bg-screens-workspace-create-login-select",
+  "sem-vault-columns-bg",
   "sem-category-navigation-folders-buttons-bg",
   "sem-category-navigation-folders-buttons-border",
   "sem-category-navigation-folders-buttons-text",
@@ -35,6 +37,7 @@ const REQUIRED_SEMANTIC_TOKENS = [
   "sem-card-active-bg",
 ];
 const REQUIRED_COMPONENT_TOKENS = [
+  "cmp-vault-columns-bg",
   "cmp-category-navigation-folders-buttons-bg",
   "cmp-category-navigation-folders-buttons-border",
   "cmp-category-navigation-folders-buttons-text",
@@ -112,6 +115,12 @@ const FORBIDDEN_CARD_ACTIVE_GRADIENT_TOKENS = [
   `--sem-card-active-bg-${"end"}`,
   `--cmp-card-active-bg-${"start"}`,
   `--cmp-card-active-bg-${"end"}`,
+];
+const LEGACY_NAV_SIDEBAR_BG_SUFFIX = ["nav", "sidebar", "bg"].join("-");
+const FORBIDDEN_LEGACY_VAULT_BG_TOKENS = [
+  `--fd-${LEGACY_NAV_SIDEBAR_BG_SUFFIX}`,
+  `--sem-${LEGACY_NAV_SIDEBAR_BG_SUFFIX}`,
+  `--cmp-${LEGACY_NAV_SIDEBAR_BG_SUFFIX}`,
 ];
 
 const LEGACY_TOKEN_RE = /--(?:color-|surface-|btn-secondary|greycolorsecondary|blueprimarycolor|input-surface|border-subtle|focus-ring|focus-border|primary-soft-bg|success-soft-bg|danger-soft-bg|danger-border-weak|danger-hover-bg|bg-screen)/;
@@ -301,6 +310,12 @@ for (const file of walk(path.resolve("src"))) {
     for (const forbidden of FORBIDDEN_CARD_ACTIVE_GRADIENT_TOKENS) {
       if (hasExactToken(lines[i], forbidden)) {
         errors.push(`${rel}:${i + 1}: forbidden card active gradient token detected: ${forbidden}`);
+      }
+    }
+
+    for (const forbidden of FORBIDDEN_LEGACY_VAULT_BG_TOKENS) {
+      if (hasExactToken(lines[i], forbidden)) {
+        errors.push(`${rel}:${i + 1}: forbidden legacy vault columns token detected: ${forbidden}`);
       }
     }
   }

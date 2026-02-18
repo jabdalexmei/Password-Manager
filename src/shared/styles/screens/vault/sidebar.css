@@ -12,7 +12,7 @@
    ======================================================================= */
 
 .vault-sidebar {
-  background: var(--cmp-nav-sidebar-bg);
+  background: var(--cmp-vault-columns-bg);
   border-right: 1px solid var(--cmp-nav-sidebar-border);
   padding: 40px;
   min-width: 0;
@@ -471,4 +471,3 @@
   font-variant-numeric: tabular-nums;
   overflow: hidden;
 }
-
