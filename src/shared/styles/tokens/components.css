@@ -1,5 +1,6 @@
 :root {
   --cmp-vault-columns-bg: var(--sem-vault-columns-bg);
+  --cmp-dialog-panel-bg: var(--sem-dialog-panel-bg);
   --cmp-nav-sidebar-border: var(--sem-nav-sidebar-border);
   --cmp-nav-control-bg: var(--sem-nav-control-bg);
   --cmp-nav-control-border: var(--sem-nav-control-border);

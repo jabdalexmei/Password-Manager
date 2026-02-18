@@ -8,8 +8,10 @@ const THEME_FILES = [
 ];
 const SEMANTIC_FILE = path.resolve("src/shared/styles/tokens/semantic.css");
 const COMPONENTS_FILE = path.resolve("src/shared/styles/tokens/components.css");
+const DIALOGS_FILE = path.resolve("src/shared/styles/ui/dialogs.css");
 const REQUIRED_FOUNDATION_TOKENS = [
   "fd-bg-screens-workspace-create-login-select",
+  "fd-dialog-panel-bg",
   "fd-vault-columns-bg",
   "fd-category-navigation-folders-buttons-bg",
   "fd-category-navigation-folders-buttons-border",
@@ -24,6 +26,7 @@ const REQUIRED_FOUNDATION_TOKENS = [
 ];
 const REQUIRED_SEMANTIC_TOKENS = [
   "sem-bg-screens-workspace-create-login-select",
+  "sem-dialog-panel-bg",
   "sem-vault-columns-bg",
   "sem-category-navigation-folders-buttons-bg",
   "sem-category-navigation-folders-buttons-border",
@@ -37,6 +40,7 @@ const REQUIRED_SEMANTIC_TOKENS = [
   "sem-card-active-bg",
 ];
 const REQUIRED_COMPONENT_TOKENS = [
+  "cmp-dialog-panel-bg",
   "cmp-vault-columns-bg",
   "cmp-category-navigation-folders-buttons-bg",
   "cmp-category-navigation-folders-buttons-border",
@@ -282,6 +286,19 @@ if (themePropSets.length === 2) {
 
     if (COLOR_LITERAL_RE.test(text)) {
       errors.push(`${rel}: component layer must not contain raw color literals`);
+    }
+  }
+}
+
+{
+  const rel = path.relative(ROOT, DIALOGS_FILE);
+  const text = readFile(DIALOGS_FILE);
+  if (text) {
+    const lines = text.split(/\r?\n/);
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes("var(--sem-surface-panel)")) {
+        errors.push(`${rel}:${i + 1}: dialogs must not reference var(--sem-surface-panel); use var(--cmp-dialog-panel-bg)`);
+      }
     }
   }
 }

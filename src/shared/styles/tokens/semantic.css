@@ -18,6 +18,7 @@
 
   --sem-surface-page: var(--fd-surface-page);
   --sem-surface-panel: var(--fd-surface-panel);
+  --sem-dialog-panel-bg: var(--fd-dialog-panel-bg);
   --sem-surface-elevated: var(--fd-surface-elevated);
   --sem-surface-subtle: var(--fd-surface-subtle);
   --sem-surface-subtle-strong: var(--fd-surface-subtle-strong);

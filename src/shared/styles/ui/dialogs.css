@@ -108,7 +108,7 @@
 }
 
 .dialog-actionmenu-item:hover {
-  background: var(--sem-surface-panel);
+  background: var(--cmp-dialog-panel-bg);
 }
 
 .dialog-close--topright {
@@ -138,7 +138,7 @@
   padding: 12px;
   border: 1px solid var(--sem-border-default);
   border-radius: var(--sem-radius-md);
-  background: var(--sem-surface-panel);
+  background: var(--cmp-dialog-panel-bg);
 }
 
 .seedphrase-cell {
@@ -168,7 +168,7 @@
   padding: 10px 12px;
   border-radius: var(--sem-radius-md);
   border: 1px solid var(--sem-border-default);
-  background: var(--sem-surface-panel);
+  background: var(--cmp-dialog-panel-bg);
   color: var(--sem-text-primary);
   font-weight: 600;
   overflow: hidden;
@@ -190,7 +190,7 @@
   padding: 12px 14px;
   border: 1px solid var(--sem-border-default);
   border-radius: var(--sem-radius-md);
-  background: var(--sem-surface-panel);
+  background: var(--cmp-dialog-panel-bg);
 }
 
 .seedphrase-summary-count {
@@ -210,7 +210,7 @@
   padding: 10px 12px;
   border-radius: var(--sem-radius-md);
   border: 1px solid var(--sem-border-default);
-  background: var(--sem-surface-panel);
+  background: var(--cmp-dialog-panel-bg);
   color: var(--sem-text-primary);
 }
 
@@ -272,7 +272,7 @@
   padding: 0 12px;
   border-radius: 12px;
   border: 1px solid var(--sem-border-default);
-  background: var(--sem-surface-panel);
+  background: var(--cmp-dialog-panel-bg);
   color: var(--sem-text-primary);
   font-size: 14px;
   cursor: pointer;
@@ -309,7 +309,7 @@
   z-index: 50;
   border-radius: 12px;
   border: 1px solid var(--sem-border-default);
-  background: var(--sem-surface-panel);
+  background: var(--cmp-dialog-panel-bg);
   box-shadow: var(--sem-shadow-popover);
   max-height: 240px;
   overflow: auto;
@@ -350,7 +350,7 @@
   height: 34px;
   border-radius: var(--sem-radius-sm);
   border: 1px solid var(--sem-border-default);
-  background: var(--sem-surface-panel);
+  background: var(--cmp-dialog-panel-bg);
   color: var(--sem-text-primary);
   cursor: pointer;
 }
@@ -457,7 +457,7 @@
 .settings-sidebar {
   border: 1px solid var(--sem-border-default);
   border-radius: var(--sem-radius-md);
-  background: var(--sem-surface-panel);
+  background: var(--cmp-dialog-panel-bg);
   padding: 14px 10px;
   display: flex;
   flex-direction: column;
@@ -593,7 +593,7 @@
 .settings-language-dropdown__trigger:hover:not(:disabled),
 .settings-language-dropdown__trigger[data-open='true'] {
   border-color: var(--sem-focus-border);
-  background: var(--sem-surface-panel);
+  background: var(--cmp-dialog-panel-bg);
 }
 
 .settings-language-dropdown__trigger:focus-visible {
@@ -631,7 +631,7 @@
   padding: 6px;
   border-radius: var(--sem-radius-md);
   border: 1px solid var(--sem-border-default);
-  background: var(--sem-surface-panel);
+  background: var(--cmp-dialog-panel-bg);
   box-shadow: var(--sem-shadow-popover);
 }
 
@@ -787,7 +787,7 @@
   padding: 8px 10px;
   border: 1px solid var(--sem-border-default);
   border-radius: var(--sem-radius-sm);
-  background: var(--sem-surface-panel);
+  background: var(--cmp-dialog-panel-bg);
 }
 
 /* One attachment row: name left, actions right */
@@ -840,7 +840,7 @@
   padding: 10px 12px;
   border: 1px solid var(--sem-border-default);
   border-radius: var(--sem-radius-sm);
-  background: var(--sem-surface-panel);
+  background: var(--cmp-dialog-panel-bg);
 }
 
 .password-history-meta {
@@ -950,6 +950,5 @@
 .generator-strength-fill--strong {
   background: var(--sem-accent-success);
 }
-
 
 
