@@ -112,6 +112,21 @@
   --fd-create-secondary-disabled-text: #e5e7eb;
   --fd-create-focus-ring-color: #2563eb;
 
+  --fd-button-ghost-bg: #0f172a;
+  --fd-button-ghost-border: rgba(255, 255, 255, 0.08);
+  --fd-button-ghost-text: #e5e7eb;
+  --fd-button-ghost-hover-bg: rgba(255, 255, 255, 0.02);
+  --fd-button-ghost-hover-border: #2563eb;
+  --fd-button-ghost-hover-text: #e5e7eb;
+  --fd-button-ghost-active-bg: rgba(255, 255, 255, 0.08);
+  --fd-button-ghost-active-border: #2563eb;
+  --fd-button-ghost-active-text: #e5e7eb;
+  --fd-button-ghost-disabled-bg: #0f172a;
+  --fd-button-ghost-disabled-border: rgba(255, 255, 255, 0.08);
+  --fd-button-ghost-disabled-text: #9ca3c7;
+  --fd-button-ghost-focus-ring-color: #2563eb;
+  --fd-button-ghost-focus-ring-offset: 2px;
+
   --fd-input-bg: rgba(255, 255, 255, 0.02);
   --fd-input-border: rgba(255, 255, 255, 0.08);
   --fd-input-text: #e5e7eb;

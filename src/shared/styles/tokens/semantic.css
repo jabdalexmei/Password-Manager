@@ -108,6 +108,21 @@
   --sem-create-secondary-disabled-text: var(--fd-create-secondary-disabled-text);
   --sem-create-focus-ring-color: var(--fd-create-focus-ring-color);
 
+  --sem-button-ghost-bg: var(--fd-button-ghost-bg);
+  --sem-button-ghost-border: var(--fd-button-ghost-border);
+  --sem-button-ghost-text: var(--fd-button-ghost-text);
+  --sem-button-ghost-hover-bg: var(--fd-button-ghost-hover-bg);
+  --sem-button-ghost-hover-border: var(--fd-button-ghost-hover-border);
+  --sem-button-ghost-hover-text: var(--fd-button-ghost-hover-text);
+  --sem-button-ghost-active-bg: var(--fd-button-ghost-active-bg);
+  --sem-button-ghost-active-border: var(--fd-button-ghost-active-border);
+  --sem-button-ghost-active-text: var(--fd-button-ghost-active-text);
+  --sem-button-ghost-disabled-bg: var(--fd-button-ghost-disabled-bg);
+  --sem-button-ghost-disabled-border: var(--fd-button-ghost-disabled-border);
+  --sem-button-ghost-disabled-text: var(--fd-button-ghost-disabled-text);
+  --sem-button-ghost-focus-ring-color: var(--fd-button-ghost-focus-ring-color);
+  --sem-button-ghost-focus-ring-offset: var(--fd-button-ghost-focus-ring-offset);
+
   --sem-input-bg: var(--fd-input-bg);
   --sem-input-border: var(--fd-input-border);
   --sem-input-text: var(--fd-input-text);

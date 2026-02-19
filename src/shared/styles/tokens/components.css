@@ -74,20 +74,20 @@
   --cmp-button-danger-focus-ring: var(--sem-focus-ring);
   --cmp-button-danger-focus-ring-offset: var(--sem-focus-ring-offset);
 
-  --cmp-button-ghost-bg: var(--sem-surface-panel);
-  --cmp-button-ghost-border: var(--sem-border-default);
-  --cmp-button-ghost-text: var(--sem-text-primary);
-  --cmp-button-ghost-hover-bg: var(--sem-surface-subtle);
-  --cmp-button-ghost-hover-border: var(--sem-accent-primary);
-  --cmp-button-ghost-hover-text: var(--sem-text-primary);
-  --cmp-button-ghost-active-bg: var(--sem-surface-subtle-strong);
-  --cmp-button-ghost-active-border: var(--sem-accent-primary);
-  --cmp-button-ghost-active-text: var(--sem-text-primary);
-  --cmp-button-ghost-disabled-bg: var(--sem-surface-panel);
-  --cmp-button-ghost-disabled-border: var(--sem-border-default);
-  --cmp-button-ghost-disabled-text: var(--sem-text-muted);
-  --cmp-button-ghost-focus-ring: var(--sem-focus-ring);
-  --cmp-button-ghost-focus-ring-offset: var(--sem-focus-ring-offset);
+  --cmp-button-ghost-bg: var(--sem-button-ghost-bg);
+  --cmp-button-ghost-border: var(--sem-button-ghost-border);
+  --cmp-button-ghost-text: var(--sem-button-ghost-text);
+  --cmp-button-ghost-hover-bg: var(--sem-button-ghost-hover-bg);
+  --cmp-button-ghost-hover-border: var(--sem-button-ghost-hover-border);
+  --cmp-button-ghost-hover-text: var(--sem-button-ghost-hover-text);
+  --cmp-button-ghost-active-bg: var(--sem-button-ghost-active-bg);
+  --cmp-button-ghost-active-border: var(--sem-button-ghost-active-border);
+  --cmp-button-ghost-active-text: var(--sem-button-ghost-active-text);
+  --cmp-button-ghost-disabled-bg: var(--sem-button-ghost-disabled-bg);
+  --cmp-button-ghost-disabled-border: var(--sem-button-ghost-disabled-border);
+  --cmp-button-ghost-disabled-text: var(--sem-button-ghost-disabled-text);
+  --cmp-button-ghost-focus-ring: 2px solid var(--sem-button-ghost-focus-ring-color);
+  --cmp-button-ghost-focus-ring-offset: var(--sem-button-ghost-focus-ring-offset);
 
   --cmp-button-outline-bg: transparent;
   --cmp-button-outline-border: var(--sem-border-default);

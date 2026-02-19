@@ -18,6 +18,20 @@ const REQUIRED_FOUNDATION_TOKENS = [
   "fd-toast-success-border",
   "fd-toast-error-bg",
   "fd-toast-error-border",
+  "fd-button-ghost-bg",
+  "fd-button-ghost-border",
+  "fd-button-ghost-text",
+  "fd-button-ghost-hover-bg",
+  "fd-button-ghost-hover-border",
+  "fd-button-ghost-hover-text",
+  "fd-button-ghost-active-bg",
+  "fd-button-ghost-active-border",
+  "fd-button-ghost-active-text",
+  "fd-button-ghost-disabled-bg",
+  "fd-button-ghost-disabled-border",
+  "fd-button-ghost-disabled-text",
+  "fd-button-ghost-focus-ring-color",
+  "fd-button-ghost-focus-ring-offset",
   "fd-vault-columns-bg",
   "fd-category-navigation-folders-buttons-bg",
   "fd-category-navigation-folders-buttons-border",
@@ -38,6 +52,20 @@ const REQUIRED_SEMANTIC_TOKENS = [
   "sem-toast-success-border",
   "sem-toast-error-bg",
   "sem-toast-error-border",
+  "sem-button-ghost-bg",
+  "sem-button-ghost-border",
+  "sem-button-ghost-text",
+  "sem-button-ghost-hover-bg",
+  "sem-button-ghost-hover-border",
+  "sem-button-ghost-hover-text",
+  "sem-button-ghost-active-bg",
+  "sem-button-ghost-active-border",
+  "sem-button-ghost-active-text",
+  "sem-button-ghost-disabled-bg",
+  "sem-button-ghost-disabled-border",
+  "sem-button-ghost-disabled-text",
+  "sem-button-ghost-focus-ring-color",
+  "sem-button-ghost-focus-ring-offset",
   "sem-vault-columns-bg",
   "sem-category-navigation-folders-buttons-bg",
   "sem-category-navigation-folders-buttons-border",
@@ -57,6 +85,20 @@ const REQUIRED_COMPONENT_TOKENS = [
   "cmp-toast-success-border",
   "cmp-toast-error-bg",
   "cmp-toast-error-border",
+  "cmp-button-ghost-bg",
+  "cmp-button-ghost-border",
+  "cmp-button-ghost-text",
+  "cmp-button-ghost-hover-bg",
+  "cmp-button-ghost-hover-border",
+  "cmp-button-ghost-hover-text",
+  "cmp-button-ghost-active-bg",
+  "cmp-button-ghost-active-border",
+  "cmp-button-ghost-active-text",
+  "cmp-button-ghost-disabled-bg",
+  "cmp-button-ghost-disabled-border",
+  "cmp-button-ghost-disabled-text",
+  "cmp-button-ghost-focus-ring",
+  "cmp-button-ghost-focus-ring-offset",
   "cmp-vault-columns-bg",
   "cmp-category-navigation-folders-buttons-bg",
   "cmp-category-navigation-folders-buttons-border",
@@ -297,6 +339,25 @@ if (themePropSets.length === 2) {
     for (const required of REQUIRED_COMPONENT_TOKENS) {
       if (!props.includes(required)) {
         errors.push(`${rel}: missing required component token --${required}`);
+      }
+    }
+
+    const forbiddenGhostRefs = [
+      "var(--sem-surface-panel)",
+      "var(--sem-border-default)",
+      "var(--sem-text-primary)",
+      "var(--sem-text-muted)",
+      "var(--sem-accent-primary)",
+      "var(--sem-focus-ring)",
+      "var(--sem-focus-ring-offset)",
+    ];
+    const lines = text.split(/\r?\n/);
+    for (let i = 0; i < lines.length; i++) {
+      if (!lines[i].includes("--cmp-button-ghost-")) continue;
+      for (const forbidden of forbiddenGhostRefs) {
+        if (lines[i].includes(forbidden)) {
+          errors.push(`${rel}:${i + 1}: ghost component tokens must not reference ${forbidden}; use --sem-button-ghost-*`);
+        }
       }
     }
 
