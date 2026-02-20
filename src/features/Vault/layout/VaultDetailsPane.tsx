@@ -73,7 +73,7 @@ export function VaultDetailsPane({
   return (
     <div className="vault-panel-wrapper">
       <div className="datacards-header">
-        <div className="vault-section-header">{tVault('information.title')}</div>
+        <div className="vault-section-header">{tVault('details.title')}</div>
 
         <div className="datacards-header__right">
           <div className="datacards-header__spacer" aria-hidden="true" />

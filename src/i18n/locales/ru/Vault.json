@@ -19,7 +19,7 @@
   "nav.favorites": "Избранное",
   "nav.archive": "Архив",
   "nav.deleted": "Удалённые",
-  "information.title": "Информация",
+  "details.title": "Детали",
   "vault.delete_folder.title": "Удалить папку",
   "vault.delete_folder.contains_cards": "В этой папке {{count}} карточек данных. Что сделать?",
   "vault.delete_folder.empty": "Вы действительно хотите удалить папку \"{{name}}\"?",

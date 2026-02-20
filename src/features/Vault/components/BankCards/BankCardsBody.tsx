@@ -132,7 +132,7 @@ export function BankCardsBody({
         />
       </section>
 
-      <section className="vault-information">
+      <section className="vault-details">
         <BankCardDetails
           card={bankCards.selectedCard}
           onEdit={(card) => viewModel.openEditModal(card)}

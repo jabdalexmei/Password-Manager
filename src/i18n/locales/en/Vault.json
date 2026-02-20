@@ -19,7 +19,7 @@
   "nav.favorites": "Favorites",
   "nav.archive": "Archive",
   "nav.deleted": "Deleted",
-  "information.title": "Information",
+  "details.title": "Details",
   "vault.delete_folder.title": "Delete folder",
   "vault.delete_folder.contains_cards": "This folder contains {{count}} data cards. What do you want to do?",
   "vault.delete_folder.empty": "Are you sure you want to delete folder \"{{name}}\"?",
