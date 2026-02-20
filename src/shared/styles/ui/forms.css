@@ -227,7 +227,7 @@ select:autofill {
 .form-textarea:focus-visible {
   outline: var(--cmp-input-focus-ring);
   outline-offset: var(--cmp-input-focus-ring-offset);
-  border-color: var(--cmp-input-focus-border);
+  border-color: transparent;
   background: var(--cmp-input-focus-bg);
 }
 
@@ -264,7 +264,7 @@ select:autofill {
 .input-with-actions:focus-within {
   outline: var(--cmp-input-focus-ring);
   outline-offset: var(--cmp-input-focus-ring-offset);
-  border-color: var(--cmp-input-focus-border);
+  border-color: transparent;
   background: var(--cmp-input-focus-bg);
 }
 
@@ -349,4 +349,3 @@ select:autofill {
   font-size: 12px;
   letter-spacing: 0.08em;
 }
-
