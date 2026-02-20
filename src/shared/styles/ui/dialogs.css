@@ -109,8 +109,8 @@
 
 .dialog-actionmenu-item:hover,
 .dialog-actionmenu-item:focus-visible {
-  background: var(--sem-state-primary-soft);
-  box-shadow: inset 2px 0 0 var(--sem-accent-primary);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--sem-accent-primary);
   outline: none;
 }
 
@@ -233,6 +233,7 @@
   right: 0;
   top: calc(100% + 6px);
   z-index: 50;
+  padding: 6px;
   border-radius: var(--sem-radius-md);
   border: 1px solid var(--sem-border-default);
   background: var(--cmp-dialog-panel-bg);
@@ -244,21 +245,27 @@
   width: 100%;
   text-align: left;
   padding: 10px 12px;
+  border-radius: var(--sem-radius-sm);
   background: transparent;
   color: var(--sem-text-primary);
   border: 0;
+  box-shadow: inset 0 0 0 1px transparent;
 }
 
 .seedphrase-select__option + .seedphrase-select__option {
   margin-top: 2px;
 }
 
-.seedphrase-select__option:hover {
-  background: var(--sem-surface-subtle);
+.seedphrase-select__option:hover,
+.seedphrase-select__option:focus-visible {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--sem-accent-primary);
+  outline: none;
 }
 
 .seedphrase-select__option.is-selected {
-  background: var(--sem-surface-subtle-strong);
+  background: var(--sem-state-primary-soft);
+  box-shadow: inset 0 0 0 1px var(--sem-accent-primary);
 }
 
 /* Folder dropdown (custom, dark, consistent across modals) */
@@ -310,6 +317,7 @@
   left: 0;
   width: 100%;
   z-index: 50;
+  padding: 6px;
   border-radius: 12px;
   border: 1px solid var(--sem-border-default);
   background: var(--cmp-dialog-panel-bg);
@@ -322,12 +330,12 @@
   width: 100%;
   text-align: left;
   padding: 10px 12px;
+  border-radius: var(--sem-radius-sm);
   background: transparent;
   border: none;
   color: var(--sem-text-primary);
   cursor: pointer;
-  /* stable "rail" for brand highlight (prevents layout jitter) */
-  box-shadow: inset 2px 0 0 transparent;
+  box-shadow: inset 0 0 0 1px transparent;
 }
 
 .folder-select__option + .folder-select__option {
@@ -336,14 +344,14 @@
 
 .folder-select__option:hover,
 .folder-select__option:focus-visible {
-  background: var(--sem-state-primary-soft);
-  box-shadow: inset 2px 0 0 var(--sem-accent-primary);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--sem-accent-primary);
   outline: none;
 }
 
 .folder-select__option.is-selected {
   background: var(--sem-state-primary-soft);
-  box-shadow: inset 2px 0 0 var(--sem-accent-primary);
+  box-shadow: inset 0 0 0 1px var(--sem-accent-primary);
   font-weight: 600;
 }
 
@@ -656,8 +664,9 @@
 
 .settings-language-dropdown__item:hover:not(:disabled),
 .settings-language-dropdown__item:focus-visible {
-  background: var(--sem-surface-subtle);
-  border-color: var(--sem-border-default);
+  background: transparent;
+  border-color: transparent;
+  box-shadow: inset 0 0 0 1px var(--sem-accent-primary);
   outline: none;
 }
 
@@ -667,7 +676,8 @@
 
 .settings-language-dropdown__item[data-selected='true'] {
   background: var(--sem-state-primary-soft);
-  border-color: var(--sem-accent-primary);
+  border-color: transparent;
+  box-shadow: inset 0 0 0 1px var(--sem-accent-primary);
   color: var(--sem-text-primary);
   font-weight: 600;
 }
@@ -675,7 +685,8 @@
 .settings-language-dropdown__item[data-selected='true']:hover:not(:disabled),
 .settings-language-dropdown__item[data-selected='true']:focus-visible {
   background: var(--sem-state-primary-soft);
-  border-color: var(--sem-accent-primary);
+  border-color: transparent;
+  box-shadow: inset 0 0 0 1px var(--sem-accent-primary);
 }
 
 .settings-language-dropdown__item:disabled {

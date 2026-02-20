@@ -54,26 +54,29 @@ export function VaultSortControl({ value, onChange, disabled }: VaultSortControl
         <>
           <div className="vault-actionmenu-backdrop" onClick={() => setOpen(false)} />
           <div className="vault-sortmenu-panel vault-context-menu" role="menu">
-            {options.map((opt, idx) => (
-              <React.Fragment key={opt.value}>
-                {isDividerIndex(idx) && <div className="vault-sortmenu-divider" role="separator" />}
-                <button
-                  className="vault-context-item vault-sortmenu-item"
-                  type="button"
-                  onClick={() => {
-                    onChange(opt.value);
-                    setOpen(false);
-                  }}
-                >
-                  <span className="vault-sortmenu-label">{opt.label}</span>
-                  {value === opt.value ? (
-                    <IconCheck className="vault-sortmenu-check" size={16} />
-                  ) : (
-                    <span className="vault-sortmenu-check-spacer" aria-hidden="true" />
-                  )}
-                </button>
-              </React.Fragment>
-            ))}
+            {options.map((opt, idx) => {
+              const isSelected = value === opt.value;
+              return (
+                <React.Fragment key={opt.value}>
+                  {isDividerIndex(idx) && <div className="vault-sortmenu-divider" role="separator" />}
+                  <button
+                    className={`vault-context-item vault-sortmenu-item ${isSelected ? 'is-selected' : ''}`.trim()}
+                    type="button"
+                    onClick={() => {
+                      onChange(opt.value);
+                      setOpen(false);
+                    }}
+                  >
+                    <span className="vault-sortmenu-label">{opt.label}</span>
+                    {isSelected ? (
+                      <IconCheck className="vault-sortmenu-check" size={16} />
+                    ) : (
+                      <span className="vault-sortmenu-check-spacer" aria-hidden="true" />
+                    )}
+                  </button>
+                </React.Fragment>
+              );
+            })}
           </div>
         </>
       )}

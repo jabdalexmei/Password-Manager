@@ -185,12 +185,7 @@
   border-radius: var(--sem-radius-sm);
   cursor: pointer;
   font-size: 13px;
-  transition: background-color 120ms ease, border-color 120ms ease;
-}
-
-.workspace-actionmenu-item:hover {
-  background: var(--cmp-nav-menu-item-hover-bg);
-  border-color: var(--cmp-nav-menu-item-hover-border);
+  transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
 }
 
 .workspace-actionmenu-item:disabled {
@@ -198,9 +193,12 @@
   cursor: not-allowed;
 }
 
-.workspace-actionmenu-item:focus-visible {
-  outline: var(--cmp-nav-focus-ring);
-  outline-offset: var(--cmp-nav-focus-ring-offset);
+.workspace-actionmenu-item:not(:disabled):hover,
+.workspace-actionmenu-item:not(:disabled):focus-visible {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: inset 0 0 0 1px var(--sem-accent-primary);
+  outline: none;
 }
 
 /* Bottom buttons */
