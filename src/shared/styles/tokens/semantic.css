@@ -18,6 +18,8 @@
 
   --sem-surface-page: var(--fd-surface-page);
   --sem-surface-panel: var(--fd-surface-panel);
+  --sem-vault-action-button-bg: var(--fd-vault-action-button-bg);
+  --sem-vault-action-button-hover-bg: var(--fd-vault-action-button-hover-bg);
   --sem-screen-card-bg-auth: var(--fd-screen-card-bg-auth);
   --sem-screen-card-bg-login: var(--fd-screen-card-bg-login);
   --sem-screen-card-bg-workspace: var(--fd-screen-card-bg-workspace);

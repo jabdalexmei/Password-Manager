@@ -50,7 +50,7 @@
   justify-content: center;
   border-radius: var(--sem-radius-sm);
   border: 1px solid var(--sem-border-default);
-  background: var(--sem-surface-page);
+  background: var(--sem-vault-action-button-bg);
   color: var(--sem-text-primary);
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
@@ -58,7 +58,7 @@
 
 .vault-action-button:hover,
 .vault-header__icon-button:hover {
-  background: var(--sem-surface-panel);
+  background: var(--sem-vault-action-button-hover-bg);
   border-color: var(--sem-accent-primary);
   transform: translateY(-1px);
 }
@@ -85,4 +85,3 @@
   outline: 2px solid var(--sem-accent-primary);
   outline-offset: 2px;
 }
-
