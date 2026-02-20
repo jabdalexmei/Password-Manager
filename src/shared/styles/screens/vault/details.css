@@ -4,7 +4,7 @@
 }
 
 .vault-detail-card {
-  background: var(--sem-vault-detail-card-bg);
+  background: var(--sem-vault-columns-bg);
   border: 1px solid var(--sem-border-default);
   border-radius: var(--sem-radius-sm);
   padding: 14px 16px;
@@ -69,7 +69,7 @@
 }
 
 .detail-value-box {
-  background: var(--sem-surface-page);
+  background: var(--sem-vault-detail-value-box-bg);
   border: 1px solid var(--sem-border-default);
   border-radius: var(--sem-radius-sm);
   padding: 10px 12px;
@@ -180,7 +180,7 @@
   padding: 12px;
   border: 1px solid var(--sem-border-default);
   border-radius: var(--sem-radius-md);
-  background: var(--sem-vault-detail-card-bg);
+  background: var(--sem-vault-columns-bg);
   min-width: 0;
 }
 
@@ -232,7 +232,7 @@
   padding: 12px;
   border: 1px solid var(--sem-border-default);
   border-radius: var(--sem-radius-sm);
-  background: var(--sem-surface-page);
+  background: var(--sem-vault-detail-value-box-bg);
   flex-wrap: wrap;
   min-width: 0;
 }
