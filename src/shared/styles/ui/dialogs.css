@@ -28,7 +28,7 @@
   --dialog-body-padding-y: 18px;
   --dialog-footer-padding-y: 20px;
   border-radius: var(--sem-radius-lg);
-  background: var(--sem-surface-page);
+  background: var(--cmp-dialog-panel-bg);
   border: 1px solid var(--sem-border-default);
   box-shadow: var(--sem-shadow-lg);
   position: relative;
@@ -232,7 +232,7 @@
   z-index: 50;
   border-radius: var(--sem-radius-md);
   border: 1px solid var(--sem-border-default);
-  background: var(--sem-surface-page);
+  background: var(--cmp-dialog-panel-bg);
   box-shadow: var(--sem-shadow-lg);
   overflow: hidden;
 }
@@ -950,5 +950,4 @@
 .generator-strength-fill--strong {
   background: var(--sem-accent-success);
 }
-
 
