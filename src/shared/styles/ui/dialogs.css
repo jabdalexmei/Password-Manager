@@ -107,8 +107,11 @@
   cursor: pointer;
 }
 
-.dialog-actionmenu-item:hover {
-  background: var(--cmp-dialog-panel-bg);
+.dialog-actionmenu-item:hover,
+.dialog-actionmenu-item:focus-visible {
+  background: var(--sem-state-primary-soft);
+  box-shadow: inset 2px 0 0 var(--sem-accent-primary);
+  outline: none;
 }
 
 .dialog-close--topright {
@@ -950,4 +953,3 @@
 .generator-strength-fill--strong {
   background: var(--sem-accent-success);
 }
-
