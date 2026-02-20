@@ -20,6 +20,9 @@
 
   --fd-surface-page: #0b1222;
   --fd-surface-panel: #0f172a;
+  --fd-screen-card-bg-auth: #0b1222;
+  --fd-screen-card-bg-login: #0b1222;
+  --fd-screen-card-bg-workspace: #0b1222;
   --fd-dialog-panel-bg: #0f172a;
   --fd-toast-panel-bg: #0f172a;
   --fd-surface-elevated: #111827;

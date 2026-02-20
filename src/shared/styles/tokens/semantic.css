@@ -18,6 +18,9 @@
 
   --sem-surface-page: var(--fd-surface-page);
   --sem-surface-panel: var(--fd-surface-panel);
+  --sem-screen-card-bg-auth: var(--fd-screen-card-bg-auth);
+  --sem-screen-card-bg-login: var(--fd-screen-card-bg-login);
+  --sem-screen-card-bg-workspace: var(--fd-screen-card-bg-workspace);
   --sem-dialog-panel-bg: var(--fd-dialog-panel-bg);
   --sem-toast-panel-bg: var(--fd-toast-panel-bg);
   --sem-surface-elevated: var(--fd-surface-elevated);

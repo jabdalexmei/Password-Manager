@@ -1,5 +1,6 @@
 ﻿/* Workspace card specifics only (base card comes from .screen-card/.screen-card--xl) */
 .workspace-card-mock {
+  background: var(--sem-screen-card-bg-workspace);
   /* Remove the glass effect so theme comparisons stay consistent. */
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
@@ -236,4 +237,3 @@
     grid-row: 3;
   }
 }
-

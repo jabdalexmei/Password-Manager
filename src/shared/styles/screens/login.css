@@ -4,6 +4,7 @@
 
 /* Log in wants slightly roomier padding than the default screen-card. */
 .login-card {
+  background: var(--sem-screen-card-bg-login);
   padding: 34px 40px 30px;
 }
 
@@ -91,4 +92,3 @@
     font-size: 28px;
   }
 }
-

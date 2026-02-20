@@ -65,7 +65,7 @@
 
 .screen-card {
   width: min(980px, 100%);
-  background: var(--sem-surface-page);
+  background: var(--sem-screen-card-bg-auth);
   border: 1px solid var(--sem-border-default);
   box-shadow: var(--sem-shadow-card);
   border-radius: var(--sem-radius-lg);
@@ -127,4 +127,3 @@
   justify-content: space-between;
   gap: 10px;
 }
-
