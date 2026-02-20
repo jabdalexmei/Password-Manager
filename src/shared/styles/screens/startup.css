@@ -31,6 +31,11 @@
   font-size: 12px;
 }
 
+/* Select profile cards: use the same blue hover border as selectable workspace tiles. */
+.profiles-list .profile-card:hover {
+  border-color: var(--sem-accent-primary);
+}
+
 @media (max-width: 720px) {
   .button-row {
     flex-direction: column;
@@ -41,4 +46,3 @@
     align-items: stretch;
   }
 }
-
