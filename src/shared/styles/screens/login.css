@@ -13,7 +13,7 @@
 /* Header */
 .login-header {
   text-align: center;
-  margin-bottom: 26px;
+  margin-bottom: 24px;
 }
 
 .login-title {
@@ -24,13 +24,13 @@
 }
 
 .login-subtitle {
-  margin: 8px 0 0 0;
-  font-size: 14px;
+  margin: 6px 0 0 0;
+  font-size: 15px;
   color: var(--sem-text-muted);
 }
 
 .login-card .auth-body {
-  margin-top: 26px;
+  margin-top: 0;
   flex: 1;
   display: flex;
 }
@@ -54,9 +54,10 @@
 }
 
 .login-selected-profile-label {
-  margin: 0 0 10px;
+  margin: 0 0 8px;
   color: var(--sem-text-primary);
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 700;
   line-height: 20px;
 }
 
@@ -68,8 +69,18 @@
   background: var(--sem-surface-subtle);
   border: 1px solid transparent;
   border-radius: var(--sem-radius-md);
-  padding: 18px 20px;
+  padding: 16px 16px 14px;
   gap: 0;
+}
+
+.login-card .login-selected-profile .profile-name {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.login-card .login-selected-profile .profile-id {
+  margin-top: 6px;
+  font-size: 12px;
 }
 
 /* Form spacing + structure for sticky footer. */
@@ -101,7 +112,7 @@
 /* Buttons */
 .login-card .auth-footer {
   margin-top: auto;
-  padding-top: 22px;
+  padding-top: 18px;
 }
 
 .login-card .auth-footer .btn {
@@ -123,7 +134,7 @@
   }
 
   .login-card .auth-footer {
-    margin-top: 22px;
+    margin-top: 18px;
     padding-top: 0;
   }
 }
