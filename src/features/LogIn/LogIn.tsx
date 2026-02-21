@@ -52,11 +52,11 @@ const LogIn: React.FC<LogInProps> = ({
         <div className="auth-body">
           <div className="auth-content">
             <div className="auth-panel">
+              <p className="login-selected-profile-label">
+                {t('selectedProfile')}
+              </p>
               <div className="profile-card login-selected-profile">
                 <div className="profile-meta">
-                  <p className="muted" style={{ marginBottom: 4 }}>
-                    {t('selectedProfile')}
-                  </p>
                   <p className="profile-name">
                     {profileName || t('unnamedProfile')}
                   </p>
@@ -70,7 +70,6 @@ const LogIn: React.FC<LogInProps> = ({
                 className="login-form form-grid"
                 onSubmit={handleSubmit}
                 autoComplete="off"
-                style={{ marginTop: 14 }}
               >
                 <div className="form-field">
                   <label className="form-label" htmlFor="login-password">
@@ -125,4 +124,3 @@ const LogIn: React.FC<LogInProps> = ({
 };
 
 export default LogIn;
-
