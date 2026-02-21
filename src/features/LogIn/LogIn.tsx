@@ -43,7 +43,7 @@ const LogIn: React.FC<LogInProps> = ({
 
   return (
     <div className="screen-shell">
-      <div className="screen-card screen-card--borderless login-card">
+      <div className="screen-card login-card">
         <header className="login-header">
           <h1 className="login-title">{t('title')}</h1>
           <p className="login-subtitle">{t('subtitle')}</p>

@@ -29,7 +29,7 @@ const ProfileCreate: React.FC<ProfileCreateProps> = ({ onCreated, onProfileCreat
 
   return (
     <div className="screen-shell">
-      <div className="screen-card profile-create-card">
+      <div className="screen-card create-profile-card">
         <header className="profile-create-header">
           <h1 className="profile-create-title">{t('title')}</h1>
           <p className="profile-create-subtitle">{t('subtitle')}</p>
@@ -134,4 +134,3 @@ const ProfileCreate: React.FC<ProfileCreateProps> = ({ onCreated, onProfileCreat
 };
 
 export default ProfileCreate;
-

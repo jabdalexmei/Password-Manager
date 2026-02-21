@@ -307,7 +307,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
 
   return (
     <div className="screen-shell">
-      <div className="screen-card screen-card--xl workspace-card-mock">
+      <div className="screen-card workspace-card">
         <header className="workspace-header">
           <h1 className="workspace-title">{t('title')}</h1>
           <p className="workspace-subtitle">{t('subtitle')}</p>

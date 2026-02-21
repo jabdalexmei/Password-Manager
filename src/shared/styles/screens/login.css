@@ -6,6 +6,7 @@
 .login-card {
   width: min(1180px, 100%);
   background: var(--sem-screen-card-bg-login);
+  border: none;
   display: flex;
   flex-direction: column;
   padding: 34px 36px;

@@ -1,5 +1,8 @@
-﻿/* Workspace card specifics only (base card comes from .screen-card/.screen-card--xl) */
-.workspace-card-mock {
+/* Workspace card specifics only */
+.workspace-card {
+  width: min(1180px, 100%);
+  border-radius: 28px;
+  padding: 34px 36px;
   background: var(--sem-screen-card-bg-workspace);
   /* Remove the glass effect so theme comparisons stay consistent. */
   backdrop-filter: none;
@@ -217,6 +220,10 @@
 }
 
 @media (max-width: 960px) {
+  .workspace-card {
+    padding: 24px;
+  }
+
   .workspace-mock-layout {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto auto;
