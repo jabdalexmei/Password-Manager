@@ -1,0 +1,241 @@
+/* Workspace card specifics only */
+.workspace-card {
+  width: min(1080px, 100%);
+  padding: 32px 36px 30px;
+  border-radius: 28px;
+  background: var(--sem-screen-card-bg-workspace);
+  /* Remove the glass effect so theme comparisons stay consistent. */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.workspace-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.workspace-title {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 800;
+  color: var(--sem-text-primary);
+}
+
+.workspace-subtitle {
+  margin: 6px 0 0 0;
+  font-size: 15px;
+  color: var(--sem-text-muted);
+}
+
+/* 2-row grid:
+   row 1: left title only
+   row 2: list + right actions aligned to list top */
+.workspace-mock-layout {
+  display: grid;
+  grid-template-columns: minmax(420px, 560px) minmax(340px, 1fr);
+  grid-template-rows: auto 1fr;
+  column-gap: 28px;
+  row-gap: 12px;
+}
+
+.workspace-left-title {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.workspace-right-title-spacer {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+/* Keep the title vertically stable. */
+.workspace-section-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--sem-text-primary);
+}
+
+.workspace-left {
+  grid-column: 1;
+  grid-row: 2;
+  min-width: 0;
+}
+
+.workspace-right {
+  grid-column: 2;
+  grid-row: 2;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.workspace-cta,
+.workspace-cta-secondary {
+  width: 100%;
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+
+.workspace-selection-hint {
+  display: none;
+}
+
+/* Empty state visuals are unified in ui.css (.empty / .empty-state).
+   Keep workspace.css focused on layout-only rules. */
+
+/* List */
+.workspace-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 420px;
+  overflow: auto;
+  padding-right: 6px;
+}
+
+.workspace-tile {
+  padding: 16px 16px 14px;
+}
+
+.workspace-tile-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.workspace-tile-info {
+  min-width: 0;
+}
+
+.workspace-tile-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.workspace-tile-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--sem-text-primary);
+}
+
+.workspace-tile-path {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--sem-text-muted);
+  word-break: break-all;
+}
+
+/* Optional status chip */
+.workspace-status {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  color: var(--sem-text-primary);
+  background: var(--sem-surface-subtle-strong);
+  border: 1px solid var(--sem-border-default);
+}
+
+/* Action bar: keep it subtle and theme-ish */
+.workspace-actionbar {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 6px !important;
+  height: 24px;
+  border-radius: 10px;
+}
+
+.workspace-actionbar:hover {
+  background: var(--cmp-nav-menu-item-hover-bg) !important;
+}
+
+.workspace-actionbar-dots {
+  font-size: 20px;
+  line-height: 1;
+  color: var(--sem-text-primary);
+  transform: translateY(-1px);
+}
+
+.workspace-actionmenu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: transparent;
+}
+
+.workspace-actionmenu-panel {
+  position: fixed;
+  z-index: 61;
+  min-width: 240px;
+  padding: 6px;
+  border-radius: var(--sem-radius-md);
+  border: 1px solid var(--cmp-nav-menu-border);
+  background: var(--cmp-nav-menu-bg);
+  box-shadow: var(--cmp-nav-menu-shadow);
+}
+
+.workspace-actionmenu-item {
+  width: 100%;
+  text-align: left;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--cmp-nav-menu-item-text);
+  padding: 8px 10px;
+  border-radius: var(--sem-radius-sm);
+  cursor: pointer;
+  font-size: 13px;
+  transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.workspace-actionmenu-item:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.workspace-actionmenu-item:not(:disabled):hover,
+.workspace-actionmenu-item:not(:disabled):focus-visible {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: inset 0 0 0 1px var(--sem-accent-primary);
+  outline: none;
+}
+
+/* Bottom buttons */
+.workspace-tile-bottom {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.workspace-btn-sm {
+  border-radius: 12px;
+  padding: 10px 18px;
+  min-width: 92px;
+}
+
+@media (max-width: 960px) {
+  .workspace-mock-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+  }
+
+  .workspace-right-title-spacer {
+    display: none;
+  }
+
+  .workspace-left {
+    grid-row: 2;
+  }
+
+  .workspace-right {
+    grid-column: 1;
+    grid-row: 3;
+  }
+}

@@ -1,0 +1,51 @@
+:root {
+  color: var(--sem-text-primary);
+  background-color: var(--sem-bg-app);
+  font-family: var(--sem-font-body);
+
+  --spacing-between-form-field-label-text-and-input-field: 6px;
+  --spacing-between-navigation-field-label-text-and-input-field: 10px;
+}
+
+* {
+  box-sizing: border-box;
+  scrollbar-color: var(--sem-scrollbar-thumb) var(--sem-scrollbar-track);
+  scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+  width: var(--sem-scrollbar-size);
+  height: var(--sem-scrollbar-size);
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--sem-scrollbar-track);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--sem-scrollbar-thumb);
+  border-radius: 999px;
+  border: 2px solid var(--sem-scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--sem-scrollbar-thumb-hover);
+}
+
+*::-webkit-scrollbar-corner {
+  background: var(--sem-scrollbar-track);
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+body {
+  background: var(--sem-bg-app);
+  color: var(--sem-text-primary);
+}

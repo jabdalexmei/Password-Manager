@@ -1,0 +1,134 @@
+/* NOTE:
+   Base screen wrapper + card now come from ui.css (.screen-shell/.screen-card).
+   This file keeps ONLY LogIn-specific layout/typography overrides. */
+
+/* Log in keeps base .screen-card size from ui.css and overrides only visuals/layout. */
+.login-card {
+  background: var(--sem-screen-card-bg-login);
+  border: none;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.login-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.login-title {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--sem-text-primary);
+}
+
+.login-subtitle {
+  margin: 6px 0 0 0;
+  font-size: 15px;
+  color: var(--sem-text-muted);
+}
+
+.login-card .auth-body {
+  margin-top: 0;
+  flex: 1;
+  display: flex;
+}
+
+/* Stretch content across card and allow footer to sit at the bottom. */
+.login-card .auth-content,
+.login-card .auth-panel {
+  width: 100%;
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+/* IMPORTANT: remove the "inner card" look for Log in */
+.login-card .auth-panel {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+.login-selected-profile-label {
+  margin: 0 0 8px;
+  color: var(--sem-text-primary);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 20px;
+}
+
+/* Selected profile block: surface only, no border */
+.login-card .login-selected-profile.profile-card {
+  width: 100%;
+  justify-content: flex-start;
+  align-items: flex-start;
+  background: var(--sem-surface-subtle);
+  border: 1px solid transparent;
+  border-radius: var(--sem-radius-md);
+  padding: 16px 16px 14px;
+  gap: 0;
+}
+
+.login-card .login-selected-profile .profile-name {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.login-card .login-selected-profile .profile-id {
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+/* Form spacing + structure for sticky footer. */
+.login-card form.login-form {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+/* Password field matches reference card/input style. */
+.login-card .login-form .input-with-actions {
+  background: var(--sem-surface-subtle);
+  border: 1px solid var(--sem-border-default);
+}
+
+.login-card .login-form .input-with-actions:hover,
+.login-card .login-form .input-with-actions:focus-within {
+  background: var(--sem-surface-subtle);
+  border-color: var(--sem-border-default);
+}
+
+/* Buttons */
+.login-card .auth-footer {
+  margin-top: auto;
+  padding-top: 18px;
+}
+
+.login-card .auth-footer .btn {
+  min-height: 42px;
+  min-width: 72px;
+}
+
+@media (max-width: 720px) {
+  .login-card {
+    min-height: auto;
+  }
+
+  .login-title {
+    font-size: 28px;
+  }
+
+  .login-card form.login-form {
+    flex: initial;
+  }
+
+  .login-card .auth-footer {
+    margin-top: 18px;
+    padding-top: 0;
+  }
+}
