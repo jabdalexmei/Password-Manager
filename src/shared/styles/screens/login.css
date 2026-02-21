@@ -103,12 +103,6 @@
   border-color: var(--sem-border-default);
 }
 
-.login-card .login-form .input-actions {
-  border-left: 1px solid var(--sem-border-default);
-  padding-left: 8px;
-  margin-left: 8px;
-}
-
 /* Buttons */
 .login-card .auth-footer {
   margin-top: auto;

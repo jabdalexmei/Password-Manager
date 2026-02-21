@@ -327,9 +327,11 @@ select:autofill {
 }
 
 .input-actions .input-action-eye:hover:not(:disabled),
-.input-actions .input-action-eye:focus-visible {
+.input-actions .input-action-eye:focus-visible,
+.input-actions .input-action-eye:active {
   border: 0 !important;
   background: transparent !important;
+  box-shadow: none !important;
   color: var(--sem-text-primary);
   opacity: 1;
 }
