@@ -1,8 +1,8 @@
 /* Workspace card specifics only */
 .workspace-card {
-  width: min(1180px, 100%);
+  width: min(1080px, 100%);
+  padding: 32px 36px 30px;
   border-radius: 28px;
-  padding: 34px 36px;
   background: var(--sem-screen-card-bg-workspace);
   /* Remove the glass effect so theme comparisons stay consistent. */
   backdrop-filter: none;
@@ -10,6 +10,7 @@
 }
 
 .workspace-header {
+  text-align: center;
   margin-bottom: 18px;
 }
 
@@ -220,10 +221,6 @@
 }
 
 @media (max-width: 960px) {
-  .workspace-card {
-    padding: 24px;
-  }
-
   .workspace-mock-layout {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto auto;

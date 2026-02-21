@@ -2,14 +2,12 @@
    Base screen wrapper + card now come from ui.css (.screen-shell/.screen-card).
    This file keeps ONLY LogIn-specific layout/typography overrides. */
 
-/* Log in wants slightly roomier padding than the default screen-card. */
+/* Log in keeps base .screen-card size from ui.css and overrides only visuals/layout. */
 .login-card {
-  width: min(1180px, 100%);
   background: var(--sem-screen-card-bg-login);
   border: none;
   display: flex;
   flex-direction: column;
-  padding: 34px 36px;
 }
 
 /* Header */
@@ -114,7 +112,6 @@
 @media (max-width: 720px) {
   .login-card {
     min-height: auto;
-    padding: 24px;
   }
 
   .login-title {
