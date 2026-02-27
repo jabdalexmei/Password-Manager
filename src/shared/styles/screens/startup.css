@@ -31,6 +31,11 @@
   font-size: 12px;
 }
 
+.select-profile-card .profiles-list {
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
 /* Select profile cards: use the same blue hover border as selectable workspace tiles. */
 .profiles-list .profile-card:hover {
   border-color: var(--sem-accent-primary);
