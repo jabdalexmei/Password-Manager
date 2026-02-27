@@ -12,6 +12,5 @@
   "submit": "Создать",
   "back": "Назад",
   "validationName": "Введите имя профиля",
-  "validationMatch": "Пароли не совпадают",
-  "footnote": "Password Manager надёжно защищает ваше хранилище."
+  "validationMatch": "Пароли не совпадают"
 }

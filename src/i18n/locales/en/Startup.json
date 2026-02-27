@@ -11,6 +11,5 @@
   "confirmDelete": "Are you sure you want to delete this profile?",
   "passwordless": "Passwordless",
   "requiresPassword": "Password protected",
-  "footnote": "Password Manager keeps your vault secure.",
   "label.profileId": "ID: {{id}}"
 }

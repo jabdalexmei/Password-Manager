@@ -122,16 +122,18 @@ const Startup: React.FC<StartupProps> = ({ onCreate, onOpen, onBack }) => {
   }, [error, loading, onOpen, profiles, profilesListMaxHeight, t]);
 
   return (
-    <div className="screen-shell">
+    <div className="screen-shell screen-shell--selectprofile-createprofile-login">
       <div className="screen-card select-profile-card">
         <header className="startup-header">
           <h1 className="startup-title">{t('title')}</h1>
           <p className="startup-subtitle">{t('subtitle')}</p>
         </header>
 
-        {content}
+        <div className="auth-screen-content">
+          {content}
+        </div>
 
-        <div className="startup-footer">
+        <div className="startup-footer auth-screen-footer">
           <button type="button" className="btn btn-secondary" onClick={onBack}>
             {t('back')}
           </button>
@@ -140,7 +142,6 @@ const Startup: React.FC<StartupProps> = ({ onCreate, onOpen, onBack }) => {
             {t('create')}
           </button>
         </div>
-        <p className="startup-footnote">{t('footnote')}</p>
       </div>
 
       <ConfirmDialog

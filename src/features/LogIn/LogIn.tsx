@@ -42,14 +42,14 @@ const LogIn: React.FC<LogInProps> = ({
   }
 
   return (
-    <div className="screen-shell">
+    <div className="screen-shell screen-shell--selectprofile-createprofile-login">
       <div className="screen-card login-card">
         <header className="login-header">
           <h1 className="login-title">{t('title')}</h1>
           <p className="login-subtitle">{t('subtitle')}</p>
         </header>
 
-        <div className="auth-body">
+        <div className="auth-body auth-screen-content">
           <div className="auth-content">
             <div className="auth-panel">
               <p className="login-selected-profile-label">
@@ -102,7 +102,7 @@ const LogIn: React.FC<LogInProps> = ({
 
                 {error && <div className="form-error">{t('error')}</div>}
 
-                <div className="auth-footer">
+                <div className="auth-footer auth-screen-footer">
                   <button
                     type="button"
                     className="btn btn-secondary"

@@ -103,12 +103,6 @@
   border-color: var(--sem-border-default);
 }
 
-/* Buttons */
-.login-card .auth-footer {
-  margin-top: auto;
-  padding-top: 18px;
-}
-
 .login-card .auth-footer .btn {
   min-height: 42px;
   min-width: 72px;
@@ -127,8 +121,4 @@
     flex: initial;
   }
 
-  .login-card .auth-footer {
-    margin-top: 18px;
-    padding-top: 0;
-  }
 }

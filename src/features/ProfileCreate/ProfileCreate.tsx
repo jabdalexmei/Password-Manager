@@ -28,7 +28,7 @@ const ProfileCreate: React.FC<ProfileCreateProps> = ({ onCreated, onProfileCreat
   };
 
   return (
-    <div className="screen-shell">
+    <div className="screen-shell screen-shell--selectprofile-createprofile-login">
       <div className="screen-card create-profile-card">
         <header className="profile-create-header">
           <h1 className="profile-create-title">{t('title')}</h1>
@@ -36,7 +36,7 @@ const ProfileCreate: React.FC<ProfileCreateProps> = ({ onCreated, onProfileCreat
         </header>
 
         {/* Full-width panel like "Select profile" (no narrow centered column) */}
-        <form className="profile-create-form" onSubmit={handleSubmit} autoComplete="off">
+        <form className="profile-create-form auth-screen-content" onSubmit={handleSubmit} autoComplete="off">
           <div className="profile-create-panel form-grid">
             <div className="form-field">
               <label className="form-label" htmlFor="profile-name">
@@ -116,7 +116,7 @@ const ProfileCreate: React.FC<ProfileCreateProps> = ({ onCreated, onProfileCreat
             {error && <div className="form-error">{t(error)}</div>}
           </div>
 
-          <div className="profile-create-footer">
+          <div className="profile-create-footer auth-screen-footer">
             <button type="button" className="btn btn-secondary" onClick={onBack}>
               {t('back')}
             </button>
@@ -126,8 +126,6 @@ const ProfileCreate: React.FC<ProfileCreateProps> = ({ onCreated, onProfileCreat
             </button>
           </div>
         </form>
-
-        <p className="profile-create-footnote">{t('footnote')}</p>
       </div>
     </div>
   );

@@ -11,6 +11,5 @@
   "confirmDelete": "Вы действительно хотите удалить этот профиль?",
   "passwordless": "Без пароля",
   "requiresPassword": "Защищён паролем",
-  "footnote": "Password Manager надёжно защищает ваше хранилище.",
   "label.profileId": "ID: {{id}}"
 }
