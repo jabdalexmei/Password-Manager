@@ -146,8 +146,14 @@
 .screen-shell--selectprofile-createprofile-login .auth-screen-footer {
   margin-top: auto;
   padding-top: 20px;
+  min-height: 62px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.screen-shell--selectprofile-createprofile-login .auth-form-error-slot {
+  min-height: 16px;
 }

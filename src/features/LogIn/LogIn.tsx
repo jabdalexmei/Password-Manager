@@ -100,7 +100,9 @@ const LogIn: React.FC<LogInProps> = ({
                   </div>
                 </div>
 
-                {error && <div className="form-error">{t('error')}</div>}
+                <div className="form-error auth-form-error-slot" aria-live="polite">
+                  {error ? t('error') : '\u00A0'}
+                </div>
 
                 <div className="auth-footer auth-screen-footer">
                   <button

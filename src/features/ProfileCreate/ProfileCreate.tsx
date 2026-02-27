@@ -113,7 +113,9 @@ const ProfileCreate: React.FC<ProfileCreateProps> = ({ onCreated, onProfileCreat
               </div>
             </div>
 
-            {error && <div className="form-error">{t(error)}</div>}
+            <div className="form-error auth-form-error-slot" aria-live="polite">
+              {error ? t(error) : '\u00A0'}
+            </div>
           </div>
 
           <div className="profile-create-footer auth-screen-footer">
