@@ -1,4 +1,4 @@
-import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from '../../shared/lib/i18n';
 import {
   backupPickFile,
@@ -36,8 +36,30 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingBackupToken, setPendingBackupToken] = useState<string | null>(null);
   const [pendingProfileName, setPendingProfileName] = useState<string | null>(null);
+  const VISIBLE_WORKSPACE_COUNT = 2;
+  const workspaceListRef = useRef<HTMLDivElement | null>(null);
+  const [workspaceListMaxHeight, setWorkspaceListMaxHeight] = useState<number | null>(null);
 
   const closeActionsMenu = useCallback(() => setActionsMenu(null), []);
+
+  const measureWorkspaceListMaxHeight = useCallback(() => {
+    const listNode = workspaceListRef.current;
+    if (!listNode) {
+      setWorkspaceListMaxHeight(null);
+      return;
+    }
+
+    const tiles = listNode.querySelectorAll<HTMLElement>('.workspace-tile');
+    if (tiles.length <= VISIBLE_WORKSPACE_COUNT) {
+      setWorkspaceListMaxHeight(null);
+      return;
+    }
+
+    const firstTop = tiles[0].offsetTop;
+    const lastVisible = tiles[VISIBLE_WORKSPACE_COUNT - 1];
+    const nextMaxHeight = Math.ceil((lastVisible.offsetTop - firstTop) + lastVisible.offsetHeight);
+    setWorkspaceListMaxHeight(nextMaxHeight > 0 ? nextMaxHeight : null);
+  }, [VISIBLE_WORKSPACE_COUNT]);
 
   useEffect(() => {
     if (!actionsMenu) return;
@@ -58,6 +80,21 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
       window.removeEventListener('scroll', onAnyScroll, true);
     };
   }, [actionsMenu, closeActionsMenu]);
+
+  useLayoutEffect(() => {
+    measureWorkspaceListMaxHeight();
+  }, [measureWorkspaceListMaxHeight, workspaces, loading, error, selectedId]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      measureWorkspaceListMaxHeight();
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [measureWorkspaceListMaxHeight]);
 
   const toggleActionsMenu = useCallback((workspaceId: string, anchorEl: HTMLElement) => {
     setActionsMenu((prev) => {
@@ -174,8 +211,12 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
       );
     }
 
+    const workspaceListStyle = workspaceListMaxHeight !== null
+      ? { maxHeight: `${workspaceListMaxHeight}px` }
+      : undefined;
+
     return (
-      <div className="workspace-list">
+      <div className="workspace-list" ref={workspaceListRef} style={workspaceListStyle}>
         {workspaces.map((workspace) => {
           const isSelected = workspace.id === selectedId;
           const statusLabel = workspace.exists ? (workspace.valid ? null : t('invalid')) : t('missing');
@@ -302,6 +343,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
     t,
     toggleActionsMenu,
     tCommon,
+    workspaceListMaxHeight,
     workspaces,
   ]);
 
