@@ -26,12 +26,12 @@
     "lucide-react": "0.562.0",
     "otpauth": "9.4.1",
     "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "react-dom": "19.2.4"
   },
   "devDependencies": {
     "@tauri-apps/cli": "2.4.0",
     "@types/react": "18.3.3",
-    "@types/react-dom": "18.3.0",
+    "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "4.3.3",
     "rollup-plugin-visualizer": "6.0.5",
     "typescript": "5.6.2",
