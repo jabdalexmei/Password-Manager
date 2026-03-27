@@ -18,6 +18,7 @@ import { VaultCenterPane } from './layout/VaultCenterPane';
 import { VaultDetailsPane } from './layout/VaultDetailsPane';
 import { VaultSidebarPane } from './layout/VaultSidebarPane';
 import { VaultOverlays } from './layout/VaultOverlays';
+import { collectFolderSubtreeIds } from './hooks/vault/lib/collectFolderSubtreeIds';
 
 type VaultProps = {
   profileId: string;
@@ -184,14 +185,29 @@ export default function Vault({
     },
   });
 
+  const folderDeleteCardCounts = useMemo(() => {
+    const activeFolderIds = [...vault.cards, ...bankCards.cards]
+      .map((card) => card.folderId)
+      .filter((folderId): folderId is string => Boolean(folderId));
+
+    return vault.folders.reduce<Record<string, number>>((acc, folder) => {
+      const subtreeIds = new Set(collectFolderSubtreeIds(folder.id, vault.folders));
+      acc[folder.id] = activeFolderIds.reduce(
+        (total, folderId) => total + (subtreeIds.has(folderId) ? 1 : 0),
+        0
+      );
+      return acc;
+    }, {});
+  }, [bankCards.cards, vault.cards, vault.folders]);
+
   const handleDeleteFolder = useCallback(
     (folderId: string) => {
       const target = vault.folders.find((folder) => folder.id === folderId);
       if (!target) return;
-      const cardsCount = combinedCounts.folders[folderId] ?? 0;
+      const cardsCount = folderDeleteCardCounts[folderId] ?? 0;
       setPendingFolderDelete({ id: folderId, name: target.name, cardsCount });
     },
-    [vault.folders]
+    [folderDeleteCardCounts, vault.folders]
   );
 
   const closeDeleteModal = useCallback(() => setPendingFolderDelete(null), []);
