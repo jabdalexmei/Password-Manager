@@ -328,7 +328,7 @@ export function VaultsSection({
       </ul>
       <div className="vault-sidebar-actions vault-sidebar-actions--vaults">
         <button className="btn btn-primary" type="button" onClick={openCreateVaultDialog}>
-          {t('action.addVault')}
+          {t('action.createVault')}
         </button>
       </div>
 

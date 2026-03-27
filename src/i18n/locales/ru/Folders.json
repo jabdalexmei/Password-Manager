@@ -12,7 +12,7 @@
   "nav.archive": "Архив",
   "nav.deleted": "Удалённые",
   "action.createFolder": "Создать папку",
-  "action.addVault": "Добавить хранилище",
+  "action.createVault": "Создать хранилище",
   "action.makeDefault": "Сделать по умолчанию",
   "action.renameVault": "Переименовать хранилище",
   "action.deleteVault": "Удалить хранилище",

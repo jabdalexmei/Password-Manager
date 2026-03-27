@@ -12,7 +12,7 @@
   "nav.archive": "Archive",
   "nav.deleted": "Deleted",
   "action.createFolder": "Create folder",
-  "action.addVault": "Add vault",
+  "action.createVault": "Create vault",
   "action.makeDefault": "Make it default",
   "action.renameVault": "Rename vault",
   "action.deleteVault": "Delete vault",
