@@ -76,6 +76,7 @@ export function useDetails({
   const lastCopiedValueRef = useRef<string | null>(null);
   const { show: showToast } = useToaster();
   const { t } = useTranslation('Details');
+  const { t: tCommon } = useTranslation('Common');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewPayload, setPreviewPayload] = useState<AttachmentPreviewState>(null);
@@ -300,12 +301,17 @@ export function useDetails({
       try {
         const ok = await saveAttachmentViaDialog(attachmentId);
         if (ok) showToast(t('attachments.downloadSuccess'), 'success');
-      } catch (err) {
+      } catch (err: any) {
         console.error(err);
-        showToast(t('attachments.downloadError'), 'error');
+        const code = err?.code ?? err?.error;
+        if (code === 'ATTACHMENT_TARGET_PATH_FORBIDDEN') {
+          showToast(tCommon('error.operationBlocked'), 'error');
+        } else {
+          showToast(t('attachments.downloadError'), 'error');
+        }
       }
     },
-    [card, showToast, t]
+    [card, showToast, t, tCommon]
   );
 
   const onRenameAttachment = useCallback(

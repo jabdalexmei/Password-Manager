@@ -38,6 +38,7 @@ export const mapErrorMessage = (code: string, tCommon: TranslateFn, fallback?: s
     case 'BACKUP_DESTINATION_PATH_FORBIDDEN':
     case 'BACKUP_RESTORE_PATH_FORBIDDEN':
     case 'BACKUP_INSPECT_PATH_FORBIDDEN':
+    case 'ATTACHMENT_TARGET_PATH_FORBIDDEN':
       return tCommon('error.operationBlocked', { code });
     case 'PROFILE_ID_INVALID':
       return tCommon('error.profileInvalid', { code });

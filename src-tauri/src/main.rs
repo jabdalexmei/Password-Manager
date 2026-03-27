@@ -8,6 +8,7 @@ mod commands;
 mod data {
     pub mod fs {
         pub mod atomic_write;
+        pub mod output_guard;
     }
     pub mod storage_paths;
     pub mod workspaces {

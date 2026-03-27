@@ -19,6 +19,7 @@ const MAX_RESTORE_FILES: usize = 4096;
 const MAX_RESTORE_ENTRY_BYTES: i64 = 64 * 1024 * 1024;
 const MAX_RESTORE_TOTAL_BYTES: i64 = 512 * 1024 * 1024;
 
+use crate::data::fs::output_guard::ensure_output_path_allowed;
 use crate::data::fs::atomic_write::write_atomic;
 use crate::data::profiles::paths::{
     backup_registry_path, backups_dir, ensure_profile_dirs, kdf_salt_path, key_check_path,
@@ -545,12 +546,12 @@ fn resolve_destination_path(
 
     let destination_path =
         destination_path.ok_or_else(|| ErrorCodeString::new("BACKUP_DESTINATION_REQUIRED"))?;
-    let destination = PathBuf::from(destination_path);
-    if let Some(parent) = destination.parent() {
-        if !parent.exists() {
-            return Err(ErrorCodeString::new("BACKUP_DESTINATION_UNAVAILABLE"));
-        }
-    }
+    let destination = ensure_output_path_allowed(
+        sp,
+        Path::new(&destination_path),
+        "BACKUP_DESTINATION_UNAVAILABLE",
+        "BACKUP_DESTINATION_PATH_FORBIDDEN",
+    )?;
 
     let timestamp = now_timestamp();
     let id = format!("backup_{timestamp}");
@@ -1000,6 +1001,13 @@ fn restore_archive_to_profile(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tempfile::tempdir;
+
+    fn configured_storage_paths(workspace_root: &Path) -> StoragePaths {
+        let mut sp = StoragePaths::new_unconfigured().unwrap();
+        sp.configure_workspace(workspace_root.to_path_buf()).unwrap();
+        sp
+    }
 
     fn test_manifest(vault_mode: &str, profile_id: &str) -> BackupManifest {
         BackupManifest {
@@ -1056,5 +1064,43 @@ mod tests {
         let manifest = test_manifest("passwordless", "abc");
         let len = expected_restore_header_len(&manifest, "vault_key.bin");
         assert_eq!(len, PASSWORDLESS_MASTER_KEY_PREFIX.len() + 3 + 1);
+    }
+
+    #[test]
+    fn resolve_destination_path_allows_default_managed_backup_location() {
+        let dir = tempdir().unwrap();
+        let workspace_root = dir.path().join("workspace");
+        std::fs::create_dir_all(&workspace_root).unwrap();
+        let sp = configured_storage_paths(&workspace_root);
+
+        let (_id, path) = resolve_destination_path(&sp, "profile1", None, true).unwrap();
+
+        let backups_root = backups_dir(&sp, "profile1").unwrap();
+        assert!(Path::new(&path).starts_with(&backups_root));
+        assert!(path.ends_with(".pmbackup.zip"));
+    }
+
+    #[test]
+    fn resolve_destination_path_blocks_manual_targets_in_managed_storage() {
+        let dir = tempdir().unwrap();
+        let workspace_root = dir.path().join("workspace");
+        std::fs::create_dir_all(&workspace_root).unwrap();
+        let sp = configured_storage_paths(&workspace_root);
+
+        let managed_target = profile_dir(&sp, "profile1")
+            .unwrap()
+            .join("backups")
+            .join("custom.pmbackup.zip");
+        std::fs::create_dir_all(managed_target.parent().unwrap()).unwrap();
+
+        let err = resolve_destination_path(
+            &sp,
+            "profile1",
+            Some(managed_target.to_string_lossy().to_string()),
+            false,
+        )
+        .unwrap_err();
+
+        assert_eq!(err.code, "BACKUP_DESTINATION_PATH_FORBIDDEN");
     }
 }

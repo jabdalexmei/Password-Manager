@@ -13,6 +13,7 @@ use uuid::Uuid;
 use crate::app_state::AppState;
 use crate::data::crypto::cipher;
 use crate::data::fs::atomic_write::write_atomic;
+use crate::data::fs::output_guard::ensure_output_path_allowed;
 use crate::data::profiles::paths::attachment_file_path;
 use crate::data::sqlite::repo_impl;
 use crate::error::{ErrorCodeString, Result};
@@ -201,9 +202,14 @@ pub fn save_attachment_to_path(
         bytes
     };
 
-    let target = Path::new(&target_path);
-    ensure_target_dir(target)?;
-    fs::write(target, &output_bytes).map_err(|_| ErrorCodeString::new("ATTACHMENT_WRITE_FAILED"))
+    let target = ensure_output_path_allowed(
+        &session.storage_paths,
+        Path::new(&target_path),
+        "ATTACHMENT_WRITE_FAILED",
+        "ATTACHMENT_TARGET_PATH_FORBIDDEN",
+    )?;
+    ensure_target_dir(&target)?;
+    fs::write(&target, &output_bytes).map_err(|_| ErrorCodeString::new("ATTACHMENT_WRITE_FAILED"))
 }
 
 pub fn get_attachment_preview(
