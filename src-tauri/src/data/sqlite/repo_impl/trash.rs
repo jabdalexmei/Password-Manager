@@ -1,5 +1,25 @@
 ﻿use super::*;
 
+fn list_attachment_ids_by_datacard_conn(
+    conn: &Connection,
+    datacard_id: &str,
+    active_vault_id: &str,
+) -> Result<Vec<String>> {
+    let mut stmt = conn
+        .prepare(
+            "SELECT a.id FROM attachments a INNER JOIN datacards d ON d.id = a.datacard_id WHERE a.datacard_id = ?1 AND d.vault_id = ?2",
+        )
+        .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
+
+    let rows = stmt
+        .query_map(params![datacard_id, active_vault_id], |row| row.get::<_, String>(0))
+        .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?
+        .collect::<rusqlite::Result<Vec<_>>>()
+        .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
+
+    Ok(rows)
+}
+
 pub fn list_deleted_datacards(state: &Arc<AppState>, profile_id: &str) -> Result<Vec<DataCard>> {
     with_connection_in_active_vault(state, profile_id, |conn, active_vault_id| {
         let mut stmt = conn
@@ -142,8 +162,15 @@ pub fn restore_datacard(state: &Arc<AppState>, profile_id: &str, id: &str) -> Re
     })
 }
 
-pub fn purge_datacard(state: &Arc<AppState>, profile_id: &str, id: &str) -> Result<bool> {
-    with_connection_in_active_vault(state, profile_id, |conn, active_vault_id| {
+pub fn purge_datacard_and_collect_attachment_ids(
+    state: &Arc<AppState>,
+    profile_id: &str,
+    id: &str,
+) -> Result<Vec<String>> {
+    with_connection_in_active_vault_tx(state, profile_id, |conn, active_vault_id| {
+        let _ = get_datacard_by_id_conn(conn, id, active_vault_id)?;
+        let attachment_ids = list_attachment_ids_by_datacard_conn(conn, id, active_vault_id)?;
+
         let rows = conn
             .execute(
                 "DELETE FROM datacards WHERE id = ?1 AND vault_id = ?2",
@@ -153,41 +180,10 @@ pub fn purge_datacard(state: &Arc<AppState>, profile_id: &str, id: &str) -> Resu
         if rows == 0 {
             return Err(ErrorCodeString::new("DATACARD_NOT_FOUND"));
         }
-        Ok(true)
+
+        Ok(attachment_ids)
     })
 }
-
-pub fn soft_delete_datacards_in_folder(
-    state: &Arc<AppState>,
-    profile_id: &str,
-    folder_id: &str,
-) -> Result<bool> {
-    with_connection_in_active_vault(state, profile_id, |conn, active_vault_id| {
-        let now = Utc::now().to_rfc3339();
-        conn.execute(
-            "UPDATE datacards SET deleted_at = ?1, updated_at = ?2 WHERE folder_id = ?3 AND vault_id = ?4",
-            params![now.clone(), now, folder_id, active_vault_id],
-        )
-        .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
-        Ok(true)
-    })
-}
-pub fn purge_datacards_in_folder(
-    state: &Arc<AppState>,
-    profile_id: &str,
-    folder_id: &str,
-) -> Result<bool> {
-    with_connection_in_active_vault(state, profile_id, |conn, active_vault_id| {
-        conn.execute(
-            "DELETE FROM datacards WHERE folder_id = ?1 AND vault_id = ?2",
-            params![folder_id, active_vault_id],
-        )
-        .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
-        Ok(true)
-    })
-}
-
-
 pub fn list_deleted_bank_cards_summary(
     state: &Arc<AppState>,
     profile_id: &str,
@@ -297,37 +293,6 @@ pub fn purge_bank_card(state: &Arc<AppState>, profile_id: &str, id: &str) -> Res
         if rows == 0 {
             return Err(ErrorCodeString::new("BANK_CARD_NOT_FOUND"));
         }
-        Ok(true)
-    })
-}
-
-pub fn soft_delete_bank_cards_in_folder(
-    state: &Arc<AppState>,
-    profile_id: &str,
-    folder_id: &str,
-) -> Result<bool> {
-    with_connection_in_active_vault(state, profile_id, |conn, active_vault_id| {
-        let now = Utc::now().to_rfc3339();
-        conn.execute(
-            "UPDATE bank_cards SET deleted_at = ?1, updated_at = ?2 WHERE folder_id = ?3 AND vault_id = ?4",
-            params![now.clone(), now, folder_id, active_vault_id],
-        )
-        .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
-        Ok(true)
-    })
-}
-
-pub fn purge_bank_cards_in_folder(
-    state: &Arc<AppState>,
-    profile_id: &str,
-    folder_id: &str,
-) -> Result<bool> {
-    with_connection_in_active_vault(state, profile_id, |conn, active_vault_id| {
-        conn.execute(
-            "DELETE FROM bank_cards WHERE folder_id = ?1 AND vault_id = ?2",
-            params![folder_id, active_vault_id],
-        )
-        .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
         Ok(true)
     })
 }

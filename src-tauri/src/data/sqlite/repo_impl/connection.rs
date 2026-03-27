@@ -71,6 +71,55 @@ pub(super) fn with_connection_in_active_vault<T>(
     })
 }
 
+pub(super) fn with_connection_in_active_vault_tx<T>(
+    state: &Arc<AppState>,
+    profile_id: &str,
+    f: impl FnOnce(&Connection, &str) -> Result<T>,
+) -> Result<T> {
+    with_connection(state, profile_id, |conn| {
+        let active_vault_id = resolve_active_vault_id_conn(conn, state)?;
+
+        conn.execute("BEGIN IMMEDIATE", []).map_err(|e| {
+            log_sqlite_err(
+                "with_connection_in_active_vault_tx.begin",
+                "BEGIN IMMEDIATE",
+                &e,
+            );
+            ErrorCodeString::new("DB_QUERY_FAILED")
+        })?;
+
+        let result = f(conn, &active_vault_id);
+
+        match result {
+            Ok(value) => {
+                if let Err(err) = conn.execute("COMMIT", []) {
+                    log_sqlite_err("with_connection_in_active_vault_tx.commit", "COMMIT", &err);
+                    if let Err(rollback_err) = conn.execute("ROLLBACK", []) {
+                        log_sqlite_err(
+                            "with_connection_in_active_vault_tx.rollback_after_commit_failure",
+                            "ROLLBACK",
+                            &rollback_err,
+                        );
+                    }
+                    return Err(ErrorCodeString::new("DB_QUERY_FAILED"));
+                }
+
+                Ok(value)
+            }
+            Err(err) => {
+                if let Err(rollback_err) = conn.execute("ROLLBACK", []) {
+                    log_sqlite_err(
+                        "with_connection_in_active_vault_tx.rollback",
+                        "ROLLBACK",
+                        &rollback_err,
+                    );
+                }
+                Err(err)
+            }
+        }
+    })
+}
+
 pub(super) fn deserialize_json<T: serde::de::DeserializeOwned>(value: String) -> rusqlite::Result<T> {
     serde_json::from_str(&value)
         .map_err(|err| rusqlite::Error::FromSqlConversionFailure(0, Type::Text, Box::new(err)))

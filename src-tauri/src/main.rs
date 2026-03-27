@@ -38,6 +38,7 @@ mod data {
 }
 mod error;
 mod services {
+    pub mod attachment_file_cleanup;
     pub mod attachments_service;
     pub mod backup_service;
     pub mod bank_cards_service;
@@ -48,6 +49,7 @@ mod services {
     pub mod profiles_service;
     pub mod security_service;
     pub mod settings_service;
+    pub mod test_support;
     pub mod trash_auto_cleanup_service;
     pub mod ui_prefs_service;
     pub mod vaults_service;

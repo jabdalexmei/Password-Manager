@@ -1,5 +1,30 @@
 ﻿use super::*;
 
+fn get_attachment_by_id_conn(
+    conn: &Connection,
+    attachment_id: &str,
+    active_vault_id: &str,
+) -> Result<AttachmentMeta> {
+    let mut stmt = conn
+        .prepare(
+            "SELECT a.* FROM attachments a INNER JOIN datacards d ON d.id = a.datacard_id WHERE a.id = ?1 AND d.vault_id = ?2",
+        )
+        .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
+
+    match stmt.query_row(params![attachment_id, active_vault_id], map_attachment) {
+        Ok(meta) => Ok(meta),
+        Err(rusqlite::Error::QueryReturnedNoRows) => Err(ErrorCodeString::new("ATTACHMENT_NOT_FOUND")),
+        Err(err) => {
+            log_sqlite_err(
+                "get_attachment_by_id_conn.query_row",
+                "SELECT a.* FROM attachments a INNER JOIN datacards d ON d.id = a.datacard_id WHERE a.id = ?1 AND d.vault_id = ?2",
+                &err,
+            );
+            Err(ErrorCodeString::new("DB_QUERY_FAILED"))
+        }
+    }
+}
+
 pub fn insert_attachment(
     state: &Arc<AppState>,
     profile_id: &str,
@@ -35,28 +60,6 @@ pub fn list_attachments_by_datacard(
         let mut stmt = conn
             .prepare(
                 "SELECT a.* FROM attachments a INNER JOIN datacards d ON d.id = a.datacard_id WHERE a.datacard_id = ?1 AND d.vault_id = ?2 AND a.deleted_at IS NULL ORDER BY a.created_at DESC",
-            )
-            .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
-
-        let rows = stmt
-            .query_map(params![datacard_id, active_vault_id], map_attachment)
-            .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?
-            .collect::<rusqlite::Result<Vec<_>>>()
-            .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
-
-        Ok(rows)
-    })
-}
-
-pub fn list_all_attachments_by_datacard(
-    state: &Arc<AppState>,
-    profile_id: &str,
-    datacard_id: &str,
-) -> Result<Vec<AttachmentMeta>> {
-    with_connection_in_active_vault(state, profile_id, |conn, active_vault_id| {
-        let mut stmt = conn
-            .prepare(
-                "SELECT a.* FROM attachments a INNER JOIN datacards d ON d.id = a.datacard_id WHERE a.datacard_id = ?1 AND d.vault_id = ?2",
             )
             .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
 
@@ -107,18 +110,11 @@ pub fn get_attachment(
     attachment_id: &str,
 ) -> Result<Option<AttachmentMeta>> {
     with_connection_in_active_vault(state, profile_id, |conn, active_vault_id| {
-        let mut stmt = conn
-            .prepare(
-                "SELECT a.* FROM attachments a INNER JOIN datacards d ON d.id = a.datacard_id WHERE a.id = ?1 AND d.vault_id = ?2",
-            )
-            .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
-
-        let meta = stmt
-            .query_row(params![attachment_id, active_vault_id], map_attachment)
-            .optional()
-            .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
-
-        Ok(meta)
+        match get_attachment_by_id_conn(conn, attachment_id, active_vault_id) {
+            Ok(meta) => Ok(Some(meta)),
+            Err(err) if err.code == "ATTACHMENT_NOT_FOUND" => Ok(None),
+            Err(err) => Err(err),
+        }
     })
 }
 
@@ -168,12 +164,13 @@ pub fn rename_attachment(
 }
 
 
-pub fn purge_attachment(
+pub fn purge_attachment_and_get_meta(
     state: &Arc<AppState>,
     profile_id: &str,
     attachment_id: &str,
-) -> Result<()> {
-    with_connection_in_active_vault(state, profile_id, |conn, active_vault_id| {
+) -> Result<AttachmentMeta> {
+    with_connection_in_active_vault_tx(state, profile_id, |conn, active_vault_id| {
+        let meta = get_attachment_by_id_conn(conn, attachment_id, active_vault_id)?;
         let updated = conn
             .execute(
                 "DELETE FROM attachments WHERE id = ?1 AND EXISTS (SELECT 1 FROM datacards d WHERE d.id = attachments.datacard_id AND d.vault_id = ?2)",
@@ -185,6 +182,6 @@ pub fn purge_attachment(
             return Err(ErrorCodeString::new("ATTACHMENT_NOT_FOUND"));
         }
 
-        Ok(())
+        Ok(meta)
     })
 }

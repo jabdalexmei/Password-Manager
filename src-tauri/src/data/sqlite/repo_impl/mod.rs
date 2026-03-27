@@ -30,7 +30,7 @@ mod password_history;
 
 use connection::{
     deserialize_json, get_default_vault_id_conn, serialize_json, with_connection,
-    with_connection_in_active_vault,
+    with_connection_in_active_vault, with_connection_in_active_vault_tx,
 };
 
 pub use attachments::*;

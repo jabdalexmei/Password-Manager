@@ -1,13 +1,10 @@
 use std::collections::{HashMap, HashSet};
-use std::fs;
 use std::sync::Arc;
 
-use chrono::Utc;
-
 use crate::app_state::AppState;
-use crate::data::profiles::paths::attachment_file_path;
 use crate::data::sqlite::repo_impl;
 use crate::error::{ErrorCodeString, Result};
+use crate::services::attachment_file_cleanup::remove_attachment_files_best_effort;
 use crate::services::security_service;
 use crate::services::settings_service::get_settings;
 use crate::types::{CreateFolderInput, Folder, MoveFolderInput, RenameFolderInput};
@@ -92,15 +89,7 @@ pub fn delete_folder_only(id: String, state: &Arc<AppState>) -> Result<bool> {
     {
         return Err(ErrorCodeString::new("FOLDER_IS_SYSTEM"));
     }
-
-    for folder_id in &subtree_ids {
-        repo_impl::move_datacards_to_root(state, &profile_id, folder_id)?;
-        repo_impl::move_bank_cards_to_root(state, &profile_id, folder_id)?;
-    }
-
-    for folder_id in subtree_ids.iter().rev() {
-        repo_impl::purge_folder(state, &profile_id, folder_id)?;
-    }
+    repo_impl::delete_folder_subtree_only_atomic(state, &profile_id, &subtree_ids)?;
     security_service::request_persist_active_vault(state.clone());
     Ok(true)
 }
@@ -125,52 +114,252 @@ pub fn delete_folder_and_cards(id: String, state: &Arc<AppState>) -> Result<bool
     let settings = get_settings(&storage_paths, &profile_id)?;
 
     if settings.soft_delete_enabled {
-        for folder_id in &subtree_ids {
-            let now = Utc::now().to_rfc3339();
-            let datacard_ids =
-                repo_impl::list_datacard_ids_in_folder(state, &profile_id, folder_id, false)?;
-
-            for datacard_id in datacard_ids {
-                repo_impl::soft_delete_attachments_by_datacard(
-                    state,
-                    &profile_id,
-                    &datacard_id,
-                    &now,
-                )?;
-            }
-            repo_impl::soft_delete_datacards_in_folder(state, &profile_id, folder_id)?;
-            repo_impl::soft_delete_bank_cards_in_folder(state, &profile_id, folder_id)?;
-        }
+        repo_impl::soft_delete_folder_subtree_and_detach_cards(state, &profile_id, &subtree_ids)?;
     } else {
-        for folder_id in &subtree_ids {
-            let datacard_ids =
-                repo_impl::list_datacard_ids_in_folder(state, &profile_id, folder_id, true)?;
-
-            for datacard_id in datacard_ids {
-                let attachments =
-                    repo_impl::list_all_attachments_by_datacard(state, &profile_id, &datacard_id)?;
-
-                for attachment in attachments {
-                    let file_path =
-                        attachment_file_path(&storage_paths, &profile_id, &attachment.id)?;
-                    let _ = fs::remove_file(file_path);
-                    if let Err(err) =
-                        repo_impl::purge_attachment(state, &profile_id, &attachment.id)
-                    {
-                        if err.code != "ATTACHMENT_NOT_FOUND" {
-                            return Err(err);
-                        }
-                    }
-                }
-            }
-            repo_impl::purge_datacards_in_folder(state, &profile_id, folder_id)?;
-            repo_impl::purge_bank_cards_in_folder(state, &profile_id, folder_id)?;
-        }
-    }
-
-    for folder_id in subtree_ids.iter().rev() {
-        repo_impl::purge_folder(state, &profile_id, folder_id)?;
+        let attachment_ids =
+            repo_impl::purge_folder_subtree_and_collect_attachment_ids(state, &profile_id, &subtree_ids)?;
+        remove_attachment_files_best_effort(&storage_paths, &profile_id, &attachment_ids);
+        security_service::request_persist_active_vault(state.clone());
+        return Ok(true);
     }
     security_service::request_persist_active_vault(state.clone());
     Ok(true)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use crate::data::sqlite::repo_impl;
+    use crate::services::{bank_cards_service, datacards_service, test_support::ServiceTestHarness};
+
+    #[test]
+    fn delete_folder_only_moves_cards_to_root_and_removes_subtree() {
+        let harness = ServiceTestHarness::new();
+        let root = harness.create_folder("Root", None);
+        let child = harness.create_folder("Child", Some(root.id.clone()));
+        let card = harness.create_datacard("Card", Some(child.id.clone()), None);
+        let bank_card = harness.create_bank_card("Bank", Some(child.id.clone()));
+
+        let deleted = delete_folder_only(root.id.clone(), &harness.state).unwrap();
+
+        assert!(deleted);
+        let moved_card = repo_impl::get_datacard(&harness.state, &harness.profile_id, &card.id).unwrap();
+        let moved_bank_card =
+            repo_impl::get_bank_card(&harness.state, &harness.profile_id, &bank_card.id).unwrap();
+        assert_eq!(moved_card.folder_id, None);
+        assert_eq!(moved_bank_card.folder_id, None);
+        assert_eq!(
+            repo_impl::get_folder(&harness.state, &harness.profile_id, &root.id)
+                .unwrap_err()
+                .code,
+            "FOLDER_NOT_FOUND"
+        );
+        assert_eq!(
+            repo_impl::get_folder(&harness.state, &harness.profile_id, &child.id)
+                .unwrap_err()
+                .code,
+            "FOLDER_NOT_FOUND"
+        );
+    }
+
+    #[test]
+    fn delete_folder_and_cards_purges_subtree_and_keeps_outside_data() {
+        let harness = ServiceTestHarness::new();
+        harness.set_soft_delete_enabled(false);
+
+        let subtree_root = harness.create_folder("Projects", None);
+        let subtree_child = harness.create_folder("Secrets", Some(subtree_root.id.clone()));
+        let outside_folder = harness.create_folder("Outside", None);
+
+        let subtree_card = harness.create_datacard("Subtree", Some(subtree_child.id.clone()), None);
+        let outside_card = harness.create_datacard("Outside", Some(outside_folder.id.clone()), None);
+        let subtree_bank = harness.create_bank_card("Subtree bank", Some(subtree_root.id.clone()));
+        let outside_bank = harness.create_bank_card("Outside bank", Some(outside_folder.id.clone()));
+
+        let subtree_attachment = harness.create_attachment(&subtree_card.id, "subtree-attachment");
+        let outside_attachment = harness.create_attachment(&outside_card.id, "outside-attachment");
+        let subtree_attachment_path = harness.attachment_path(&subtree_attachment.id);
+        let outside_attachment_path = harness.attachment_path(&outside_attachment.id);
+
+        let deleted = delete_folder_and_cards(subtree_root.id.clone(), &harness.state).unwrap();
+
+        assert!(deleted);
+        assert_eq!(
+            repo_impl::get_folder(&harness.state, &harness.profile_id, &subtree_root.id)
+                .unwrap_err()
+                .code,
+            "FOLDER_NOT_FOUND"
+        );
+        assert_eq!(
+            repo_impl::get_folder(&harness.state, &harness.profile_id, &subtree_child.id)
+                .unwrap_err()
+                .code,
+            "FOLDER_NOT_FOUND"
+        );
+        assert_eq!(
+            repo_impl::get_datacard(&harness.state, &harness.profile_id, &subtree_card.id)
+                .unwrap_err()
+                .code,
+            "DATACARD_NOT_FOUND"
+        );
+        assert_eq!(
+            repo_impl::get_bank_card(&harness.state, &harness.profile_id, &subtree_bank.id)
+                .unwrap_err()
+                .code,
+            "BANK_CARD_NOT_FOUND"
+        );
+        assert!(
+            repo_impl::get_attachment(&harness.state, &harness.profile_id, &subtree_attachment.id)
+                .unwrap()
+                .is_none()
+        );
+        assert!(!subtree_attachment_path.exists());
+
+        assert_eq!(
+            repo_impl::get_datacard(&harness.state, &harness.profile_id, &outside_card.id)
+                .unwrap()
+                .folder_id,
+            Some(outside_folder.id.clone())
+        );
+        assert_eq!(
+            repo_impl::get_bank_card(&harness.state, &harness.profile_id, &outside_bank.id)
+                .unwrap()
+                .folder_id,
+            Some(outside_folder.id.clone())
+        );
+        assert!(
+            repo_impl::get_attachment(&harness.state, &harness.profile_id, &outside_attachment.id)
+                .unwrap()
+                .is_some()
+        );
+        assert!(outside_attachment_path.exists());
+    }
+
+    #[test]
+    fn delete_folder_and_cards_soft_deletes_subtree_detaches_cards_and_keeps_blobs() {
+        let harness = ServiceTestHarness::new();
+        harness.set_soft_delete_enabled(true);
+
+        let subtree_root = harness.create_folder("Projects", None);
+        let subtree_child = harness.create_folder("Secrets", Some(subtree_root.id.clone()));
+        let outside_folder = harness.create_folder("Outside", None);
+
+        let subtree_card = harness.create_datacard("Subtree", Some(subtree_child.id.clone()), None);
+        let outside_card = harness.create_datacard("Outside", Some(outside_folder.id.clone()), None);
+        let subtree_bank = harness.create_bank_card("Subtree bank", Some(subtree_root.id.clone()));
+        let outside_bank = harness.create_bank_card("Outside bank", Some(outside_folder.id.clone()));
+
+        let subtree_attachment = harness.create_attachment(&subtree_card.id, "subtree-attachment");
+        let outside_attachment = harness.create_attachment(&outside_card.id, "outside-attachment");
+        let subtree_attachment_path = harness.attachment_path(&subtree_attachment.id);
+        let outside_attachment_path = harness.attachment_path(&outside_attachment.id);
+
+        let deleted = delete_folder_and_cards(subtree_root.id.clone(), &harness.state).unwrap();
+
+        assert!(deleted);
+        assert_eq!(
+            repo_impl::get_folder(&harness.state, &harness.profile_id, &subtree_root.id)
+                .unwrap_err()
+                .code,
+            "FOLDER_NOT_FOUND"
+        );
+        assert_eq!(
+            repo_impl::get_folder(&harness.state, &harness.profile_id, &subtree_child.id)
+                .unwrap_err()
+                .code,
+            "FOLDER_NOT_FOUND"
+        );
+
+        let deleted_card =
+            repo_impl::get_datacard(&harness.state, &harness.profile_id, &subtree_card.id).unwrap();
+        let deleted_bank =
+            repo_impl::get_bank_card(&harness.state, &harness.profile_id, &subtree_bank.id).unwrap();
+        let deleted_attachment = repo_impl::get_attachment(
+            &harness.state,
+            &harness.profile_id,
+            &subtree_attachment.id,
+        )
+        .unwrap()
+        .unwrap();
+
+        assert!(deleted_card.deleted_at.is_some());
+        assert_eq!(deleted_card.folder_id, None);
+        assert!(deleted_bank.deleted_at.is_some());
+        assert_eq!(deleted_bank.folder_id, None);
+        assert!(deleted_attachment.deleted_at.is_some());
+        assert!(subtree_attachment_path.exists());
+
+        assert_eq!(
+            repo_impl::get_datacard(&harness.state, &harness.profile_id, &outside_card.id)
+                .unwrap()
+                .folder_id,
+            Some(outside_folder.id.clone())
+        );
+        assert_eq!(
+            repo_impl::get_datacard(&harness.state, &harness.profile_id, &outside_card.id)
+                .unwrap()
+                .deleted_at,
+            None
+        );
+        assert_eq!(
+            repo_impl::get_bank_card(&harness.state, &harness.profile_id, &outside_bank.id)
+                .unwrap()
+                .folder_id,
+            Some(outside_folder.id.clone())
+        );
+        assert_eq!(
+            repo_impl::get_bank_card(&harness.state, &harness.profile_id, &outside_bank.id)
+                .unwrap()
+                .deleted_at,
+            None
+        );
+        assert_eq!(
+            repo_impl::get_attachment(&harness.state, &harness.profile_id, &outside_attachment.id)
+                .unwrap()
+                .unwrap()
+                .deleted_at,
+            None
+        );
+        assert!(outside_attachment_path.exists());
+    }
+
+    #[test]
+    fn delete_folder_and_cards_soft_delete_allows_restore_to_root() {
+        let harness = ServiceTestHarness::new();
+        harness.set_soft_delete_enabled(true);
+
+        let subtree_root = harness.create_folder("Projects", None);
+        let subtree_child = harness.create_folder("Secrets", Some(subtree_root.id.clone()));
+
+        let subtree_card = harness.create_datacard("Subtree", Some(subtree_child.id.clone()), None);
+        let subtree_bank = harness.create_bank_card("Subtree bank", Some(subtree_root.id.clone()));
+        let subtree_attachment = harness.create_attachment(&subtree_card.id, "subtree-attachment");
+        let subtree_attachment_path = harness.attachment_path(&subtree_attachment.id);
+
+        let deleted = delete_folder_and_cards(subtree_root.id.clone(), &harness.state).unwrap();
+        assert!(deleted);
+
+        datacards_service::restore_datacard(subtree_card.id.clone(), &harness.state).unwrap();
+        bank_cards_service::restore_bank_card(subtree_bank.id.clone(), &harness.state).unwrap();
+
+        let restored_card =
+            repo_impl::get_datacard(&harness.state, &harness.profile_id, &subtree_card.id).unwrap();
+        let restored_bank =
+            repo_impl::get_bank_card(&harness.state, &harness.profile_id, &subtree_bank.id).unwrap();
+        let restored_attachment = repo_impl::get_attachment(
+            &harness.state,
+            &harness.profile_id,
+            &subtree_attachment.id,
+        )
+        .unwrap()
+        .unwrap();
+
+        assert_eq!(restored_card.deleted_at, None);
+        assert_eq!(restored_card.folder_id, None);
+        assert_eq!(restored_bank.deleted_at, None);
+        assert_eq!(restored_bank.folder_id, None);
+        assert_eq!(restored_attachment.deleted_at, None);
+        assert!(subtree_attachment_path.exists());
+    }
 }

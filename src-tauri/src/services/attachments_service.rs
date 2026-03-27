@@ -17,6 +17,7 @@ use crate::data::fs::output_guard::ensure_output_path_allowed;
 use crate::data::profiles::paths::attachment_file_path;
 use crate::data::sqlite::repo_impl;
 use crate::error::{ErrorCodeString, Result};
+use crate::services::attachment_file_cleanup::remove_attachment_files_best_effort;
 use crate::services::security_service;
 use crate::types::{AttachmentMeta, AttachmentPreviewPayload};
 
@@ -171,13 +172,28 @@ pub fn remove_attachment(app: &AppHandle, attachment_id: String) -> Result<()> {
 
 pub fn purge_attachment(app: &AppHandle, attachment_id: String) -> Result<()> {
     let session = require_logged_in(app)?;
-    let meta = repo_impl::get_attachment(&session.state, &session.profile_id, &attachment_id)?
-        .ok_or_else(|| ErrorCodeString::new("ATTACHMENT_NOT_FOUND"))?;
-
-    let file_path = attachment_file_path(&session.storage_paths, &session.profile_id, &meta.id)?;
-    let _ = fs::remove_file(file_path);
-    repo_impl::purge_attachment(&session.state, &session.profile_id, &attachment_id)?;
+    purge_attachment_by_profile(
+        &session.state,
+        &session.storage_paths,
+        &session.profile_id,
+        &attachment_id,
+    )?;
     security_service::request_persist_active_vault(session.state.clone());
+    Ok(())
+}
+
+pub(crate) fn purge_attachment_by_profile(
+    state: &Arc<AppState>,
+    storage_paths: &crate::data::storage_paths::StoragePaths,
+    profile_id: &str,
+    attachment_id: &str,
+) -> Result<()> {
+    let meta = repo_impl::purge_attachment_and_get_meta(state, profile_id, attachment_id)?;
+    remove_attachment_files_best_effort(
+        storage_paths,
+        profile_id,
+        std::slice::from_ref(&meta.id),
+    );
     Ok(())
 }
 
@@ -268,4 +284,59 @@ pub fn clear_previews_for_profile(_state: &Arc<AppState>, _profile_id: &str) -> 
     // Attachment previews are currently streamed to the UI as base64 payloads.
     // There is no on-disk preview cache to clear.
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use crate::data::sqlite::repo_impl;
+    use crate::services::test_support::ServiceTestHarness;
+
+    #[test]
+    fn purge_attachment_removes_db_row_and_blob() {
+        let harness = ServiceTestHarness::new();
+        let card = harness.create_datacard("Card", None, None);
+        let attachment = harness.create_attachment(&card.id, "att-1");
+        let file_path = harness.attachment_path(&attachment.id);
+
+        purge_attachment_by_profile(
+            &harness.state,
+            &harness.storage_paths(),
+            &harness.profile_id,
+            &attachment.id,
+        )
+        .unwrap();
+
+        assert!(
+            repo_impl::get_attachment(&harness.state, &harness.profile_id, &attachment.id)
+                .unwrap()
+                .is_none()
+        );
+        assert!(!file_path.exists());
+    }
+
+    #[test]
+    fn purge_attachment_succeeds_when_blob_is_already_missing() {
+        let harness = ServiceTestHarness::new();
+        let card = harness.create_datacard("Card", None, None);
+        let attachment = harness.create_attachment(&card.id, "att-missing");
+        let file_path = harness.attachment_path(&attachment.id);
+        std::fs::remove_file(&file_path).unwrap();
+
+        purge_attachment_by_profile(
+            &harness.state,
+            &harness.storage_paths(),
+            &harness.profile_id,
+            &attachment.id,
+        )
+        .unwrap();
+
+        assert!(
+            repo_impl::get_attachment(&harness.state, &harness.profile_id, &attachment.id)
+                .unwrap()
+                .is_none()
+        );
+        assert!(!file_path.exists());
+    }
 }
