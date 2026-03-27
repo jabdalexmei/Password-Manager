@@ -71,7 +71,7 @@
 .vault-search:focus-visible {
   outline: var(--cmp-input-focus-ring);
   outline-offset: var(--cmp-input-focus-ring-offset);
-  border-color: var(--cmp-input-focus-border);
+  border-color: transparent;
   background: var(--cmp-input-focus-bg);
 }
 
