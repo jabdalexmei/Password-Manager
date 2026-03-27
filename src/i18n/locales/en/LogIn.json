@@ -1,0 +1,18 @@
+{
+  "title": "Log in",
+  "subtitle": "Enter the master password to unlock this vault",
+
+  "selectedProfile": "Selected profile",
+  "unnamedProfile": "Unnamed profile",
+
+  "passwordLabel": "Password",
+  "passwordPlaceholder": "Password",
+
+  "back": "Back",
+  "submit": "Log in",
+
+  "invalidPassword": "Invalid password",
+  "validationPassword": "Enter the password",
+  "error": "Unable to unlock the profile",
+  "label.profileId": "ID: {{id}}"
+}
