@@ -337,24 +337,29 @@ export function VaultsSection({
 
       {openMenu && openMenu.type === 'vault' && menuVault && (
         <div
-          className="vault-context-backdrop"
+          className="vault-actionmenu-backdrop"
           onClick={() => setOpenMenu(null)}
           onContextMenu={(event) => event.preventDefault()}
         >
           <div
-            className="vault-context-menu"
+            className="vault-actionmenu-panel vault-contextmenu-panel"
             role="menu"
-            style={{ top: openMenu.y, left: openMenu.x }}
+            style={
+              {
+                '--menu-x': `${openMenu.x}px`,
+                '--menu-y': `${openMenu.y}px`,
+              } as React.CSSProperties
+            }
             onClick={(event) => event.stopPropagation()}
           >
             {menuVault.isDefault ? (
-              <button type="button" className="vault-context-item" disabled>
+              <button type="button" className="vault-actionmenu-item" disabled>
                 {t('status.default')}
               </button>
             ) : (
               <button
                 type="button"
-                className="vault-context-item"
+                className="vault-actionmenu-item"
                 onClick={() => void handleSetDefaultVaultFromMenu(openMenu.vaultId)}
               >
                 {t('action.makeDefault')}
@@ -362,14 +367,14 @@ export function VaultsSection({
             )}
             <button
               type="button"
-              className="vault-context-item"
+              className="vault-actionmenu-item"
               onClick={() => openRenameVaultDialog(openMenu.vaultId)}
             >
               {t('action.renameVault')}
             </button>
             <button
               type="button"
-              className="vault-context-item"
+              className="vault-actionmenu-item vault-actionmenu-danger"
               onClick={() => handleDeleteVaultFromMenu(openMenu.vaultId)}
             >
               {t('action.deleteVault')}

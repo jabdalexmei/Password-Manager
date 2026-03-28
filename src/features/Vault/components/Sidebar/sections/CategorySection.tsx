@@ -53,19 +53,24 @@ export function CategorySection({
 
       {openMenu && openMenu.type === 'category' && (
         <div
-          className="vault-context-backdrop"
+          className="vault-actionmenu-backdrop"
           onClick={() => setOpenMenu(null)}
           onContextMenu={(event) => event.preventDefault()}
         >
           <div
-            className="vault-context-menu"
+            className="vault-actionmenu-panel vault-contextmenu-panel"
             role="menu"
-            style={{ top: openMenu.y, left: openMenu.x }}
+            style={
+              {
+                '--menu-x': `${openMenu.x}px`,
+                '--menu-y': `${openMenu.y}px`,
+              } as React.CSSProperties
+            }
             onClick={(event) => event.stopPropagation()}
           >
             <button
               type="button"
-              className="vault-context-item"
+              className="vault-actionmenu-item"
               onClick={() => {
                 onAddBankCard();
                 setOpenMenu(null);

@@ -388,24 +388,33 @@ export function FoldersTreeSection({
       {renderRenameDialog()}
 
       {openMenu && openMenu.type === 'folder' && (
-        <div className="vault-context-backdrop" onClick={() => setOpenMenu(null)} onContextMenu={(event) => event.preventDefault()}>
+        <div className="vault-actionmenu-backdrop" onClick={() => setOpenMenu(null)} onContextMenu={(event) => event.preventDefault()}>
           <div
-            className="vault-context-menu"
+            className="vault-actionmenu-panel vault-contextmenu-panel"
             role="menu"
-            style={{ top: openMenu.y, left: openMenu.x }}
+            style={
+              {
+                '--menu-x': `${openMenu.x}px`,
+                '--menu-y': `${openMenu.y}px`,
+              } as React.CSSProperties
+            }
             onClick={(event) => event.stopPropagation()}
           >
             <button
               type="button"
-              className="vault-context-item"
+              className="vault-actionmenu-item"
               onClick={() => handleCreateSubfolderFromMenu(openMenu.folderId)}
             >
               {t('action.createSubfolder')}
             </button>
-            <button type="button" className="vault-context-item" onClick={() => openRenameDialog(openMenu.folderId)}>
+            <button type="button" className="vault-actionmenu-item" onClick={() => openRenameDialog(openMenu.folderId)}>
               {t('action.renameFolder')}
             </button>
-            <button type="button" className="vault-context-item" onClick={() => handleDeleteFromMenu(openMenu.folderId)}>
+            <button
+              type="button"
+              className="vault-actionmenu-item vault-actionmenu-danger"
+              onClick={() => handleDeleteFromMenu(openMenu.folderId)}
+            >
               {t('action.deleteFolder')}
             </button>
           </div>

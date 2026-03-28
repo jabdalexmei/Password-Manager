@@ -53,14 +53,14 @@ export function VaultSortControl({ value, onChange, disabled }: VaultSortControl
       {open && (
         <>
           <div className="vault-actionmenu-backdrop" onClick={() => setOpen(false)} />
-          <div className="vault-sortmenu-panel vault-context-menu" role="menu">
+          <div className="vault-actionmenu-panel vault-sortmenu-panel" role="menu">
             {options.map((opt, idx) => {
               const isSelected = value === opt.value;
               return (
                 <React.Fragment key={opt.value}>
                   {isDividerIndex(idx) && <div className="vault-sortmenu-divider" role="separator" />}
                   <button
-                    className={`vault-context-item vault-sortmenu-item ${isSelected ? 'is-selected' : ''}`.trim()}
+                    className={`vault-actionmenu-item vault-sortmenu-item ${isSelected ? 'is-selected' : ''}`.trim()}
                     type="button"
                     onClick={() => {
                       onChange(opt.value);
