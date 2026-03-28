@@ -59,14 +59,14 @@ export function DeleteFolderModal({
           <button className="btn btn-secondary" type="button" onClick={onCancel}>
             {tCommon('action.cancel')}
           </button>
-          <button className="btn btn-danger" type="button" onClick={onDeleteFolderOnly}>
-            {t('vault.delete_folder.only')}
-          </button>
           {!isEmpty && (
             <button className="btn btn-danger" type="button" onClick={onDeleteFolderAndCards}>
               {t('vault.delete_folder.and_cards')}
             </button>
           )}
+          <button className="btn btn-danger" type="button" onClick={onDeleteFolderOnly}>
+            {t('vault.delete_folder.only')}
+          </button>
         </div>
       </div>
     </div>
