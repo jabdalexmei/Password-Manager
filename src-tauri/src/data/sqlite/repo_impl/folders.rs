@@ -1,5 +1,7 @@
 ﻿use super::*;
 
+use std::collections::HashSet;
+
 fn list_attachment_ids_in_folder_conn(
     conn: &Connection,
     folder_id: &str,
@@ -101,11 +103,22 @@ pub fn move_folder(
     parent_id: &Option<String>,
 ) -> Result<bool> {
     with_connection_in_active_vault(state, profile_id, |conn, active_vault_id| {
+        let _ = get_folder_by_id_conn(conn, id, active_vault_id)?;
         if let Some(parent) = parent_id {
-            if parent == id {
-                return Err(ErrorCodeString::new("FOLDER_NOT_FOUND"));
+            let mut candidate_id = parent.clone();
+            let mut visited = HashSet::new();
+
+            loop {
+                if !visited.insert(candidate_id.clone()) || candidate_id == id {
+                    return Err(ErrorCodeString::new("FOLDER_INVALID_PARENT"));
+                }
+
+                let candidate = get_folder_by_id_conn(conn, &candidate_id, active_vault_id)?;
+                let Some(next_parent_id) = candidate.parent_id else {
+                    break;
+                };
+                candidate_id = next_parent_id;
             }
-            let _ = get_folder_by_id_conn(conn, parent, active_vault_id)?;
         }
         let rows = conn
             .execute(

@@ -237,6 +237,60 @@ mod tests {
     }
 
     #[test]
+    fn move_folder_rejects_moving_into_own_descendant() {
+        let harness = ServiceTestHarness::new();
+        let root = harness.create_folder("Root", None);
+        let child = harness.create_folder("Child", Some(root.id.clone()));
+        let grandchild = harness.create_folder("Grandchild", Some(child.id.clone()));
+
+        let err = move_folder(
+            MoveFolderInput {
+                id: root.id.clone(),
+                parent_id: Some(grandchild.id.clone()),
+            },
+            &harness.state,
+        )
+        .unwrap_err();
+
+        assert_eq!(err.code, "FOLDER_INVALID_PARENT");
+        assert_eq!(
+            repo_impl::get_folder(&harness.state, &harness.profile_id, &root.id)
+                .unwrap()
+                .parent_id,
+            None
+        );
+        assert_eq!(
+            repo_impl::get_folder(&harness.state, &harness.profile_id, &child.id)
+                .unwrap()
+                .parent_id,
+            Some(root.id.clone())
+        );
+    }
+
+    #[test]
+    fn move_folder_rejects_self_as_parent() {
+        let harness = ServiceTestHarness::new();
+        let root = harness.create_folder("Root", None);
+
+        let err = move_folder(
+            MoveFolderInput {
+                id: root.id.clone(),
+                parent_id: Some(root.id.clone()),
+            },
+            &harness.state,
+        )
+        .unwrap_err();
+
+        assert_eq!(err.code, "FOLDER_INVALID_PARENT");
+        assert_eq!(
+            repo_impl::get_folder(&harness.state, &harness.profile_id, &root.id)
+                .unwrap()
+                .parent_id,
+            None
+        );
+    }
+
+    #[test]
     fn delete_folder_and_cards_soft_deletes_subtree_detaches_cards_and_keeps_blobs() {
         let harness = ServiceTestHarness::new();
         harness.set_soft_delete_enabled(true);
