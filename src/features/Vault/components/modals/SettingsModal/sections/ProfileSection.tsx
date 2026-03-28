@@ -199,7 +199,7 @@ export function ProfileSection({
                 <div className="input-actions">
                   <button
                     type="button"
-                    className="icon-button input-action-eye"
+                    className="icon-button input-action-inline"
                     disabled={busy || isSettingPassword || profileHasPassword}
                     aria-label={isSetPasswordVisible ? tCommon('action.hidePassword') : tCommon('action.showPassword')}
                     title={isSetPasswordVisible ? tTip('action.hidePassword') : tTip('action.showPassword')}
@@ -228,7 +228,7 @@ export function ProfileSection({
                 <div className="input-actions">
                   <button
                     type="button"
-                    className="icon-button input-action-eye"
+                    className="icon-button input-action-inline"
                     disabled={busy || isSettingPassword || profileHasPassword}
                     aria-label={isSetPasswordConfirmVisible ? tCommon('action.hidePassword') : tCommon('action.showPassword')}
                     title={isSetPasswordConfirmVisible ? tTip('action.hidePassword') : tTip('action.showPassword')}
@@ -281,7 +281,7 @@ export function ProfileSection({
                 <div className="input-actions">
                   <button
                     type="button"
-                    className="icon-button input-action-eye"
+                    className="icon-button input-action-inline"
                     disabled={busy || isChangingPassword || !profileHasPassword}
                     aria-label={isChangePasswordVisible ? tCommon('action.hidePassword') : tCommon('action.showPassword')}
                     title={isChangePasswordVisible ? tTip('action.hidePassword') : tTip('action.showPassword')}
@@ -310,7 +310,7 @@ export function ProfileSection({
                 <div className="input-actions">
                   <button
                     type="button"
-                    className="icon-button input-action-eye"
+                    className="icon-button input-action-inline"
                     disabled={busy || isChangingPassword || !profileHasPassword}
                     aria-label={isChangePasswordConfirmVisible ? tCommon('action.hidePassword') : tCommon('action.showPassword')}
                     title={isChangePasswordConfirmVisible ? tTip('action.hidePassword') : tTip('action.showPassword')}

@@ -275,7 +275,7 @@ export function DataCardFormDialog({
             <label className="form-label" htmlFor={`${dialogId}-password`}>
               {t('label.password')}
             </label>
-            <div className="input-with-actions">
+            <div className="input-with-actions input-with-actions--inline-actions">
               <input
                 id={`${dialogId}-password`}
                 className="input"
@@ -286,7 +286,7 @@ export function DataCardFormDialog({
               />
               <div className="input-actions">
                 <button
-                  className="icon-button input-action-eye"
+                  className="icon-button input-action-inline"
                   type="button"
                   onClick={togglePasswordVisibility}
                   aria-label={t('action.togglePasswordVisibility')}
@@ -296,7 +296,7 @@ export function DataCardFormDialog({
                 </button>
 
                 <button
-                  className="icon-button icon-button-primary"
+                  className="icon-button input-action-inline"
                   type="button"
                   onClick={openGenerator}
                   aria-label={t('action.openGenerator')}

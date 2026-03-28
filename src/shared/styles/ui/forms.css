@@ -298,6 +298,23 @@ select:autofill {
   padding-right: 0;
 }
 
+.input-with-actions--inline-actions {
+  position: relative;
+}
+
+.input-with-actions--inline-actions .input {
+  padding-right: 72px;
+}
+
+.input-with-actions--inline-actions .input-actions {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  gap: 4px;
+  padding-right: 0;
+}
+
 .input-actions {
   display: inline-flex;
   align-items: center;
@@ -333,8 +350,8 @@ select:autofill {
   opacity: 0.55;
 }
 
-/* Password visibility button: no own border/background, keep only icon hover color. */
-.input-actions .input-action-eye {
+/* Flat inline action button inside inputs: no own border/background, keep only icon hover color. */
+.input-actions .input-action-inline {
   width: 26px !important;
   height: 26px !important;
   min-width: 26px !important;
@@ -349,9 +366,9 @@ select:autofill {
   transition: color 0.15s ease, opacity 0.15s ease;
 }
 
-.input-actions .input-action-eye:hover:not(:disabled),
-.input-actions .input-action-eye:focus-visible,
-.input-actions .input-action-eye:active {
+.input-actions .input-action-inline:hover:not(:disabled),
+.input-actions .input-action-inline:focus-visible,
+.input-actions .input-action-inline:active {
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;

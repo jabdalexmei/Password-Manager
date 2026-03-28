@@ -89,7 +89,7 @@ const LogIn: React.FC<LogInProps> = ({
                     <div className="input-actions">
                       <button
                         type="button"
-                        className="icon-button input-action-eye"
+                        className="icon-button input-action-inline"
                         aria-label={isPasswordVisible ? tCommon('action.hidePassword') : tCommon('action.showPassword')}
                         title={isPasswordVisible ? tCommon('action.hidePassword') : tCommon('action.showPassword')}
                         onClick={() => setIsPasswordVisible((prev) => !prev)}
