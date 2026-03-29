@@ -320,8 +320,7 @@ pub async fn add_attachments_via_dialog(
 #[tauri::command]
 pub async fn save_attachment_via_dialog(app: AppHandle, attachment_id: String) -> Result<bool> {
     tauri::async_runtime::spawn_blocking(move || {
-        let preview = attachments_service::get_attachment_preview(&app, attachment_id.clone())?;
-        let default_name = preview.file_name.clone();
+        let default_name = attachments_service::get_attachment_file_name(&app, attachment_id.clone())?;
 
         let selection = app
             .dialog()
