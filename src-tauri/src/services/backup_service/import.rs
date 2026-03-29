@@ -8,6 +8,7 @@ pub fn backup_restore_workflow(state: &Arc<AppState>, backup_path: String) -> Re
 
     let backup_path = PathBuf::from(&backup_path);
     let (manifest, profile_name) = read_backup_manifest_and_name(&backup_path)?;
+    recover_pending_restore_tx(&sp, &manifest.profile_id)?;
 
     if manifest.vault_mode == "protected" {
         let mut has_kdf_salt = false;
@@ -47,7 +48,8 @@ pub fn backup_restore_workflow(state: &Arc<AppState>, backup_path: String) -> Re
         registry::upsert_profile_with_id(&sp, &manifest.profile_id, &profile_name, has_password)?;
     }
 
-    let restored = restore_archive_to_profile(state, &sp, &manifest.profile_id, &backup_path)?;
+    let restored =
+        restore_archive_to_profile(state, &sp, &manifest.profile_id, &profile_name, &backup_path)?;
 
     // Keep profiles registry in sync with restored state (name + vault mode).
     let has_password = manifest.vault_mode == "protected";

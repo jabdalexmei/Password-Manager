@@ -90,9 +90,7 @@ pub(super) fn map_restore_io_error(
 }
 
 pub(super) fn prepare_empty_dir_for_restore(path: &Path) -> std::io::Result<()> {
-    if path.exists() {
-        fs::remove_dir_all(path)?;
-    }
+    remove_dir_all_if_exists(path)?;
     fs::create_dir_all(path)
 }
 
@@ -120,4 +118,58 @@ pub(super) fn rename_with_retry(src: &Path, dst: &Path) -> std::io::Result<()> {
         }
     }
     Err(last_err.unwrap_or_else(|| std::io::Error::new(std::io::ErrorKind::Other, "rename failed")))
+}
+
+pub(super) fn remove_file_if_exists(path: &Path) -> std::io::Result<()> {
+    use std::time::Duration;
+
+    const ATTEMPTS: usize = 200;
+    const SLEEP_MS: u64 = 50;
+
+    let mut last_err: Option<std::io::Error> = None;
+    for _ in 0..ATTEMPTS {
+        match fs::remove_file(path) {
+            Ok(()) => return Ok(()),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+            Err(e) => {
+                if is_transient_windows_fs_error(&e) {
+                    last_err = Some(e);
+                    std::thread::sleep(Duration::from_millis(SLEEP_MS));
+                    continue;
+                }
+                return Err(e);
+            }
+        }
+    }
+
+    Err(last_err.unwrap_or_else(|| {
+        std::io::Error::new(std::io::ErrorKind::Other, "remove file failed")
+    }))
+}
+
+pub(super) fn remove_dir_all_if_exists(path: &Path) -> std::io::Result<()> {
+    use std::time::Duration;
+
+    const ATTEMPTS: usize = 200;
+    const SLEEP_MS: u64 = 50;
+
+    let mut last_err: Option<std::io::Error> = None;
+    for _ in 0..ATTEMPTS {
+        match fs::remove_dir_all(path) {
+            Ok(()) => return Ok(()),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+            Err(e) => {
+                if is_transient_windows_fs_error(&e) {
+                    last_err = Some(e);
+                    std::thread::sleep(Duration::from_millis(SLEEP_MS));
+                    continue;
+                }
+                return Err(e);
+            }
+        }
+    }
+
+    Err(last_err.unwrap_or_else(|| {
+        std::io::Error::new(std::io::ErrorKind::Other, "remove directory failed")
+    }))
 }

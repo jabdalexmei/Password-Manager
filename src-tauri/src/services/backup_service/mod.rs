@@ -6,7 +6,6 @@ use std::sync::Arc;
 use chrono::{SecondsFormat, Utc};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use uuid::Uuid;
 use walkdir::WalkDir;
 use zip::write::FileOptions;
 use zip::{CompressionMethod, ZipArchive, ZipWriter};
@@ -46,8 +45,8 @@ pub use import::*;
 pub use inspect::*;
 
 use backup_fs::{
-    best_effort_fsync_rename_dirs, map_restore_io_error, prepare_empty_dir_for_restore,
-    rename_with_retry, replace_file_windows,
+    map_restore_io_error, prepare_empty_dir_for_restore, remove_dir_all_if_exists,
+    remove_file_if_exists, rename_with_retry, replace_file_windows,
 };
 use format::{
     load_registry, now_timestamp, now_utc_string, read_backup_manifest_and_name, save_registry,
@@ -89,6 +88,85 @@ const SQLITE_MAGIC: &[u8; 16] = b"SQLite format 3\0";
 
 // Passwordless vault_key.bin prefix (master key stored in a self-describing, unwrapped format).
 const PASSWORDLESS_MASTER_KEY_PREFIX: &[u8; 6] = b"PMMK1:";
+
+const RESTORE_STAGING_DIR: &str = "restore_staging";
+const RESTORE_TX_DIR: &str = "restore_tx";
+const RESTORE_TX_MANIFEST_FILE: &str = "manifest.json";
+const RESTORE_TX_COMMIT_MARKER: &str = "commit";
+const RESTORE_TX_ORIGINALS_DIR: &str = "originals";
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct RestoreTxManifest {
+    version: u8,
+    profile_id: String,
+    profile_name: String,
+    has_password: bool,
+    entries: Vec<RestoreTxEntry>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct RestoreTxEntry {
+    kind: RestoreTxKind,
+    target_rel: String,
+    backup_rel: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+enum RestoreTxKind {
+    FileReplace,
+    FileRemove,
+    DirectoryReplace,
+    DirectoryCreate,
+}
+
+#[derive(Debug, Clone)]
+enum RestoreApplySource {
+    File(PathBuf),
+    Directory(PathBuf),
+    None,
+}
+
+#[derive(Debug, Clone)]
+struct RestoreApplyAction {
+    entry: RestoreTxEntry,
+    source: RestoreApplySource,
+}
+
+#[cfg(test)]
+fn restore_apply_failpoint_cell() -> &'static std::sync::Mutex<Option<usize>> {
+    static CELL: std::sync::OnceLock<std::sync::Mutex<Option<usize>>> = std::sync::OnceLock::new();
+    CELL.get_or_init(|| std::sync::Mutex::new(None))
+}
+
+#[cfg(test)]
+fn restore_apply_failpoint_lock() -> &'static std::sync::Mutex<()> {
+    static LOCK: std::sync::OnceLock<std::sync::Mutex<()>> = std::sync::OnceLock::new();
+    LOCK.get_or_init(|| std::sync::Mutex::new(()))
+}
+
+#[cfg(test)]
+fn set_restore_apply_failpoint(trigger_after: usize) {
+    *restore_apply_failpoint_cell().lock().unwrap() = Some(trigger_after);
+}
+
+#[cfg(test)]
+fn clear_restore_apply_failpoint() {
+    *restore_apply_failpoint_cell().lock().unwrap() = None;
+}
+
+#[cfg(test)]
+fn maybe_trigger_restore_failpoint(applied_count: usize) -> Result<()> {
+    let trigger_after = *restore_apply_failpoint_cell().lock().unwrap();
+    if trigger_after.is_some_and(|n| applied_count >= n) {
+        return Err(ErrorCodeString::new("BACKUP_RESTORE_TEST_FAILPOINT"));
+    }
+    Ok(())
+}
+
+#[cfg(not(test))]
+fn maybe_trigger_restore_failpoint(_applied_count: usize) -> Result<()> {
+    Ok(())
+}
 
 fn expected_restore_header_len(manifest: &BackupManifest, entry_path: &str) -> usize {
     let enc_header_len = cipher::PM_ENC_MAGIC.len() + 1;
@@ -595,17 +673,416 @@ fn create_backup_internal(
     })
 }
 
+fn restore_staging_root(profile_root: &Path) -> PathBuf {
+    profile_root.join("tmp").join(RESTORE_STAGING_DIR)
+}
+
+fn restore_tx_root(profile_root: &Path) -> PathBuf {
+    profile_root.join("tmp").join(RESTORE_TX_DIR)
+}
+
+fn restore_tx_manifest_path(tx_root: &Path) -> PathBuf {
+    tx_root.join(RESTORE_TX_MANIFEST_FILE)
+}
+
+fn restore_tx_commit_path(tx_root: &Path) -> PathBuf {
+    tx_root.join(RESTORE_TX_COMMIT_MARKER)
+}
+
+fn restore_tx_originals_root(tx_root: &Path) -> PathBuf {
+    tx_root.join(RESTORE_TX_ORIGINALS_DIR)
+}
+
+fn restore_original_backup_rel(target_rel: &str) -> String {
+    format!("{RESTORE_TX_ORIGINALS_DIR}/{}", target_rel.replace('\\', "/"))
+}
+
+fn restore_tx_path(tx_root: &Path, rel: &str) -> PathBuf {
+    tx_root.join(rel)
+}
+
+fn restore_target_path(profile_root: &Path, target_rel: &str) -> PathBuf {
+    profile_root.join(target_rel)
+}
+
+fn build_restore_action(
+    profile_root: &Path,
+    kind: RestoreTxKind,
+    target_rel: &str,
+    source: RestoreApplySource,
+) -> RestoreApplyAction {
+    let target_path = restore_target_path(profile_root, target_rel);
+    let backup_rel = if target_path.exists() {
+        Some(restore_original_backup_rel(target_rel))
+    } else {
+        None
+    };
+
+    RestoreApplyAction {
+        entry: RestoreTxEntry {
+            kind,
+            target_rel: target_rel.to_string(),
+            backup_rel,
+        },
+        source,
+    }
+}
+
+fn build_restore_tx_manifest_and_actions(
+    profile_root: &Path,
+    staging_root: &Path,
+    manifest: &BackupManifest,
+    profile_name: &str,
+) -> Result<(RestoreTxManifest, Vec<RestoreApplyAction>)> {
+    let mut actions = Vec::new();
+
+    let extracted_vault = staging_root.join("vault.db");
+    if !extracted_vault.exists() {
+        return Err(ErrorCodeString::new("BACKUP_ARCHIVE_INVALID"));
+    }
+    actions.push(build_restore_action(
+        profile_root,
+        RestoreTxKind::FileReplace,
+        "vault.db",
+        RestoreApplySource::File(extracted_vault),
+    ));
+
+    let extracted_attachments = staging_root.join("attachments");
+    if extracted_attachments.exists() {
+        actions.push(build_restore_action(
+            profile_root,
+            RestoreTxKind::DirectoryReplace,
+            "attachments",
+            RestoreApplySource::Directory(extracted_attachments),
+        ));
+    } else {
+        actions.push(build_restore_action(
+            profile_root,
+            RestoreTxKind::DirectoryCreate,
+            "attachments",
+            RestoreApplySource::None,
+        ));
+    }
+
+    for file_name in ["config.json", "user_settings.json", "vault_key.bin"] {
+        let extracted = staging_root.join(file_name);
+        if extracted.exists() {
+            actions.push(build_restore_action(
+                profile_root,
+                RestoreTxKind::FileReplace,
+                file_name,
+                RestoreApplySource::File(extracted),
+            ));
+        }
+    }
+
+    match manifest.vault_mode.as_str() {
+        "protected" => {
+            for file_name in ["kdf_salt.bin", "key_check.bin"] {
+                let extracted = staging_root.join(file_name);
+                if !extracted.exists() {
+                    return Err(ErrorCodeString::new("BACKUP_ARCHIVE_INVALID"));
+                }
+                actions.push(build_restore_action(
+                    profile_root,
+                    RestoreTxKind::FileReplace,
+                    file_name,
+                    RestoreApplySource::File(extracted),
+                ));
+            }
+        }
+        "passwordless" => {
+            for file_name in ["kdf_salt.bin", "key_check.bin"] {
+                let live = profile_root.join(file_name);
+                if live.exists() {
+                    actions.push(build_restore_action(
+                        profile_root,
+                        RestoreTxKind::FileRemove,
+                        file_name,
+                        RestoreApplySource::None,
+                    ));
+                }
+            }
+        }
+        _ => return Err(ErrorCodeString::new("BACKUP_MANIFEST_INVALID")),
+    }
+
+    let tx_manifest = RestoreTxManifest {
+        version: 1,
+        profile_id: manifest.profile_id.clone(),
+        profile_name: profile_name.to_string(),
+        has_password: manifest.vault_mode == "protected",
+        entries: actions.iter().map(|action| action.entry.clone()).collect(),
+    };
+
+    Ok((tx_manifest, actions))
+}
+
+fn write_restore_tx_manifest(profile_root: &Path, manifest: &RestoreTxManifest) -> Result<PathBuf> {
+    let tx_root = restore_tx_root(profile_root);
+    prepare_empty_dir_for_restore(&tx_root)
+        .map_err(|e| map_restore_io_error("prepare_restore_tx_root", Some(&tx_root), None, e))?;
+
+    let originals_root = restore_tx_originals_root(&tx_root);
+    fs::create_dir_all(&originals_root).map_err(|e| {
+        map_restore_io_error(
+            "create_restore_tx_originals_root",
+            Some(&originals_root),
+            None,
+            e,
+        )
+    })?;
+
+    let manifest_path = restore_tx_manifest_path(&tx_root);
+    let serialized = serde_json::to_vec_pretty(manifest)
+        .map_err(|_| ErrorCodeString::new("BACKUP_RESTORE_FAILED"))?;
+    write_atomic(&manifest_path, &serialized)
+        .map_err(|_| ErrorCodeString::new("BACKUP_RESTORE_FAILED"))?;
+
+    Ok(tx_root)
+}
+
+fn move_target_to_restore_backup(
+    profile_root: &Path,
+    tx_root: &Path,
+    entry: &RestoreTxEntry,
+) -> Result<()> {
+    let Some(backup_rel) = entry.backup_rel.as_deref() else {
+        return Ok(());
+    };
+
+    let target_path = restore_target_path(profile_root, &entry.target_rel);
+    if !target_path.exists() {
+        return Ok(());
+    }
+
+    let backup_path = restore_tx_path(tx_root, backup_rel);
+    if let Some(parent) = backup_path.parent() {
+        fs::create_dir_all(parent).map_err(|e| {
+            map_restore_io_error("create_restore_backup_parent", Some(parent), None, e)
+        })?;
+    }
+
+    rename_with_retry(&target_path, &backup_path).map_err(|e| {
+        map_restore_io_error(
+            "move_restore_target_to_backup",
+            Some(&target_path),
+            Some(&backup_path),
+            e,
+        )
+    })?;
+
+    Ok(())
+}
+
+fn apply_restore_tx_action(
+    profile_root: &Path,
+    tx_root: &Path,
+    action: &RestoreApplyAction,
+) -> Result<()> {
+    let target_path = restore_target_path(profile_root, &action.entry.target_rel);
+    move_target_to_restore_backup(profile_root, tx_root, &action.entry)?;
+
+    match (&action.entry.kind, &action.source) {
+        (RestoreTxKind::FileReplace, RestoreApplySource::File(source))
+        | (RestoreTxKind::DirectoryReplace, RestoreApplySource::Directory(source)) => {
+            rename_with_retry(source, &target_path).map_err(|e| {
+                map_restore_io_error(
+                    "move_restore_source_to_live",
+                    Some(source),
+                    Some(&target_path),
+                    e,
+                )
+            })?;
+        }
+        (RestoreTxKind::FileRemove, RestoreApplySource::None) => {}
+        (RestoreTxKind::DirectoryCreate, RestoreApplySource::None) => {
+            fs::create_dir_all(&target_path).map_err(|e| {
+                map_restore_io_error("create_restore_live_dir", Some(&target_path), None, e)
+            })?;
+        }
+        _ => return Err(ErrorCodeString::new("BACKUP_RESTORE_FAILED")),
+    }
+
+    Ok(())
+}
+
+fn apply_restore_tx(
+    profile_root: &Path,
+    tx_root: &Path,
+    actions: &[RestoreApplyAction],
+) -> Result<()> {
+    let mut applied_count = 0usize;
+
+    for action in actions {
+        apply_restore_tx_action(profile_root, tx_root, action)?;
+        applied_count += 1;
+        maybe_trigger_restore_failpoint(applied_count)?;
+    }
+
+    Ok(())
+}
+
+fn rollback_restore_tx(profile_root: &Path, tx_root: &Path, manifest: &RestoreTxManifest) -> Result<()> {
+    for entry in manifest.entries.iter().rev() {
+        let target_path = restore_target_path(profile_root, &entry.target_rel);
+
+        match entry.kind {
+            RestoreTxKind::FileReplace | RestoreTxKind::FileRemove => {
+                if let Some(backup_rel) = entry.backup_rel.as_deref() {
+                    let backup_path = restore_tx_path(tx_root, backup_rel);
+                    if backup_path.exists() {
+                        if target_path.exists() {
+                            remove_file_if_exists(&target_path).map_err(|e| {
+                                map_restore_io_error(
+                                    "rollback_remove_live_file",
+                                    Some(&target_path),
+                                    None,
+                                    e,
+                                )
+                            })?;
+                        }
+
+                        rename_with_retry(&backup_path, &target_path).map_err(|e| {
+                            map_restore_io_error(
+                                "rollback_restore_file",
+                                Some(&backup_path),
+                                Some(&target_path),
+                                e,
+                            )
+                        })?;
+                    }
+                } else if target_path.exists() {
+                    remove_file_if_exists(&target_path).map_err(|e| {
+                        map_restore_io_error(
+                            "rollback_remove_created_file",
+                            Some(&target_path),
+                            None,
+                            e,
+                        )
+                    })?;
+                }
+            }
+            RestoreTxKind::DirectoryReplace | RestoreTxKind::DirectoryCreate => {
+                if let Some(backup_rel) = entry.backup_rel.as_deref() {
+                    let backup_path = restore_tx_path(tx_root, backup_rel);
+                    if backup_path.exists() {
+                        if target_path.exists() {
+                            remove_dir_all_if_exists(&target_path).map_err(|e| {
+                                map_restore_io_error(
+                                    "rollback_remove_live_dir",
+                                    Some(&target_path),
+                                    None,
+                                    e,
+                                )
+                            })?;
+                        }
+
+                        rename_with_retry(&backup_path, &target_path).map_err(|e| {
+                            map_restore_io_error(
+                                "rollback_restore_dir",
+                                Some(&backup_path),
+                                Some(&target_path),
+                                e,
+                            )
+                        })?;
+                    }
+                } else if target_path.exists() {
+                    remove_dir_all_if_exists(&target_path).map_err(|e| {
+                        map_restore_io_error(
+                            "rollback_remove_created_dir",
+                            Some(&target_path),
+                            None,
+                            e,
+                        )
+                    })?;
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn cleanup_restore_dir_best_effort(path: &Path, step: &'static str) {
+    if let Err(e) = remove_dir_all_if_exists(path) {
+        log::warn!("[BACKUP][restore] cleanup_failed step={} path={:?} err={}", step, path, e);
+    }
+}
+
+fn cleanup_restore_state_best_effort(profile_root: &Path) {
+    cleanup_restore_dir_best_effort(
+        &restore_staging_root(profile_root),
+        "cleanup_restore_staging",
+    );
+    cleanup_restore_dir_best_effort(&restore_tx_root(profile_root), "cleanup_restore_tx");
+}
+
+fn load_restore_tx_manifest(tx_root: &Path) -> Result<RestoreTxManifest> {
+    let manifest_path = restore_tx_manifest_path(tx_root);
+    let content = fs::read_to_string(&manifest_path).map_err(|e| {
+        map_restore_io_error("read_restore_tx_manifest", Some(&manifest_path), None, e)
+    })?;
+
+    serde_json::from_str(&content).map_err(|_| ErrorCodeString::new("BACKUP_RESTORE_FAILED"))
+}
+
+pub fn recover_pending_restore_tx(sp: &StoragePaths, profile_id: &str) -> Result<()> {
+    let profile_root = profile_dir(sp, profile_id)?;
+    if !profile_root.exists() {
+        return Ok(());
+    }
+
+    let staging_root = restore_staging_root(&profile_root);
+    let tx_root = restore_tx_root(&profile_root);
+    if !tx_root.exists() {
+        if staging_root.exists() {
+            cleanup_restore_dir_best_effort(&staging_root, "cleanup_orphan_restore_staging");
+        }
+        return Ok(());
+    }
+
+    let manifest_path = restore_tx_manifest_path(&tx_root);
+    if !manifest_path.exists() {
+        cleanup_restore_state_best_effort(&profile_root);
+        return Ok(());
+    }
+
+    let manifest = load_restore_tx_manifest(&tx_root)?;
+    if manifest.version != 1 || manifest.profile_id != profile_id {
+        return Err(ErrorCodeString::new("BACKUP_RESTORE_FAILED"));
+    }
+
+    let commit_path = restore_tx_commit_path(&tx_root);
+    if commit_path.exists() {
+        registry::upsert_profile_with_id(
+            sp,
+            profile_id,
+            &manifest.profile_name,
+            manifest.has_password,
+        )?;
+        cleanup_restore_state_best_effort(&profile_root);
+        return Ok(());
+    }
+
+    rollback_restore_tx(&profile_root, &tx_root, &manifest)?;
+    cleanup_restore_state_best_effort(&profile_root);
+    Ok(())
+}
 
 fn restore_archive_to_profile(
     _state: &Arc<AppState>,
     sp: &StoragePaths,
     target_profile_id: &str,
+    profile_name: &str,
     backup_path: &Path,
 ) -> Result<bool> {
     let backup_path = PathBuf::from(backup_path);
     if !backup_path.exists() {
         return Err(ErrorCodeString::new("BACKUP_ARCHIVE_INVALID"));
     }
+
+    recover_pending_restore_tx(sp, target_profile_id)?;
 
     let profile_root = profile_dir(sp, target_profile_id)?;
 
@@ -636,7 +1113,7 @@ fn restore_archive_to_profile(
     let has_password = manifest.vault_mode == "protected";
     ensure_profile_dirs(sp, target_profile_id, has_password)?;
 
-    let staging_root = profile_root.join("tmp").join("restore_staging");
+    let staging_root = restore_staging_root(&profile_root);
     // Keep staging paths short (important on Windows) and deterministic for easier debugging.
     // We clear it on each restore attempt.
     prepare_empty_dir_for_restore(&staging_root)
@@ -805,195 +1282,39 @@ fn restore_archive_to_profile(
         }
     }
 
-    let vault_path = vault_db_path(sp, target_profile_id)?;
-    let extracted_vault = staging_root.as_path().join("vault.db");
-    if !extracted_vault.exists() {
-        return Err(ErrorCodeString::new("BACKUP_ARCHIVE_INVALID"));
-    }
+    let (tx_manifest, actions) =
+        build_restore_tx_manifest_and_actions(&profile_root, &staging_root, &manifest, profile_name)?;
+    let tx_root = write_restore_tx_manifest(&profile_root, &tx_manifest)?;
 
-    let attachments_path = profile_root.join("attachments");
-    let extracted_attachments = staging_root.as_path().join("attachments");
-    let attachments_existed_before = attachments_path.exists();
-
-    let vault_backup_path = vault_path.with_extension(format!("old.{}", Uuid::new_v4()));
-    let attachments_backup_path = profile_root.join(format!("attachments.old.{}", Uuid::new_v4()));
-
-    let mut moved_vault = false;
-    let mut vault_replaced = false;
-    let mut vault_tmp_path: Option<PathBuf> = None;
-
-    let mut moved_attachments = false;
-    let mut restored_attachments_created = false;
-
-    let restore_result: Result<()> = (|| {
-        if vault_path.exists() {
-            rename_with_retry(&vault_path, &vault_backup_path).map_err(|e| {
-                map_restore_io_error(
-                    "rename_vault_to_backup",
-                    Some(&vault_path),
-                    Some(&vault_backup_path),
-                    e,
-                )
-            })?;
-            moved_vault = true;
-        }
-
-        let tmp = profile_root.join(format!("vault.db.restore.{}", Uuid::new_v4()));
-        vault_tmp_path = Some(tmp.clone());
-        fs::copy(&extracted_vault, &tmp).map_err(|e| {
-            map_restore_io_error("copy_vault_to_tmp", Some(&extracted_vault), Some(&tmp), e)
-        })?;
-        fs::OpenOptions::new()
-            .read(true)
-            .write(true)
-            .open(&tmp)
-            .map_err(|e| map_restore_io_error("open_tmp_vault", Some(&tmp), None, e))?
-            .sync_all()
-            .map_err(|e| map_restore_io_error("sync_tmp_vault", Some(&tmp), None, e))?;
-
-        rename_with_retry(&tmp, &vault_path).map_err(|e| {
-            map_restore_io_error("rename_tmp_vault_to_live", Some(&tmp), Some(&vault_path), e)
-        })?;
-        vault_replaced = true;
-
-        if attachments_path.exists() {
-            rename_with_retry(&attachments_path, &attachments_backup_path).map_err(|e| {
-                map_restore_io_error(
-                    "rename_attachments_to_backup",
-                    Some(&attachments_path),
-                    Some(&attachments_backup_path),
-                    e,
-                )
-            })?;
-            moved_attachments = true;
-        }
-
-        if extracted_attachments.exists() {
-            rename_with_retry(&extracted_attachments, &attachments_path).map_err(|e| {
-                map_restore_io_error(
-                    "rename_extracted_attachments_to_live",
-                    Some(&extracted_attachments),
-                    Some(&attachments_path),
-                    e,
-                )
-            })?;
-            restored_attachments_created = true;
-        } else {
-            if !attachments_path.exists() {
-                fs::create_dir_all(&attachments_path).map_err(|e| {
-                    map_restore_io_error("create_attachments_dir", Some(&attachments_path), None, e)
-                })?;
-                restored_attachments_created = true;
-            }
-        }
-
-        for file_name in [
-            "config.json",
-            "user_settings.json",
-            "kdf_salt.bin",
-            "key_check.bin",
-            "vault_key.bin",
-        ] {
-            let extracted_file = staging_root.as_path().join(file_name);
-            if extracted_file.exists() {
-                let target = profile_root.join(file_name);
-
-                let tmp = profile_root.join(format!("{}.restore.{}", file_name, Uuid::new_v4()));
-                fs::copy(&extracted_file, &tmp).map_err(|e| {
-                    map_restore_io_error(
-                        "copy_keyfile_to_tmp",
-                        Some(&extracted_file),
-                        Some(&tmp),
-                        e,
-                    )
-                })?;
-                fs::OpenOptions::new()
-                    .read(true)
-                    .write(true)
-                    .open(&tmp)
-                    .map_err(|e| map_restore_io_error("open_tmp_keyfile", Some(&tmp), None, e))?
-                    .sync_all()
-                    .map_err(|e| map_restore_io_error("sync_tmp_keyfile", Some(&tmp), None, e))?;
-
-                let replaced: Result<()> = (|| {
-                    replace_file_windows(&tmp, &target).map_err(|e| {
-                        map_restore_io_error("replace_keyfile", Some(&tmp), Some(&target), e)
-                    })?;
-                    best_effort_fsync_rename_dirs(&tmp, &target);
-                    Ok(())
-                })();
-
-                if let Err(err) = replaced {
-                    let _ = fs::remove_file(&tmp);
-                    return Err(err);
-                }
-            }
-        }
-
-        // Post-restore key hygiene: remove incompatible key files so we don't end up with
-        // "two locks on one door".
-        if manifest.vault_mode == "passwordless" {
-            // Remove password-based wrapper files if they existed before or were included accidentally.
-            if let Ok(p) = kdf_salt_path(sp, target_profile_id) {
-                let _ = fs::remove_file(p);
-            }
-            if let Ok(p) = key_check_path(sp, target_profile_id) {
-                let _ = fs::remove_file(p);
-            }
-        }
-
-        Ok(())
-    })();
-
+    let restore_result = apply_restore_tx(&profile_root, &tx_root, &actions);
     if let Err(err) = restore_result {
-        if let Some(tmp) = vault_tmp_path.as_ref() {
-            if tmp.exists() {
-                let _ = fs::remove_file(tmp);
-            }
-        }
-        if moved_vault && vault_backup_path.exists() {
-            let _ = replace_file_windows(&vault_backup_path, &vault_path);
-            best_effort_fsync_rename_dirs(&vault_backup_path, &vault_path);
-        } else if !moved_vault && vault_replaced && vault_path.exists() {
-            let _ = fs::remove_file(&vault_path);
-        }
-
-        if moved_attachments && attachments_backup_path.exists() {
-            if attachments_path.exists() {
-                let _ = fs::remove_dir_all(&attachments_path);
-            }
-            let _ = rename_with_retry(&attachments_backup_path, &attachments_path);
-        } else if !attachments_existed_before
-            && restored_attachments_created
-            && attachments_path.exists()
-        {
-            let _ = fs::remove_dir_all(&attachments_path);
-        }
-
         log::error!(
             "[BACKUP][restore] failed code={} profile_id={} backup_path={:?}",
             err.code,
             target_profile_id,
             backup_path
         );
-        let _ = fs::remove_dir_all(&staging_root);
+
+        if let Err(rollback_err) = rollback_restore_tx(&profile_root, &tx_root, &tx_manifest) {
+            cleanup_restore_state_best_effort(&profile_root);
+            return Err(rollback_err);
+        }
+
+        cleanup_restore_state_best_effort(&profile_root);
         return Err(err);
     }
 
-    if vault_backup_path.exists() {
-        let _ = fs::remove_file(&vault_backup_path);
-    }
-    if attachments_backup_path.exists() {
-        let _ = fs::remove_dir_all(&attachments_backup_path);
-    }
+    let commit_path = restore_tx_commit_path(&tx_root);
+    write_atomic(&commit_path, b"committed")
+        .map_err(|_| ErrorCodeString::new("BACKUP_RESTORE_FAILED"))?;
+
     log::info!(
         "[BACKUP][restore] success profile_id={} backup_path={:?}",
         target_profile_id,
         backup_path
     );
 
-    // Best-effort: clear staging directory after a successful restore.
-    let _ = fs::remove_dir_all(&staging_root);
+    cleanup_restore_state_best_effort(&profile_root);
 
     Ok(true)
 }
@@ -1018,6 +1339,105 @@ mod tests {
             profile_name: Some("Test".to_string()),
             vault_mode: vault_mode.to_string(),
             files: vec![],
+        }
+    }
+
+    fn write_bytes(path: &Path, bytes: &[u8]) {
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent).unwrap();
+        }
+        std::fs::write(path, bytes).unwrap();
+    }
+
+    fn read_bytes(path: &Path) -> Vec<u8> {
+        std::fs::read(path).unwrap()
+    }
+
+    fn test_restore_tx_manifest(
+        profile_id: &str,
+        profile_name: &str,
+        has_password: bool,
+        entries: Vec<RestoreTxEntry>,
+    ) -> RestoreTxManifest {
+        RestoreTxManifest {
+            version: 1,
+            profile_id: profile_id.to_string(),
+            profile_name: profile_name.to_string(),
+            has_password,
+            entries,
+        }
+    }
+
+    fn write_restore_tx_fixture(
+        profile_root: &Path,
+        manifest: &RestoreTxManifest,
+        committed: bool,
+    ) -> PathBuf {
+        let tx_root = write_restore_tx_manifest(profile_root, manifest).unwrap();
+        if committed {
+            write_atomic(&restore_tx_commit_path(&tx_root), b"committed").unwrap();
+        }
+        tx_root
+    }
+
+    fn configured_state(workspace_root: &Path) -> std::sync::Arc<AppState> {
+        std::fs::create_dir_all(workspace_root).unwrap();
+        let sp = configured_storage_paths(workspace_root);
+        std::sync::Arc::new(AppState::new(sp, workspace_root.join("app-config")))
+    }
+
+    fn create_protected_profile_fixture(
+        sp: &StoragePaths,
+        profile_id: &str,
+        profile_name: &str,
+        password: &str,
+        config_marker: &str,
+        settings_marker: &str,
+    ) {
+        registry::upsert_profile_with_id(sp, profile_id, profile_name, true).unwrap();
+
+        let master_key = crate::data::crypto::master_key::generate_master_key();
+        crate::data::sqlite::init::init_database_protected_encrypted(sp, profile_id, &master_key)
+            .unwrap();
+
+        let salt = crate::data::crypto::kdf::generate_kdf_salt();
+        write_atomic(&kdf_salt_path(sp, profile_id).unwrap(), &salt).unwrap();
+
+        let wrapping = zeroize::Zeroizing::new(
+            crate::data::crypto::kdf::derive_master_key(password, &salt).unwrap(),
+        );
+        crate::data::crypto::key_check::create_key_check_file(sp, profile_id, &wrapping).unwrap();
+        crate::data::crypto::master_key::write_master_key_wrapped_with_password(
+            sp,
+            profile_id,
+            &wrapping,
+            &master_key,
+        )
+        .unwrap();
+
+        let config = serde_json::json!({
+            "name": profile_name,
+            "marker": config_marker,
+        });
+        let config_bytes = serde_json::to_vec_pretty(&config).unwrap();
+        write_atomic(&profile_config_path(sp, profile_id).unwrap(), &config_bytes).unwrap();
+        write_atomic(
+            &user_settings_path(sp, profile_id).unwrap(),
+            settings_marker.as_bytes(),
+        )
+        .unwrap();
+    }
+
+    fn protected_backup_source(sp: &StoragePaths, profile_id: &str) -> BackupSource {
+        BackupSource {
+            vault_path: vault_db_path(sp, profile_id).unwrap(),
+            attachments_path: profile_dir(sp, profile_id).unwrap().join("attachments"),
+            config_path: Some(profile_config_path(sp, profile_id).unwrap()),
+            settings_path: Some(user_settings_path(sp, profile_id).unwrap()),
+            kdf_salt_path: Some(kdf_salt_path(sp, profile_id).unwrap()),
+            key_check_path: Some(key_check_path(sp, profile_id).unwrap()),
+            vault_key_path: Some(vault_key_path(sp, profile_id).unwrap()),
+            _temp_dir: None,
         }
     }
 
@@ -1102,5 +1522,272 @@ mod tests {
         .unwrap_err();
 
         assert_eq!(err.code, "BACKUP_DESTINATION_PATH_FORBIDDEN");
+    }
+
+    #[test]
+    fn rollback_restores_replaced_root_files() {
+        let dir = tempdir().unwrap();
+        let workspace_root = dir.path().join("workspace");
+        std::fs::create_dir_all(&workspace_root).unwrap();
+        let sp = configured_storage_paths(&workspace_root);
+        let profile_id = "profile-rollback";
+        ensure_profile_dirs(&sp, profile_id, true).unwrap();
+
+        let profile_root = profile_dir(&sp, profile_id).unwrap();
+        let files = [
+            ("config.json", b"new-config".as_slice(), b"old-config".as_slice()),
+            (
+                "user_settings.json",
+                b"new-settings".as_slice(),
+                b"old-settings".as_slice(),
+            ),
+            (
+                "vault_key.bin",
+                b"new-vault-key".as_slice(),
+                b"old-vault-key".as_slice(),
+            ),
+            ("kdf_salt.bin", b"new-salt".as_slice(), b"old-salt".as_slice()),
+            (
+                "key_check.bin",
+                b"new-key-check".as_slice(),
+                b"old-key-check".as_slice(),
+            ),
+        ];
+
+        let entries = files
+            .iter()
+            .map(|(name, _, _)| RestoreTxEntry {
+                kind: RestoreTxKind::FileReplace,
+                target_rel: (*name).to_string(),
+                backup_rel: Some(restore_original_backup_rel(name)),
+            })
+            .collect();
+        let manifest = test_restore_tx_manifest(profile_id, "Rollback", true, entries);
+        let tx_root = write_restore_tx_fixture(&profile_root, &manifest, false);
+
+        for (name, live, backup) in files {
+            write_bytes(&profile_root.join(name), live);
+            write_bytes(
+                &restore_tx_path(&tx_root, &restore_original_backup_rel(name)),
+                backup,
+            );
+        }
+
+        recover_pending_restore_tx(&sp, profile_id).unwrap();
+
+        for (name, _, backup) in files {
+            assert_eq!(read_bytes(&profile_root.join(name)), backup);
+        }
+        assert!(!tx_root.exists());
+    }
+
+    #[test]
+    fn rollback_removes_newly_created_files_without_originals() {
+        let dir = tempdir().unwrap();
+        let workspace_root = dir.path().join("workspace");
+        std::fs::create_dir_all(&workspace_root).unwrap();
+        let sp = configured_storage_paths(&workspace_root);
+        let profile_id = "profile-created-file";
+        ensure_profile_dirs(&sp, profile_id, false).unwrap();
+
+        let profile_root = profile_dir(&sp, profile_id).unwrap();
+        let created_path = profile_root.join("user_settings.json");
+        write_bytes(&created_path, b"created-by-restore");
+
+        let manifest = test_restore_tx_manifest(
+            profile_id,
+            "Created File",
+            false,
+            vec![RestoreTxEntry {
+                kind: RestoreTxKind::FileReplace,
+                target_rel: "user_settings.json".to_string(),
+                backup_rel: None,
+            }],
+        );
+        let tx_root = write_restore_tx_fixture(&profile_root, &manifest, false);
+
+        recover_pending_restore_tx(&sp, profile_id).unwrap();
+
+        assert!(!created_path.exists());
+        assert!(!tx_root.exists());
+    }
+
+    #[test]
+    fn rollback_restores_passwordless_cleanup_files() {
+        let dir = tempdir().unwrap();
+        let workspace_root = dir.path().join("workspace");
+        std::fs::create_dir_all(&workspace_root).unwrap();
+        let sp = configured_storage_paths(&workspace_root);
+        let profile_id = "profile-passwordless-cleanup";
+        ensure_profile_dirs(&sp, profile_id, false).unwrap();
+
+        let profile_root = profile_dir(&sp, profile_id).unwrap();
+        let manifest = test_restore_tx_manifest(
+            profile_id,
+            "Passwordless",
+            false,
+            vec![
+                RestoreTxEntry {
+                    kind: RestoreTxKind::FileRemove,
+                    target_rel: "kdf_salt.bin".to_string(),
+                    backup_rel: Some(restore_original_backup_rel("kdf_salt.bin")),
+                },
+                RestoreTxEntry {
+                    kind: RestoreTxKind::FileRemove,
+                    target_rel: "key_check.bin".to_string(),
+                    backup_rel: Some(restore_original_backup_rel("key_check.bin")),
+                },
+            ],
+        );
+        let tx_root = write_restore_tx_fixture(&profile_root, &manifest, false);
+
+        write_bytes(
+            &restore_tx_path(&tx_root, &restore_original_backup_rel("kdf_salt.bin")),
+            b"salt-before-remove",
+        );
+        write_bytes(
+            &restore_tx_path(&tx_root, &restore_original_backup_rel("key_check.bin")),
+            b"key-check-before-remove",
+        );
+
+        recover_pending_restore_tx(&sp, profile_id).unwrap();
+
+        assert_eq!(
+            read_bytes(&profile_root.join("kdf_salt.bin")),
+            b"salt-before-remove"
+        );
+        assert_eq!(
+            read_bytes(&profile_root.join("key_check.bin")),
+            b"key-check-before-remove"
+        );
+        assert!(!tx_root.exists());
+    }
+
+    #[test]
+    fn committed_restore_tx_keeps_live_files_and_updates_registry() {
+        let dir = tempdir().unwrap();
+        let workspace_root = dir.path().join("workspace");
+        std::fs::create_dir_all(&workspace_root).unwrap();
+        let sp = configured_storage_paths(&workspace_root);
+        let profile_id = "profile-committed";
+        registry::upsert_profile_with_id(&sp, profile_id, "Old Name", true).unwrap();
+
+        let profile_root = profile_dir(&sp, profile_id).unwrap();
+        let live_vault_key = profile_root.join("vault_key.bin");
+        write_bytes(&live_vault_key, b"restored-live-vault-key");
+
+        let manifest = test_restore_tx_manifest(
+            profile_id,
+            "Recovered Name",
+            false,
+            vec![RestoreTxEntry {
+                kind: RestoreTxKind::FileReplace,
+                target_rel: "vault_key.bin".to_string(),
+                backup_rel: Some(restore_original_backup_rel("vault_key.bin")),
+            }],
+        );
+        let tx_root = write_restore_tx_fixture(&profile_root, &manifest, true);
+        write_bytes(
+            &restore_tx_path(&tx_root, &restore_original_backup_rel("vault_key.bin")),
+            b"stale-backup",
+        );
+
+        recover_pending_restore_tx(&sp, profile_id).unwrap();
+
+        assert_eq!(read_bytes(&live_vault_key), b"restored-live-vault-key");
+        let profile = registry::get_profile(&sp, profile_id).unwrap().unwrap();
+        assert_eq!(profile.name, "Recovered Name");
+        assert!(!profile.has_password);
+        assert!(!tx_root.exists());
+    }
+
+    #[test]
+    fn restore_failpoint_rolls_back_and_keeps_profile_unlockable() {
+        let _failpoint_lock = restore_apply_failpoint_lock().lock().unwrap();
+        clear_restore_apply_failpoint();
+        struct ResetFailpoint;
+        impl Drop for ResetFailpoint {
+            fn drop(&mut self) {
+                clear_restore_apply_failpoint();
+            }
+        }
+        let _reset = ResetFailpoint;
+
+        let dir = tempdir().unwrap();
+        let target_workspace = dir.path().join("target-workspace");
+        let source_workspace = dir.path().join("source-workspace");
+        let state = configured_state(&target_workspace);
+        let target_sp = state.get_storage_paths().unwrap();
+        let source_sp = configured_storage_paths(&source_workspace);
+        let profile_id = "profile-e2e-failpoint";
+
+        create_protected_profile_fixture(
+            &target_sp,
+            profile_id,
+            "Original",
+            "old-password",
+            "old-config",
+            "old-settings",
+        );
+        create_protected_profile_fixture(
+            &source_sp,
+            profile_id,
+            "Restored",
+            "new-password",
+            "new-config",
+            "new-settings",
+        );
+
+        let target_profile_root = profile_dir(&target_sp, profile_id).unwrap();
+        let original_files = [
+            ("vault.db", read_bytes(&vault_db_path(&target_sp, profile_id).unwrap())),
+            (
+                "config.json",
+                read_bytes(&profile_config_path(&target_sp, profile_id).unwrap()),
+            ),
+            (
+                "user_settings.json",
+                read_bytes(&user_settings_path(&target_sp, profile_id).unwrap()),
+            ),
+            (
+                "vault_key.bin",
+                read_bytes(&vault_key_path(&target_sp, profile_id).unwrap()),
+            ),
+            (
+                "kdf_salt.bin",
+                read_bytes(&kdf_salt_path(&target_sp, profile_id).unwrap()),
+            ),
+            (
+                "key_check.bin",
+                read_bytes(&key_check_path(&target_sp, profile_id).unwrap()),
+            ),
+        ];
+
+        let backup_path = dir.path().join("restore-e2e.pmbackup.zip");
+        create_archive(
+            &backup_path,
+            protected_backup_source(&source_sp, profile_id),
+            profile_id,
+            "Restored",
+            "protected",
+            "2026-01-23T00:00:00Z",
+        )
+        .unwrap();
+
+        set_restore_apply_failpoint(4);
+        let err = restore_archive_to_profile(&state, &target_sp, profile_id, "Restored", &backup_path)
+            .unwrap_err();
+        assert_eq!(err.code, "BACKUP_RESTORE_TEST_FAILPOINT");
+
+        for (name, expected) in original_files {
+            assert_eq!(read_bytes(&target_profile_root.join(name)), expected);
+        }
+
+        assert!(crate::services::security_service::login_vault(
+            profile_id,
+            Some("old-password"),
+            &state,
+        )
+        .unwrap());
     }
 }

@@ -21,57 +21,12 @@ pub fn login_vault(id: &str, password: Option<&str>, state: &Arc<AppState>) -> R
     }
 
     let storage_paths = state.get_storage_paths()?;
+    crate::services::backup_service::recover_pending_restore_tx(&storage_paths, id)?;
     let mut profile = registry::get_profile(&storage_paths, id)?
         .ok_or_else(|| ErrorCodeString::new("PROFILE_NOT_FOUND"))?;
 
-    // Recover any pending profile transitions (password changes) and incomplete restore (if any) before opening
+    // Recover any pending profile transitions (password changes) before opening.
     recover_incomplete_profile_transitions_with_password(&storage_paths, id, &profile.name)?;
-    {
-        use crate::data::profiles::paths::{profile_dir, vault_db_path};
-        use std::fs;
-        let profile_root = profile_dir(&storage_paths, id)?;
-        let vault_path = vault_db_path(&storage_paths, id)?;
-        if !vault_path.exists() {
-            for entry in fs::read_dir(&profile_root)
-                .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_READ"))?
-            {
-                let path = entry
-                    .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_READ"))?
-                    .path();
-                if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                    if name.starts_with("vault.db.old.") {
-                        fs::rename(&path, &vault_path)
-                            .map_err(|_| ErrorCodeString::new("RESTORE_ROLLBACK_FAILED"))?;
-                        break;
-                    }
-                }
-            }
-        }
-        let attachments_path = profile_root.join("attachments");
-        if !attachments_path.exists() {
-            let mut restored = false;
-            for entry in fs::read_dir(&profile_root)
-                .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_READ"))?
-            {
-                let p = entry
-                    .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_READ"))?
-                    .path();
-                if let Some(name) = p.file_name().and_then(|n| n.to_str()) {
-                    if name.starts_with("attachments.old.") {
-                        fs::rename(&p, &attachments_path)
-                            .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
-                        restored = true;
-                        break;
-                    }
-                }
-            }
-
-            if !restored && !attachments_path.exists() {
-                fs::create_dir_all(&attachments_path)
-                    .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
-            }
-        }
-    }
     profile = registry::get_profile(&storage_paths, id)?
         .ok_or_else(|| ErrorCodeString::new("PROFILE_NOT_FOUND"))?;
 
