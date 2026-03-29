@@ -16,6 +16,7 @@ export type VaultSortControlProps = {
 
 export function VaultSortControl({ value, onChange, disabled }: VaultSortControlProps) {
   const { t } = useTranslation('Common');
+  const { t: tTip } = useTranslation('Tooltips');
   const [open, setOpen] = useState(false);
 
   const options = useMemo<SortOption[]>(
@@ -40,6 +41,7 @@ export function VaultSortControl({ value, onChange, disabled }: VaultSortControl
         className="btn btn-icon vault-actionbar"
         type="button"
         aria-label={t('sort.aria.open')}
+        title={tTip('action.sort')}
         aria-haspopup="menu"
         aria-expanded={open}
         disabled={disabled}
@@ -51,27 +53,30 @@ export function VaultSortControl({ value, onChange, disabled }: VaultSortControl
       {open && (
         <>
           <div className="vault-actionmenu-backdrop" onClick={() => setOpen(false)} />
-          <div className="vault-sortmenu-panel vault-context-menu" role="menu">
-            {options.map((opt, idx) => (
-              <React.Fragment key={opt.value}>
-                {isDividerIndex(idx) && <div className="vault-sortmenu-divider" role="separator" />}
-                <button
-                  className="vault-context-item vault-sortmenu-item"
-                  type="button"
-                  onClick={() => {
-                    onChange(opt.value);
-                    setOpen(false);
-                  }}
-                >
-                  <span className="vault-sortmenu-label">{opt.label}</span>
-                  {value === opt.value ? (
-                    <IconCheck className="vault-sortmenu-check" size={16} />
-                  ) : (
-                    <span className="vault-sortmenu-check-spacer" aria-hidden="true" />
-                  )}
-                </button>
-              </React.Fragment>
-            ))}
+          <div className="vault-actionmenu-panel vault-sortmenu-panel" role="menu">
+            {options.map((opt, idx) => {
+              const isSelected = value === opt.value;
+              return (
+                <React.Fragment key={opt.value}>
+                  {isDividerIndex(idx) && <div className="vault-sortmenu-divider" role="separator" />}
+                  <button
+                    className={`vault-actionmenu-item vault-sortmenu-item ${isSelected ? 'is-selected' : ''}`.trim()}
+                    type="button"
+                    onClick={() => {
+                      onChange(opt.value);
+                      setOpen(false);
+                    }}
+                  >
+                    <span className="vault-sortmenu-label">{opt.label}</span>
+                    {isSelected ? (
+                      <IconCheck className="vault-sortmenu-check" size={16} />
+                    ) : (
+                      <span className="vault-sortmenu-check-spacer" aria-hidden="true" />
+                    )}
+                  </button>
+                </React.Fragment>
+              );
+            })}
           </div>
         </>
       )}

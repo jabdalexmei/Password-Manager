@@ -29,15 +29,15 @@ export function CategorySection({
       <ul className="vault-folder-list">
         {categoryCounts && (
           <li className={selectedCategory === 'data_cards' ? 'active' : ''}>
-            <button className="vault-folder" type="button" onClick={() => onSelectCategory('data_cards')}>
-              <span className="folder-name">{t('category.dataCards')}</span>
+            <button className="vault-folder vault-folder--with-count" type="button" onClick={() => onSelectCategory('data_cards')}>
+              <span className="folder-name">{t('category.dataCard')}</span>
               <span className="folder-count">{categoryCounts.dataCards}</span>
             </button>
           </li>
         )}
         <li className={selectedCategory === 'bank_cards' ? 'active' : ''}>
           <button
-            className="vault-folder"
+            className="vault-folder vault-folder--with-count"
             type="button"
             onClick={() => onSelectCategory('bank_cards')}
             onContextMenu={(event) => {
@@ -45,7 +45,7 @@ export function CategorySection({
               setOpenMenu({ type: 'category', x: event.clientX, y: event.clientY });
             }}
           >
-            <span className="folder-name">{t('category.bankCards')}</span>
+            <span className="folder-name">{t('category.bankCard')}</span>
             <span className="folder-count">{categoryCounts?.bankCards ?? counts.all}</span>
           </button>
         </li>
@@ -53,25 +53,30 @@ export function CategorySection({
 
       {openMenu && openMenu.type === 'category' && (
         <div
-          className="vault-context-backdrop"
+          className="vault-actionmenu-backdrop"
           onClick={() => setOpenMenu(null)}
           onContextMenu={(event) => event.preventDefault()}
         >
           <div
-            className="vault-context-menu"
+            className="vault-actionmenu-panel vault-contextmenu-panel"
             role="menu"
-            style={{ top: openMenu.y, left: openMenu.x }}
+            style={
+              {
+                '--menu-x': `${openMenu.x}px`,
+                '--menu-y': `${openMenu.y}px`,
+              } as React.CSSProperties
+            }
             onClick={(event) => event.stopPropagation()}
           >
             <button
               type="button"
-              className="vault-context-item"
+              className="vault-actionmenu-item"
               onClick={() => {
                 onAddBankCard();
                 setOpenMenu(null);
               }}
             >
-              {t('action.addBankCard')}
+              {t('action.createBankCard')}
             </button>
           </div>
         </div>

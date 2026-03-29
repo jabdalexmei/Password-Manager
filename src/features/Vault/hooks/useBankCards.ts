@@ -17,7 +17,7 @@ import {
   updateBankCard,
 } from '../api/vaultApi';
 import { useDebouncedValue } from './useDebouncedValue';
-import { useTranslation } from '../../../shared/lib/i18n';
+import { useI18n, useTranslation } from '../../../shared/lib/i18n';
 import { useToaster } from '../../../shared/components/Toaster';
 import {
   mapBankCardFromBackend,
@@ -32,6 +32,7 @@ import { SelectedNav } from './useVault';
 import { BackendUserSettings } from '../types/backend';
 import type { Folder } from '../types/ui';
 import type { BankCardPreviewField } from '../lib/bankcardPreviewFields';
+import { createVaultDateTimeFormatter } from '../utils/dateTime';
 
 export type BankCardsError = { code: string; message?: string } | null;
 
@@ -42,6 +43,7 @@ export function useBankCards(
   activeVaultId: string
 ) {
   const { show: showToast } = useToaster();
+  const { language } = useI18n();
   const { t: tCommon } = useTranslation('Common');
   const { t: tVault } = useTranslation('Vault');
   const initOnceRef = useRef(false);
@@ -58,8 +60,8 @@ export function useBankCards(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<BankCardsError>(null);
   const dtf = useMemo(
-    () => new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'short' }),
-    []
+    () => createVaultDateTimeFormatter(settings?.date_time_format ?? 'auto', language),
+    [language, settings?.date_time_format]
   );
 
   useEffect(() => {
@@ -94,7 +96,7 @@ export function useBankCards(
     return () => {
       cancelled = true;
     };
-  }, [debouncedSearchQuery]);
+  }, [activeVaultId, debouncedSearchQuery]);
 
   useEffect(() => {
     const handler = (event: Event) => {
@@ -265,7 +267,9 @@ export function useBankCards(
     refreshActive();
     refreshTrash();
     getSettings()
-      .then(setSettings)
+      .then((nextSettings) => {
+        setSettings(nextSettings);
+      })
       .catch(handleError);
   }, [activeVaultId, handleError, refreshActive, refreshTrash]);
 

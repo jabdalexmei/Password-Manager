@@ -76,7 +76,16 @@ pub fn create_profile(
 }
 
 pub fn delete_profile(sp: &StoragePaths, id: &str) -> Result<bool> {
-    registry::delete_profile(sp, id)
+    let deleted = registry::delete_profile(sp, id)?;
+    if deleted {
+        if let Ok(mut settings) = config::load_settings(sp) {
+            if settings.active_profile.as_deref() == Some(id) {
+                settings.active_profile = None;
+                let _ = config::save_settings(sp, &settings);
+            }
+        }
+    }
+    Ok(deleted)
 }
 
 pub fn rename_profile(sp: &StoragePaths, id: &str, name: &str) -> Result<ProfileMeta> {
@@ -102,4 +111,31 @@ pub fn set_active_profile(sp: &StoragePaths, id: &str) -> Result<bool> {
     settings.active_profile = Some(id.to_string());
     config::save_settings(sp, &settings)?;
     Ok(true)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use tempfile::tempdir;
+
+    fn configured_storage_paths(workspace_root: &std::path::Path) -> StoragePaths {
+        let mut sp = StoragePaths::new_unconfigured().unwrap();
+        sp.configure_workspace(workspace_root.to_path_buf()).unwrap();
+        sp
+    }
+
+    #[test]
+    fn delete_profile_clears_active_profile_setting() {
+        let dir = tempdir().unwrap();
+        let workspace_root = dir.path().join("workspace");
+        std::fs::create_dir_all(&workspace_root).unwrap();
+        let sp = configured_storage_paths(&workspace_root);
+        let profile = create_profile(&sp, "Active", None).unwrap();
+
+        set_active_profile(&sp, &profile.id).unwrap();
+        delete_profile(&sp, &profile.id).unwrap();
+
+        assert_eq!(config::load_settings(&sp).unwrap().active_profile, None);
+    }
 }

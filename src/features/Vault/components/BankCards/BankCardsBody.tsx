@@ -92,11 +92,11 @@ export function BankCardsBody({
         </div>
 
         <div className="vault-sidebar-actions">
-          <button className="btn btn-primary" type="button" onClick={viewModel.openCreateModal}>
-            {tBankCards('label.addBankCard')}
+          <button className="btn btn-primary vault-sidebar-btn-nowrap vault-sidebar-btn-bankcard" type="button" onClick={viewModel.openCreateModal}>
+            {tBankCards('label.createBankCard')}
           </button>
-          <button className="btn btn-secondary" type="button" onClick={() => folderDialogs.openCreateFolder()}>
-            {tFolders('action.addFolder')}
+          <button className="btn btn-primary" type="button" onClick={() => folderDialogs.openCreateFolder()}>
+            {tFolders('action.createFolder')}
           </button>
         </div>
 
@@ -106,6 +106,7 @@ export function BankCardsBody({
           multiplyVaultsEnabled={false}
           onSelectVault={() => undefined}
           onCreateVault={() => null}
+          onSetDefaultVault={() => undefined}
           onRenameVault={() => undefined}
           onDeleteVault={() => undefined}
           selectedCategory={selectedCategory}
@@ -122,7 +123,7 @@ export function BankCardsBody({
         />
       </aside>
 
-      <section className="vault-datacards">
+      <section className="vault-allcards">
         <BankCards
           profileId={profileId}
           viewModel={viewModel}

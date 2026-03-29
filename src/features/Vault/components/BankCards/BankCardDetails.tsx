@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useTranslation } from '../../../../shared/lib/i18n';
+import { useI18n, useTranslation } from '../../../../shared/lib/i18n';
 import { BankCardItem } from '../../types/ui';
 import { useBankCardDetails } from './useBankCardDetails';
 import { IconCopy, IconPreview, IconPreviewOff } from '@/shared/icons/lucide/icons';
 import ConfirmDialog from '../../../../shared/components/ConfirmDialog';
 import { wasActuallyUpdated } from '../../utils/updatedAt';
+import { formatVaultDateTime } from '../../utils/dateTime';
+import type { BackendDateTimeFormat } from '../../types/backend';
 import { setBankCardPreviewFieldsForCard } from '../../api/vaultApi';
 import {
   loadBankCardPreviewFields,
@@ -20,6 +22,7 @@ import {
 
 export type BankCardDetailsProps = {
   card: BankCardItem | null;
+  dateTimeFormat?: BackendDateTimeFormat;
   onEdit: (card: BankCardItem) => void;
   onReloadCard?: (id: string) => Promise<void> | void;
   onDelete: (id: string) => void;
@@ -47,6 +50,7 @@ const maskHolder = (value?: string | null) => {
 
 export function BankCardDetails({
   card,
+  dateTimeFormat,
   onEdit,
   onReloadCard,
   onDelete,
@@ -57,9 +61,12 @@ export function BankCardDetails({
   clipboardAutoClearEnabled,
   clipboardClearTimeoutSeconds,
 }: BankCardDetailsProps) {
+  const { language } = useI18n();
   const { t } = useTranslation('BankCards');
   const { t: tVault } = useTranslation('Vault');
   const { t: tCommon } = useTranslation('Common');
+  const { t: tTip } = useTranslation('Tooltips');
+  const effectiveDateTimeFormat = dateTimeFormat ?? 'auto';
   const detailActions = useBankCardDetails({
     card,
     onDelete,
@@ -133,7 +140,15 @@ export function BankCardDetails({
     };
   }, []);
 
-  const informationTitle = <div className="vault-section-header">{tVault('information.title')}</div>;
+  const informationTitle = (
+    <div className="datacards-header">
+      <div className="vault-section-header">{tVault('details.title')}</div>
+
+      <div className="datacards-header__right">
+        <div className="datacards-header__spacer" aria-hidden="true" />
+      </div>
+    </div>
+  );
 
   if (!card) {
     return (
@@ -145,9 +160,11 @@ export function BankCardDetails({
   }
 
   const isFavorite = card.isFavorite;
-  const createdText = `${t('label.created')}: ${new Date(card.createdAt).toLocaleString()}`;
+  const createdText = `${t('label.created')}: ${formatVaultDateTime(card.createdAt, effectiveDateTimeFormat, language)}`;
   const showUpdated = wasActuallyUpdated(card.createdAt, card.updatedAt);
-  const updatedText = showUpdated ? `${t('label.updated')}: ${new Date(card.updatedAt).toLocaleString()}` : '';
+  const updatedText = showUpdated
+    ? `${t('label.updated')}: ${formatVaultDateTime(card.updatedAt, effectiveDateTimeFormat, language)}`
+    : '';
   const hasValue = (value?: string | null) => {
     const trimmed = value?.trim();
     return Boolean(trimmed);
@@ -244,7 +261,7 @@ export function BankCardDetails({
                     {t('action.restore')}
                   </button>
                   <button className="btn btn-danger" type="button" onClick={() => setPurgeConfirmOpen(true)}>
-                    {t('action.purge')}
+                    {t('action.delete')}
                   </button>
                 </>
               )}
@@ -282,6 +299,7 @@ export function BankCardDetails({
                     className="icon-button"
                     type="button"
                     aria-label={t('action.copy')}
+                    title={tTip('action.copy')}
                     onClick={() => detailActions.copyToClipboard(card.bankName)}
                   >
                     <IconCopy />
@@ -307,6 +325,7 @@ export function BankCardDetails({
                     className="icon-button"
                     type="button"
                     aria-label={t(`action.${showHolder ? 'hide' : 'reveal'}`)}
+                    title={showHolder ? tTip('action.hide') : tTip('action.reveal')}
                     onClick={detailActions.toggleHolderVisibility}
                   >
                     {showHolder ? <IconPreviewOff /> : <IconPreview />}
@@ -315,6 +334,7 @@ export function BankCardDetails({
                     className="icon-button"
                     type="button"
                     aria-label={t('action.copy')}
+                    title={tTip('action.copy')}
                     onClick={() => detailActions.copyToClipboard(card.holder, { isSecret: true })}
                   >
                     <IconCopy />
@@ -340,6 +360,7 @@ export function BankCardDetails({
                     className="icon-button"
                     type="button"
                     aria-label={t(`action.${showNumber ? 'hide' : 'reveal'}`)}
+                    title={showNumber ? tTip('action.hide') : tTip('action.reveal')}
                     onClick={detailActions.toggleNumberVisibility}
                   >
                     {showNumber ? <IconPreviewOff /> : <IconPreview />}
@@ -348,6 +369,7 @@ export function BankCardDetails({
                     className="icon-button"
                     type="button"
                     aria-label={t('action.copy')}
+                    title={tTip('action.copy')}
                     onClick={() => detailActions.copyToClipboard(card.number, { isSecret: true })}
                   >
                     <IconCopy />
@@ -376,6 +398,7 @@ export function BankCardDetails({
                     className="icon-button"
                     type="button"
                     aria-label={t(`action.${showCvc ? 'hide' : 'reveal'}`)}
+                    title={showCvc ? tTip('action.hide') : tTip('action.reveal')}
                     onClick={detailActions.toggleCvcVisibility}
                   >
                     {showCvc ? <IconPreviewOff /> : <IconPreview />}
@@ -384,6 +407,7 @@ export function BankCardDetails({
                     className="icon-button"
                     type="button"
                     aria-label={t('action.copy')}
+                    title={tTip('action.copy')}
                     onClick={() => detailActions.copyToClipboard(card.cvc, { isSecret: true })}
                   >
                     <IconCopy />
@@ -413,6 +437,7 @@ export function BankCardDetails({
                       className="icon-button"
                       type="button"
                       aria-label={t('action.copy')}
+                      title={tTip('action.copy')}
                       onClick={() => detailActions.copyToClipboard(noteText)}
                     >
                       <IconCopy />
@@ -597,9 +622,9 @@ export function BankCardDetails({
       />
       <ConfirmDialog
         open={purgeConfirmOpen}
-        title={t('dialog.purge.title')}
-        description={t('dialog.purge.message')}
-        confirmLabel={t('dialog.purge.confirm')}
+        title={t('dialog.delete.title')}
+        description={tCommon('dialog.delete.permanentMessage')}
+        confirmLabel={t('dialog.delete.confirm')}
         cancelLabel={tCommon('action.cancel')}
         onConfirm={() => {
           detailActions.purgeCard();

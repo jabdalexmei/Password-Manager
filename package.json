@@ -18,6 +18,7 @@
     "security:js": "node scripts/security-audit.mjs js",
     "security:rust": "node scripts/security-audit.mjs rust",
     "theme:check": "node scripts/check-theme-colors.mjs",
+    "theme:contract": "node scripts/check-token-contract.mjs",
     "icons:check": "node scripts/check-no-inline-svg.mjs"
   },
   "dependencies": {

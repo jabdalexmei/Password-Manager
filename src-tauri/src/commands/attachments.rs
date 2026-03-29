@@ -1,7 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use tauri::AppHandle;
-use tauri::Manager;
+use tauri::{AppHandle, DragDropEvent, Emitter, Manager, Window};
 use tauri_plugin_dialog::{DialogExt, FilePath};
 use uuid::Uuid;
 
@@ -26,6 +25,19 @@ fn now_ms() -> Result<u128> {
         .duration_since(UNIX_EPOCH)
         .map(|d| d.as_millis())
         .map_err(|_| ErrorCodeString::new("TIME_UNAVAILABLE"))
+}
+
+#[tauri::command]
+pub async fn rename_attachment(
+    app: AppHandle,
+    attachment_id: String,
+    file_name: String,
+) -> Result<AttachmentMeta> {
+    tauri::async_runtime::spawn_blocking(move || {
+        attachments_service::rename_attachment(&app, attachment_id, file_name)
+    })
+    .await
+    .map_err(|_| ErrorCodeString::new("TASK_JOIN_FAILED"))?
 }
 
 #[tauri::command]
@@ -75,68 +87,151 @@ fn cleanup_stale_picks(state: &AppState, now: u128) -> Result<()> {
     Ok(())
 }
 
+fn build_pending_files(paths: Vec<std::path::PathBuf>) -> Result<Vec<PendingPickedFile>> {
+    let mut files: Vec<PendingPickedFile> = Vec::new();
+    for path in paths {
+        let file_name = path
+            .file_name()
+            .and_then(|s| s.to_str())
+            .ok_or_else(|| ErrorCodeString::new("ATTACHMENT_INVALID_FILE_NAME"))?
+            .to_string();
+        let byte_size = std::fs::metadata(&path)
+            .map(|m| m.len())
+            .map_err(|_| ErrorCodeString::new("ATTACHMENT_READ_FAILED"))?;
+        files.push(PendingPickedFile {
+            id: Uuid::new_v4().to_string(),
+            path,
+            file_name,
+            byte_size,
+        });
+    }
+    Ok(files)
+}
+
+fn stage_attachment_pick_from_paths(
+    state: &AppState,
+    paths: Vec<std::path::PathBuf>,
+) -> Result<Option<AttachmentPickPayload>> {
+    let now = now_ms()?;
+    cleanup_stale_picks(state, now)?;
+
+    let files = build_pending_files(paths)?;
+    if files.is_empty() {
+        return Ok(None);
+    }
+
+    let token = Uuid::new_v4().to_string();
+    let payload_files: Vec<AttachmentPickFile> = files
+        .iter()
+        .map(|f| AttachmentPickFile {
+            id: f.id.clone(),
+            file_name: f.file_name.clone(),
+            byte_size: f.byte_size as i64,
+        })
+        .collect();
+
+    {
+        let mut map = state
+            .pending_attachment_picks
+            .lock()
+            .map_err(|_| ErrorCodeString::new("STATE_UNAVAILABLE"))?;
+        map.insert(
+            token.clone(),
+            PendingAttachmentPick {
+                created_at_ms: now,
+                files,
+            },
+        );
+    }
+
+    Ok(Some(AttachmentPickPayload {
+        token,
+        files: payload_files,
+    }))
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct AttachmentsDndPosition {
+    pub x: f64,
+    pub y: f64,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct AttachmentsDndDropPickedPayload {
+    pub token: String,
+    pub files: Vec<AttachmentPickFile>,
+    pub position: AttachmentsDndPosition,
+}
+
+fn emit_attachments_dnd_over(
+    window: &Window,
+    position: &tauri::PhysicalPosition<f64>,
+) -> Result<()> {
+    window
+        .emit(
+            "attachments://dnd-over",
+            AttachmentsDndPosition {
+                x: position.x,
+                y: position.y,
+            },
+        )
+        .map_err(|_| ErrorCodeString::new("EVENT_EMIT_FAILED"))
+}
+
+pub fn relay_attachments_drag_drop_event(window: &Window, event: &DragDropEvent) -> Result<()> {
+    match event {
+        DragDropEvent::Enter { position, .. } | DragDropEvent::Over { position } => {
+            emit_attachments_dnd_over(window, position)?;
+        }
+        DragDropEvent::Leave => {
+            window
+                .emit("attachments://dnd-leave", ())
+                .map_err(|_| ErrorCodeString::new("EVENT_EMIT_FAILED"))?;
+        }
+        DragDropEvent::Drop { paths, position } => {
+            let state = window
+                .app_handle()
+                .state::<std::sync::Arc<AppState>>()
+                .inner()
+                .clone();
+            let Some(payload) = stage_attachment_pick_from_paths(&state, paths.clone())? else {
+                return Ok(());
+            };
+
+            window
+                .emit(
+                    "attachments://dnd-drop-picked",
+                    AttachmentsDndDropPickedPayload {
+                        token: payload.token,
+                        files: payload.files,
+                        position: AttachmentsDndPosition {
+                            x: position.x,
+                            y: position.y,
+                        },
+                    },
+                )
+                .map_err(|_| ErrorCodeString::new("EVENT_EMIT_FAILED"))?;
+        }
+        _ => {}
+    }
+    Ok(())
+}
+
 #[tauri::command]
 pub async fn attachments_pick_files(app: AppHandle) -> Result<Option<AttachmentPickPayload>> {
     tauri::async_runtime::spawn_blocking(move || {
         let state = app.state::<std::sync::Arc<AppState>>().inner().clone();
-        let now = now_ms()?;
-        cleanup_stale_picks(&state, now)?;
-
         let selection = app.dialog().file().blocking_pick_files();
         let Some(paths) = selection else {
             return Ok(None);
         };
 
-        let mut files: Vec<PendingPickedFile> = Vec::new();
+        let mut selected_paths: Vec<std::path::PathBuf> = Vec::new();
         for fp in paths {
-            let path = file_path_to_pathbuf(fp)?;
-            let file_name = path
-                .file_name()
-                .and_then(|s| s.to_str())
-                .ok_or_else(|| ErrorCodeString::new("ATTACHMENT_INVALID_FILE_NAME"))?
-                .to_string();
-            let byte_size = std::fs::metadata(&path)
-                .map(|m| m.len())
-                .map_err(|_| ErrorCodeString::new("ATTACHMENT_READ_FAILED"))?;
-            files.push(PendingPickedFile {
-                id: Uuid::new_v4().to_string(),
-                path,
-                file_name,
-                byte_size,
-            });
+            selected_paths.push(file_path_to_pathbuf(fp)?);
         }
 
-        if files.is_empty() {
-            return Ok(None);
-        }
-
-        let token = Uuid::new_v4().to_string();
-        {
-            let mut map = state
-                .pending_attachment_picks
-                .lock()
-                .map_err(|_| ErrorCodeString::new("STATE_UNAVAILABLE"))?;
-            map.insert(
-                token.clone(),
-                PendingAttachmentPick {
-                    created_at_ms: now,
-                    files: files.clone(),
-                },
-            );
-        }
-
-        let payload = AttachmentPickPayload {
-            token,
-            files: files
-                .into_iter()
-                .map(|f| AttachmentPickFile {
-                    id: f.id,
-                    file_name: f.file_name,
-                    byte_size: f.byte_size as i64,
-                })
-                .collect(),
-        };
-        Ok(Some(payload))
+        stage_attachment_pick_from_paths(&state, selected_paths)
     })
     .await
     .map_err(|_| ErrorCodeString::new("TASK_JOIN_FAILED"))?
@@ -185,8 +280,11 @@ pub async fn add_attachments_from_pick(
                     continue;
                 }
             }
-            let meta =
-                attachments_service::add_attachment_from_fs_path(&app, datacard_id.clone(), &f.path)?;
+            let meta = attachments_service::add_attachment_from_fs_path(
+                &app,
+                datacard_id.clone(),
+                &f.path,
+            )?;
             out.push(meta);
         }
         Ok(out)
@@ -222,8 +320,7 @@ pub async fn add_attachments_via_dialog(
 #[tauri::command]
 pub async fn save_attachment_via_dialog(app: AppHandle, attachment_id: String) -> Result<bool> {
     tauri::async_runtime::spawn_blocking(move || {
-        let preview = attachments_service::get_attachment_preview(&app, attachment_id.clone())?;
-        let default_name = preview.file_name.clone();
+        let default_name = attachments_service::get_attachment_file_name(&app, attachment_id.clone())?;
 
         let selection = app
             .dialog()

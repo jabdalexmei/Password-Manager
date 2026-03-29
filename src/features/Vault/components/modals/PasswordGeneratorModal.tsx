@@ -27,6 +27,8 @@ export const PasswordGeneratorModal: React.FC<PasswordGeneratorModalProps> = ({
   onCopy,
 }) => {
   const { t } = useTranslation('DataCards');
+  const { t: tCommon } = useTranslation('Common');
+  const { t: tTip } = useTranslation('Tooltips');
 
   if (!isOpen) return null;
 
@@ -46,12 +48,15 @@ export const PasswordGeneratorModal: React.FC<PasswordGeneratorModalProps> = ({
   const normalizedStrength = Math.min(1, Math.max(0, (bits - minBitsForMeter) / (maxBitsForMeter - minBitsForMeter)));
 
   // Make the early part of the scale visually "redder" (gamma curve).
-  // hue: 0 = red, 120 = green (passing through orange in the middle).
-  const strengthHue = Math.round(Math.pow(normalizedStrength, 1.6) * 120);
+  const strengthToneClass =
+    bits < 40
+      ? 'generator-strength-fill--weak'
+      : bits < 80
+        ? 'generator-strength-fill--medium'
+        : 'generator-strength-fill--strong';
 
   const strengthFillStyle: React.CSSProperties = {
     width: `${normalizedStrength * 100}%`,
-    backgroundColor: `hsl(${strengthHue}, 85%, 45%)`,
   };
 
   const handleCheckboxChange = (key: keyof PasswordGeneratorOptions) => (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,7 +73,12 @@ export const PasswordGeneratorModal: React.FC<PasswordGeneratorModalProps> = ({
       }}
     >
       <div className="dialog generator-dialog" role="dialog" aria-modal="true" aria-labelledby="generator-title">
-        <button className="dialog-close dialog-close--topright" type="button" aria-label="Close" onClick={onClose}>
+        <button
+          className="dialog-close dialog-close--topright"
+          type="button"
+          aria-label={tCommon('action.close')}
+          onClick={onClose}
+        >
           {'\u00D7'}
         </button>
         <div className="dialog-header">
@@ -89,11 +99,18 @@ export const PasswordGeneratorModal: React.FC<PasswordGeneratorModalProps> = ({
                   className="icon-button icon-button-primary"
                   type="button"
                   aria-label={t('generator.regenerate')}
+                  title={tTip('generator.regenerate')}
                   onClick={onRegenerate}
                 >
                   <IconRegenerate />
                 </button>
-                <button className="icon-button" type="button" aria-label={t('action.copy')} onClick={() => void onCopy()}>
+                <button
+                  className="icon-button"
+                  type="button"
+                  aria-label={t('action.copy')}
+                  title={tTip('action.copy')}
+                  onClick={() => void onCopy()}
+                >
                   <IconCopy />
                 </button>
               </div>
@@ -107,7 +124,7 @@ export const PasswordGeneratorModal: React.FC<PasswordGeneratorModalProps> = ({
             </div>
 
             <div className="generator-strength-bar">
-              <div className="generator-strength-fill" style={strengthFillStyle} />
+              <div className={`generator-strength-fill ${strengthToneClass}`} style={strengthFillStyle} />
             </div>
           </div>
 
@@ -143,8 +160,8 @@ export const PasswordGeneratorModal: React.FC<PasswordGeneratorModalProps> = ({
               <span>{t('generator.symbols')}</span>
             </label>
             <label className="checkbox">
-              <input type="checkbox" checked={options.excludeSimilar} onChange={handleCheckboxChange('excludeSimilar')} />
-              <span>{t('generator.excludeSimilar')}</span>
+              <input type="checkbox" checked={options.similarSymbols} onChange={handleCheckboxChange('similarSymbols')} />
+              <span>{t('generator.similarSymbols')}</span>
             </label>
           </div>
         </div>

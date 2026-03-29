@@ -6,7 +6,7 @@ use crate::data::storage_paths::StoragePaths;
 use crate::error::{ErrorCodeString, Result};
 use rusqlite::DatabaseName;
 
-use super::migrations;
+use super::schema_initialization;
 
 pub fn init_database_protected_encrypted(
     sp: &StoragePaths,
@@ -17,7 +17,7 @@ pub fn init_database_protected_encrypted(
         .map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
 
     let conn = Connection::open_in_memory().map_err(|_| ErrorCodeString::new("DB_OPEN_FAILED"))?;
-    migrations::migrate_to_latest(&conn)?;
+    schema_initialization::schema_initialization(&conn)?;
 
     let bytes = conn
         .serialize(DatabaseName::Main)

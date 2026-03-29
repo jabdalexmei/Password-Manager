@@ -21,6 +21,7 @@ const FILTER_ORDER: Array<{ key: keyof VaultFilters; labelKey: string }> = [
 
 export function Search({ query, onChange, filters, onChangeFilters }: Props) {
   const { t } = useTranslation('Vault');
+  const { t: tTip } = useTranslation('Tooltips');
   const [isOpen, setIsOpen] = useState(false);
 
   const hasFiltersUi = Boolean(filters && onChangeFilters);
@@ -51,6 +52,7 @@ export function Search({ query, onChange, filters, onChangeFilters }: Props) {
             type="button"
             className="vault-filter-btn"
             aria-label={t('filters.title')}
+            title={tTip('action.filters')}
             aria-expanded={isOpen}
             onClick={() => setIsOpen((v) => !v)}
           >

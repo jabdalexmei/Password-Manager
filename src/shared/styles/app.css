@@ -1,10 +1,13 @@
-@layer tokens, base, ui, screens;
+@layer foundation, semantic, components, base, ui, screens;
 
-@import "./themes/blueTheme.css" layer(tokens);
+@import "./themes/blueTheme.css" layer(foundation);
+@import "./themes/darkTheme.css" layer(foundation);
+@import "./tokens/semantic.css" layer(semantic);
+@import "./tokens/components.css" layer(components);
 @import "./base.css" layer(base);
-@import "./ui.css" layer(ui);
+@import "./ui/index.css" layer(ui);
 @import "./screens/startup.css" layer(screens);
 @import "./screens/workspace.css" layer(screens);
 @import "./screens/profile-create.css" layer(screens);
 @import "./screens/login.css" layer(screens);
-@import "./screens/vault.css" layer(screens);
+@import "./screens/vault/index.css" layer(screens);

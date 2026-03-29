@@ -175,6 +175,11 @@ export type BackendAttachmentPreviewPayload = {
   base64_data: string;
 };
 
+export type BackendDateTimeFormat =
+  | "auto"
+  | "ddmmyyyy_24h"
+  | "mmddyyyy_12h_ampm";
+
 export type BackendUserSettings = {
   auto_hide_secret_timeout_seconds: number;
   auto_lock_enabled: boolean;
@@ -183,6 +188,7 @@ export type BackendUserSettings = {
   clipboard_auto_clear_enabled: boolean;
   clipboard_clear_timeout_seconds: number;
   soft_delete_enabled: boolean;
+  trash_auto_cleanup_enabled: boolean;
   trash_retention_days: number;
   backups_enabled: boolean;
   auto_backup_interval_minutes: number;
@@ -193,4 +199,11 @@ export type BackendUserSettings = {
   mask_password_by_default: boolean;
   multiply_vaults_enabled: boolean;
   active_vault_id: string;
+  date_time_format: BackendDateTimeFormat;
+};
+
+export type BackendTrashCleanupResult = {
+  enabled: boolean;
+  purged_datacards: number;
+  purged_bank_cards: number;
 };

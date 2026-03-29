@@ -88,6 +88,7 @@ export function FoldersTreeSection({
 }: FoldersTreeSectionProps) {
   const { t } = useTranslation('Folders');
   const { t: tCommon } = useTranslation('Common');
+  const { t: tTip } = useTranslation('Tooltips');
   const nameInputRef = useRef<HTMLInputElement | null>(null);
   const renameInputRef = useRef<HTMLInputElement | null>(null);
   const [renameTargetId, setRenameTargetId] = useState<string | null>(null);
@@ -206,7 +207,7 @@ export function FoldersTreeSection({
               </div>
             )}
 
-            <div className="form-field form-field--spacious">
+            <div className="form-field form-field--navigation">
               <label className="form-label" htmlFor="folder-name">
                 {t('dialog.newFolder.label')}
               </label>
@@ -344,6 +345,7 @@ export function FoldersTreeSection({
               type="button"
               className="vault-folder-toggle"
               aria-label={isCollapsed ? t('action.expandFolder') : t('action.collapseFolder')}
+              title={isCollapsed ? tTip('folder.expand') : tTip('folder.collapse')}
               onClick={() => toggleFolderCollapsed(folder.id)}
             >
               <span aria-hidden="true">{isCollapsed ? '>' : 'v'}</span>
@@ -353,7 +355,7 @@ export function FoldersTreeSection({
           )}
 
           <button
-            className="vault-folder vault-folder--tree"
+            className="vault-folder vault-folder--tree vault-folder--with-count"
             type="button"
             onClick={() => onSelectNav(isActive ? 'all' : { folderId: folder.id })}
             onContextMenu={(event) => {
@@ -386,24 +388,33 @@ export function FoldersTreeSection({
       {renderRenameDialog()}
 
       {openMenu && openMenu.type === 'folder' && (
-        <div className="vault-context-backdrop" onClick={() => setOpenMenu(null)} onContextMenu={(event) => event.preventDefault()}>
+        <div className="vault-actionmenu-backdrop" onClick={() => setOpenMenu(null)} onContextMenu={(event) => event.preventDefault()}>
           <div
-            className="vault-context-menu"
+            className="vault-actionmenu-panel vault-contextmenu-panel"
             role="menu"
-            style={{ top: openMenu.y, left: openMenu.x }}
+            style={
+              {
+                '--menu-x': `${openMenu.x}px`,
+                '--menu-y': `${openMenu.y}px`,
+              } as React.CSSProperties
+            }
             onClick={(event) => event.stopPropagation()}
           >
             <button
               type="button"
-              className="vault-context-item"
+              className="vault-actionmenu-item"
               onClick={() => handleCreateSubfolderFromMenu(openMenu.folderId)}
             >
-              {t('action.addSubfolder')}
+              {t('action.createSubfolder')}
             </button>
-            <button type="button" className="vault-context-item" onClick={() => openRenameDialog(openMenu.folderId)}>
+            <button type="button" className="vault-actionmenu-item" onClick={() => openRenameDialog(openMenu.folderId)}>
               {t('action.renameFolder')}
             </button>
-            <button type="button" className="vault-context-item" onClick={() => handleDeleteFromMenu(openMenu.folderId)}>
+            <button
+              type="button"
+              className="vault-actionmenu-item vault-actionmenu-danger"
+              onClick={() => handleDeleteFromMenu(openMenu.folderId)}
+            >
               {t('action.deleteFolder')}
             </button>
           </div>

@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from '../../../../shared/lib/i18n';
 import { useToaster } from '../../../../shared/components/Toaster';
-import { addAttachmentsFromPick, attachmentsDiscardPick, attachmentsPickFiles } from '../../api/vaultApi';
+import { addAttachmentsFromPick, attachmentsDiscardPick, attachmentsPickFiles, listAttachments } from '../../api/vaultApi';
 import {
   CreateDataCardInput,
   CustomField,
@@ -48,6 +48,7 @@ type UseDataCardsParams = {
   onToggleArchive: (id: string) => Promise<void> | void;
   onCreateCard: (input: CreateDataCardInput) => Promise<DataCard | void | null>;
   onUploadAttachments: (cardId: string, paths: string[]) => Promise<string[]>;
+  onAttachmentPresenceChange?: (cardId: string, hasAttachments: boolean) => void;
   onUpdateCard: (input: UpdateDataCardInput) => Promise<boolean>;
   onDeleteCard: (id: string) => Promise<void> | void;
   onRestoreCard: (id: string) => Promise<void> | void;
@@ -83,6 +84,7 @@ export type DataCardsViewModel = {
   editFolderError: string | null;
   isCreateSubmitting: boolean;
   isEditSubmitting: boolean;
+  isCreateDirty: boolean;
   updateCreateField: (field: keyof DataCardFormState, value: string | boolean | number | null) => void;
   updateEditField: (field: keyof DataCardFormState, value: string | boolean | number | null) => void;
   submitCreate: () => Promise<void>;
@@ -93,19 +95,19 @@ export type DataCardsViewModel = {
   createAttachments: PendingAttachment[];
   pickCreateAttachments: () => Promise<void>;
   removeCreateAttachment: (id: string) => void;
-  addCreateCustomFieldByName: (name: string) => { ok: true } | { ok: false; reason: 'EMPTY' | 'DUPLICATE' };
+  addCreateCustomFieldByName: (name: string) => { ok: true } | { ok: false; reason: 'EMPTY' };
   updateCreateCustomFieldValue: (rowId: string, value: string) => void;
   renameCreateCustomFieldById: (
     rowId: string,
     nextName: string
-  ) => { ok: true } | { ok: false; reason: 'EMPTY' | 'DUPLICATE' };
+  ) => { ok: true } | { ok: false; reason: 'EMPTY' };
   removeCreateCustomFieldById: (rowId: string) => void;
-  addEditCustomFieldByName: (name: string) => { ok: true } | { ok: false; reason: 'EMPTY' | 'DUPLICATE' };
+  addEditCustomFieldByName: (name: string) => { ok: true } | { ok: false; reason: 'EMPTY' };
   updateEditCustomFieldValue: (rowId: string, value: string) => void;
   renameEditCustomFieldById: (
     rowId: string,
     nextName: string
-  ) => { ok: true } | { ok: false; reason: 'EMPTY' | 'DUPLICATE' };
+  ) => { ok: true } | { ok: false; reason: 'EMPTY' };
   removeEditCustomFieldById: (rowId: string) => void;
   setCreateSeedPhrase: (phrase: string, words: number) => void;
   setEditSeedPhrase: (phrase: string, words: number) => void;
@@ -180,6 +182,36 @@ const buildInitialForm = (defaultFolderId: string | null, folderName: string): D
   customFields: [],
 });
 
+const areCustomFieldRowsEqual = (left: CustomFieldFormRow[], right: CustomFieldFormRow[]) => {
+  if (left.length !== right.length) return false;
+  for (let i = 0; i < left.length; i += 1) {
+    const a = left[i];
+    const b = right[i];
+    if (!b) return false;
+    if (a.id !== b.id || a.key !== b.key || a.value !== b.value || a.type !== b.type) {
+      return false;
+    }
+  }
+  return true;
+};
+
+const areFormStatesEqual = (left: DataCardFormState, right: DataCardFormState) =>
+  left.title === right.title &&
+  left.folderId === right.folderId &&
+  left.folderName === right.folderName &&
+  left.url === right.url &&
+  left.email === right.email &&
+  left.recoveryEmail === right.recoveryEmail &&
+  left.username === right.username &&
+  left.password === right.password &&
+  left.mobilePhone === right.mobilePhone &&
+  left.note === right.note &&
+  left.tagsText === right.tagsText &&
+  left.totpUri === right.totpUri &&
+  left.seedPhrase === right.seedPhrase &&
+  left.seedPhraseWordCount === right.seedPhraseWordCount &&
+  areCustomFieldRowsEqual(left.customFields, right.customFields);
+
 const findFolderName = (folderId: string | null, folderList: Folder[]) => {
   if (!folderId) return '';
   return folderList.find((folder) => folder.id === folderId)?.name ?? '';
@@ -203,6 +235,7 @@ export function useDataCards({
   onToggleArchive,
   onCreateCard,
   onUploadAttachments,
+  onAttachmentPresenceChange,
   onUpdateCard,
   onDeleteCard,
   onRestoreCard,
@@ -229,6 +262,14 @@ export function useDataCards({
   const [showPassword, setShowPassword] = useState(false);
   const [createAttachments, setCreateAttachments] = useState<PendingAttachment[]>([]);
   const [createAttachmentPickToken, setCreateAttachmentPickToken] = useState<string | null>(null);
+  const initialCreateForm = useMemo(
+    () => buildInitialForm(defaultFolderId, findFolderName(defaultFolderId, folders)),
+    [defaultFolderId, folders]
+  );
+  const isCreateDirty = useMemo(
+    () => !areFormStatesEqual(createForm, initialCreateForm) || createAttachments.length > 0,
+    [createAttachments.length, createForm, initialCreateForm]
+  );
 
   const resetCreateForm = useCallback(() => {
     const folderName = findFolderName(defaultFolderId, folders);
@@ -331,11 +372,6 @@ export function useDataCards({
       const trimmed = name.trim();
       if (!trimmed) return { ok: false as const, reason: 'EMPTY' as const };
 
-      const exists = createForm.customFields.some(
-        (row) => row.key.trim().toLowerCase() === trimmed.toLowerCase()
-      );
-      if (exists) return { ok: false as const, reason: 'DUPLICATE' as const };
-
       setCreateForm((prev) => ({
         ...prev,
         customFields: [...prev.customFields, { id: makeRowId(), key: trimmed, value: '', type: 'text' }],
@@ -343,7 +379,7 @@ export function useDataCards({
 
       return { ok: true as const };
     },
-    [createForm.customFields]
+    []
   );
 
   const updateCreateCustomFieldValue = useCallback((rowId: string, value: string) => {
@@ -358,13 +394,6 @@ export function useDataCards({
       const trimmed = nextName.trim();
       if (!trimmed) return { ok: false as const, reason: 'EMPTY' as const };
 
-      const exists = createForm.customFields.some((row) => {
-        if (row.id === rowId) return false;
-        return row.key.trim().toLowerCase() === trimmed.toLowerCase();
-      });
-
-      if (exists) return { ok: false as const, reason: 'DUPLICATE' as const };
-
       setCreateForm((prev) => ({
         ...prev,
         customFields: prev.customFields.map((row) => (row.id === rowId ? { ...row, key: trimmed } : row)),
@@ -372,7 +401,7 @@ export function useDataCards({
 
       return { ok: true as const };
     },
-    [createForm.customFields]
+    []
   );
 
   const removeCreateCustomFieldById = useCallback((rowId: string) => {
@@ -387,11 +416,6 @@ export function useDataCards({
       const trimmed = name.trim();
       if (!trimmed) return { ok: false as const, reason: 'EMPTY' as const };
 
-      const exists = (editForm?.customFields ?? []).some(
-        (row) => row.key.trim().toLowerCase() === trimmed.toLowerCase()
-      );
-      if (exists) return { ok: false as const, reason: 'DUPLICATE' as const };
-
       setEditForm((prev) => {
         if (!prev) return prev;
         return {
@@ -402,7 +426,7 @@ export function useDataCards({
 
       return { ok: true as const };
     },
-    [editForm]
+    []
   );
 
   const updateEditCustomFieldValue = useCallback((rowId: string, value: string) => {
@@ -420,13 +444,6 @@ export function useDataCards({
       const trimmed = nextName.trim();
       if (!trimmed) return { ok: false as const, reason: 'EMPTY' as const };
 
-      const exists = (editForm?.customFields ?? []).some((row) => {
-        if (row.id === rowId) return false;
-        return row.key.trim().toLowerCase() === trimmed.toLowerCase();
-      });
-
-      if (exists) return { ok: false as const, reason: 'DUPLICATE' as const };
-
       setEditForm((prev) => {
         if (!prev) return prev;
         return {
@@ -437,7 +454,7 @@ export function useDataCards({
 
       return { ok: true as const };
     },
-    [editForm]
+    []
   );
 
   const removeEditCustomFieldById = useCallback((rowId: string) => {
@@ -537,10 +554,19 @@ export function useDataCards({
       if (created && createAttachments.length > 0 && createAttachmentPickToken) {
         try {
           const fileIds = createAttachments.map((a) => a.id);
-          await addAttachmentsFromPick(created.id, createAttachmentPickToken, fileIds);
+          const uploaded = await addAttachmentsFromPick(created.id, createAttachmentPickToken, fileIds);
+          onAttachmentPresenceChange?.(created.id, uploaded.length > 0);
         } catch (err) {
           console.error(err);
           showToast(t('toast.attachmentUploadError'), 'error');
+          if (onAttachmentPresenceChange) {
+            try {
+              const existing = await listAttachments(created.id);
+              onAttachmentPresenceChange(created.id, existing.length > 0);
+            } catch {
+              // ignore
+            }
+          }
         } finally {
           await attachmentsDiscardPick(createAttachmentPickToken);
           setCreateAttachmentPickToken(null);
@@ -564,6 +590,7 @@ export function useDataCards({
     createForm,
     isCreateSubmitting,
     onCreateCard,
+    onAttachmentPresenceChange,
     resetCreateForm,
     showToast,
     t,
@@ -647,6 +674,7 @@ export function useDataCards({
     editFolderError,
     isCreateSubmitting,
     isEditSubmitting,
+    isCreateDirty,
     updateCreateField,
     updateEditField,
     submitCreate,

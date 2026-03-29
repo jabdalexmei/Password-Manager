@@ -10,6 +10,7 @@ type VaultsSectionProps = {
   multiplyVaultsEnabled: boolean;
   onSelectVault: (vaultId: string) => void | Promise<void>;
   onCreateVault: (name: string) => Promise<VaultItem | void | null> | VaultItem | void | null;
+  onSetDefaultVault: (id: string) => boolean | void | Promise<boolean | void>;
   onRenameVault: (id: string, name: string) => boolean | void | Promise<boolean | void>;
   onDeleteVault: (id: string) => boolean | void | Promise<boolean | void>;
   openMenu: SidebarMenu;
@@ -22,6 +23,7 @@ export function VaultsSection({
   multiplyVaultsEnabled,
   onSelectVault,
   onCreateVault,
+  onSetDefaultVault,
   onRenameVault,
   onDeleteVault,
   openMenu,
@@ -44,6 +46,25 @@ export function VaultsSection({
 
   const [deleteVaultTarget, setDeleteVaultTarget] = useState<{ id: string; name: string } | null>(null);
   const [isDeletingVault, setIsDeletingVault] = useState(false);
+
+  const getVaultDisplayName = (vault: VaultItem) => {
+    const normalizedName = vault.name.trim().toLowerCase();
+    const localizedSystemDefaultName = t('vaults.systemDefaultName');
+
+    const baseName =
+      vault.id === 'default' && normalizedName === 'default vault'
+        ? localizedSystemDefaultName
+        : vault.name;
+
+    const isSystemDefaultName =
+      baseName.trim().toLowerCase() === localizedSystemDefaultName.trim().toLowerCase();
+
+    if (vault.isDefault && !isSystemDefaultName) {
+      return `${baseName} ${t('vault.defaultSuffix')}`;
+    }
+
+    return baseName;
+  };
 
   useEffect(() => {
     if (isCreateVaultOpen && vaultNameInputRef.current) {
@@ -134,7 +155,13 @@ export function VaultsSection({
     const vault = vaults.find((item) => item.id === vaultId);
     if (!vault) return;
     setOpenMenu(null);
-    setDeleteVaultTarget({ id: vault.id, name: vault.name });
+    setDeleteVaultTarget({ id: vault.id, name: getVaultDisplayName(vault) });
+  };
+
+  const handleSetDefaultVaultFromMenu = async (vaultId: string) => {
+    const ok = await onSetDefaultVault(vaultId);
+    if (ok === false) return;
+    setOpenMenu(null);
   };
 
   const renderCreateVaultDialog = () => {
@@ -184,7 +211,6 @@ export function VaultsSection({
                   setVaultName(e.target.value);
                   if (vaultError) setVaultError(null);
                 }}
-                placeholder={t('dialog.newVault.placeholder')}
               />
               {vaultError && <div className="form-error">{vaultError}</div>}
             </div>
@@ -238,7 +264,7 @@ export function VaultsSection({
           <form className="dialog-body" onSubmit={handleSubmit} autoComplete="off">
             <div className="form-field">
               <label className="form-label" htmlFor="rename-vault-name">
-                {t('dialog.renameVault.label')}
+                {t('dialog.newVault.label')}
               </label>
               <input
                 id="rename-vault-name"
@@ -250,7 +276,6 @@ export function VaultsSection({
                   setRenameVaultName(e.target.value);
                   if (renameVaultError) setRenameVaultError(null);
                 }}
-                placeholder={t('dialog.renameVault.placeholder')}
               />
               {renameVaultError && <div className="form-error">{renameVaultError}</div>}
             </div>
@@ -274,6 +299,10 @@ export function VaultsSection({
     );
   };
 
+  const menuVault = openMenu && openMenu.type === 'vault'
+    ? (vaults.find((item) => item.id === openMenu.vaultId) ?? null)
+    : null;
+
   return (
     <>
       <div className="vault-sidebar-title">{t('vaults.title')}</div>
@@ -287,48 +316,65 @@ export function VaultsSection({
                 type="button"
                 onClick={() => void onSelectVault(vault.id)}
                 onContextMenu={(event) => {
-                  if (vault.isDefault) return;
                   event.preventDefault();
                   setOpenMenu({ type: 'vault', vaultId: vault.id, x: event.clientX, y: event.clientY });
                 }}
               >
-                <span className="folder-name">{vault.name}</span>
+                <span className="folder-name">{getVaultDisplayName(vault)}</span>
               </button>
             </li>
           );
         })}
       </ul>
       <div className="vault-sidebar-actions vault-sidebar-actions--vaults">
-        <button className="btn btn-secondary" type="button" onClick={openCreateVaultDialog}>
-          {t('action.addVault')}
+        <button className="btn btn-primary" type="button" onClick={openCreateVaultDialog}>
+          {t('action.createVault')}
         </button>
       </div>
 
       {renderCreateVaultDialog()}
       {renderRenameVaultDialog()}
 
-      {openMenu && openMenu.type === 'vault' && (
+      {openMenu && openMenu.type === 'vault' && menuVault && (
         <div
-          className="vault-context-backdrop"
+          className="vault-actionmenu-backdrop"
           onClick={() => setOpenMenu(null)}
           onContextMenu={(event) => event.preventDefault()}
         >
           <div
-            className="vault-context-menu"
+            className="vault-actionmenu-panel vault-contextmenu-panel"
             role="menu"
-            style={{ top: openMenu.y, left: openMenu.x }}
+            style={
+              {
+                '--menu-x': `${openMenu.x}px`,
+                '--menu-y': `${openMenu.y}px`,
+              } as React.CSSProperties
+            }
             onClick={(event) => event.stopPropagation()}
           >
+            {menuVault.isDefault ? (
+              <button type="button" className="vault-actionmenu-item" disabled>
+                {t('status.default')}
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="vault-actionmenu-item"
+                onClick={() => void handleSetDefaultVaultFromMenu(openMenu.vaultId)}
+              >
+                {t('action.makeDefault')}
+              </button>
+            )}
             <button
               type="button"
-              className="vault-context-item"
+              className="vault-actionmenu-item"
               onClick={() => openRenameVaultDialog(openMenu.vaultId)}
             >
               {t('action.renameVault')}
             </button>
             <button
               type="button"
-              className="vault-context-item"
+              className="vault-actionmenu-item vault-actionmenu-danger"
               onClick={() => handleDeleteVaultFromMenu(openMenu.vaultId)}
             >
               {t('action.deleteVault')}

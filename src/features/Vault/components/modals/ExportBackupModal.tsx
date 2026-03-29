@@ -108,9 +108,11 @@ export function ExportBackupModal({ open, profileId, onClose }: ExportBackupModa
               <button
                 id="use-default-path-switch"
                 type="button"
+                className="pm-switch"
                 role="switch"
                 aria-checked={useDefaultPath}
                 aria-labelledby="use-default-path-label"
+                data-checked={useDefaultPath ? 'true' : 'false'}
                 disabled={isSaving}
                 onClick={() => setUseDefaultPath((v) => !v)}
                 onKeyDown={(e) => {
@@ -120,31 +122,8 @@ export function ExportBackupModal({ open, profileId, onClose }: ExportBackupModa
                     setUseDefaultPath((v) => !v);
                   }
                 }}
-                style={{
-                  width: 44,
-                  height: 24,
-                  borderRadius: 9999,
-                  border: useDefaultPath ? '1px solid rgba(34, 197, 94, 0.95)' : '1px solid rgba(255, 255, 255, 0.25)',
-                  background: useDefaultPath ? 'rgba(34, 197, 94, 0.55)' : 'rgba(255, 255, 255, 0.14)',
-                  padding: 0,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'flex-start',
-                  cursor: isSaving ? 'not-allowed' : 'pointer',
-                  opacity: isSaving ? 0.65 : 1,
-                  outline: 'none',
-                }}
               >
-                <span
-                  style={{
-                    width: 18,
-                    height: 18,
-                    borderRadius: 9999,
-                    background: 'rgba(255, 255, 255, 0.95)',
-                    transform: useDefaultPath ? 'translateX(22px)' : 'translateX(2px)',
-                    transition: 'transform 160ms ease',
-                  }}
-                />
+                <span className="pm-switch__thumb" />
               </button>
             </div>
           </div>

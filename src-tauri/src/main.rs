@@ -3,12 +3,12 @@
 #[cfg(not(windows))]
 compile_error!("This application is Windows-only.");
 
-
 mod app_state;
 mod commands;
 mod data {
     pub mod fs {
         pub mod atomic_write;
+        pub mod output_guard;
     }
     pub mod storage_paths;
     pub mod workspaces {
@@ -30,12 +30,15 @@ mod data {
     pub mod sqlite {
         pub mod diagnostics;
         pub mod init;
-        pub mod migrations;
         pub mod repo_impl;
+        pub mod schema_initialization;
+        pub mod schema_migration;
+        pub mod schema_validation;
     }
 }
 mod error;
 mod services {
+    pub mod attachment_file_cleanup;
     pub mod attachments_service;
     pub mod backup_service;
     pub mod bank_cards_service;
@@ -46,6 +49,8 @@ mod services {
     pub mod profiles_service;
     pub mod security_service;
     pub mod settings_service;
+    pub mod test_support;
+    pub mod trash_auto_cleanup_service;
     pub mod ui_prefs_service;
     pub mod vaults_service;
 }
@@ -56,16 +61,16 @@ use std::sync::Arc;
 use app_state::AppState;
 use commands::{
     attachments::*, backup::*, bank_cards::*, clipboard::*, datacards::*, folders::*,
-    password_history::*, profiles::*, security::*, settings::*, ui_prefs::*, vaults::*,
-    workspace::*,
+    password_history::*, profiles::*, security::*, settings::*, trash_auto_cleanup::*, ui_prefs::*,
+    vaults::*, workspace::*,
 };
 use data::storage_paths::StoragePaths;
 use services::security_service;
 use tauri::{Manager, WindowEvent};
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 
-use windows::core::Interface;
 use webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2Settings4;
+use windows::core::Interface;
 
 fn main() {
     tauri::Builder::default()
@@ -76,9 +81,34 @@ fn main() {
                 let app_state = window.state::<Arc<AppState>>().inner().clone();
                 let _ = security_service::auto_lock_cleanup(&app_state);
             }
+            WindowEvent::DragDrop(drag_drop_event) => {
+                if let Err(err) = relay_attachments_drag_drop_event(window, drag_drop_event) {
+                    log::warn!("attachments drag-drop relay failed: {}", err);
+                }
+            }
             _ => {}
         })
         .setup(|app| {
+            let app_config_dir = match app.path().app_config_dir() {
+                Ok(path) => path,
+                Err(_) => {
+                    app.dialog()
+                        .message("Unable to determine application config directory.")
+                        .title("Password Manager")
+                        .kind(MessageDialogKind::Error)
+                        .blocking_show();
+                    std::process::exit(1);
+                }
+            };
+            if std::fs::create_dir_all(&app_config_dir).is_err() {
+                app.dialog()
+                    .message("Unable to create application config directory.")
+                    .title("Password Manager")
+                    .kind(MessageDialogKind::Error)
+                    .blocking_show();
+                std::process::exit(1);
+            }
+
             let storage_paths = match StoragePaths::new_unconfigured() {
                 Ok(paths) => paths,
                 Err(err) => {
@@ -97,7 +127,7 @@ fn main() {
                 }
             };
 
-            app.manage(Arc::new(AppState::new(storage_paths)));
+            app.manage(Arc::new(AppState::new(storage_paths, app_config_dir)));
 
             // Windows/WebView2: disable Chromium "Saved info" (form autofill suggestions)
             // because it breaks dark theme and can expose sensitive suggestions.
@@ -137,6 +167,7 @@ fn main() {
             is_logged_in,
             health_check,
             list_attachments,
+            rename_attachment,
             attachments_pick_files,
             attachments_discard_pick,
             add_attachments_from_pick,
@@ -158,6 +189,7 @@ fn main() {
             create_vault,
             rename_vault,
             delete_vault,
+            set_default_vault,
             set_active_vault,
             create_folder,
             rename_folder,
@@ -194,11 +226,18 @@ fn main() {
             restore_all_deleted_datacards,
             purge_all_deleted_datacards,
             get_datacard_password_history,
+            delete_datacard_password_history_entry,
             clear_datacard_password_history,
             get_settings,
             update_settings,
+            resolve_app_theme,
+            get_app_theme,
+            set_app_theme,
+            run_trash_auto_cleanup_if_enabled,
             get_datacard_preview_fields,
             set_datacard_preview_fields,
+            get_datacard_preview_fields_folder_only_by_folder,
+            set_datacard_preview_fields_folder_only_by_folder,
             set_datacard_preview_fields_for_card,
             get_bankcard_preview_fields,
             set_bankcard_preview_fields,

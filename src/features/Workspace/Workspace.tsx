@@ -1,4 +1,4 @@
-import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from '../../shared/lib/i18n';
 import {
   backupPickFile,
@@ -28,6 +28,7 @@ type ActionsMenuState = {
 
 const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
   const { t } = useTranslation('Workspace');
+  const { t: tCommon } = useTranslation('Common');
   const { show: showToast } = useToaster();
   const { workspaces, loading, error, selectedId, setSelectedId, refresh, remove } = useWorkspace();
   const [busy, setBusy] = useState(false);
@@ -35,8 +36,30 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingBackupToken, setPendingBackupToken] = useState<string | null>(null);
   const [pendingProfileName, setPendingProfileName] = useState<string | null>(null);
+  const VISIBLE_WORKSPACE_COUNT = 2;
+  const workspaceListRef = useRef<HTMLDivElement | null>(null);
+  const [workspaceListMaxHeight, setWorkspaceListMaxHeight] = useState<number | null>(null);
 
   const closeActionsMenu = useCallback(() => setActionsMenu(null), []);
+
+  const measureWorkspaceListMaxHeight = useCallback(() => {
+    const listNode = workspaceListRef.current;
+    if (!listNode) {
+      setWorkspaceListMaxHeight(null);
+      return;
+    }
+
+    const tiles = listNode.querySelectorAll<HTMLElement>('.workspace-tile');
+    if (tiles.length <= VISIBLE_WORKSPACE_COUNT) {
+      setWorkspaceListMaxHeight(null);
+      return;
+    }
+
+    const firstTop = tiles[0].offsetTop;
+    const lastVisible = tiles[VISIBLE_WORKSPACE_COUNT - 1];
+    const nextMaxHeight = Math.ceil((lastVisible.offsetTop - firstTop) + lastVisible.offsetHeight);
+    setWorkspaceListMaxHeight(nextMaxHeight > 0 ? nextMaxHeight : null);
+  }, [VISIBLE_WORKSPACE_COUNT]);
 
   useEffect(() => {
     if (!actionsMenu) return;
@@ -57,6 +80,21 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
       window.removeEventListener('scroll', onAnyScroll, true);
     };
   }, [actionsMenu, closeActionsMenu]);
+
+  useLayoutEffect(() => {
+    measureWorkspaceListMaxHeight();
+  }, [measureWorkspaceListMaxHeight, workspaces, loading, error, selectedId]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      measureWorkspaceListMaxHeight();
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [measureWorkspaceListMaxHeight]);
 
   const toggleActionsMenu = useCallback((workspaceId: string, anchorEl: HTMLElement) => {
     setActionsMenu((prev) => {
@@ -95,7 +133,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
   const handleCreate = useCallback(async () => {
     setBusy(true);
     try {
-      const ok = await workspaceCreateViaDialog();
+      const ok = await workspaceCreateViaDialog(t('selectDataFolderDialogTitle'));
       if (!ok) return;
       await refresh();
       onWorkspaceReady();
@@ -114,12 +152,12 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
     } finally {
       setBusy(false);
     }
-  }, [onWorkspaceReady, refresh]);
+  }, [onWorkspaceReady, refresh, t]);
 
   const handleRestoreFromBackup = useCallback(async () => {
     setBusy(true);
     try {
-      const ok = await workspaceCreateViaDialog();
+      const ok = await workspaceCreateViaDialog(t('restore.step1SelectDestinationFolder'));
       if (!ok) return;
       await refresh();
 
@@ -151,7 +189,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
   const handleOpenDataFolder = useCallback(async () => {
     setBusy(true);
     try {
-      const ok = await workspaceCreateViaDialog();
+      const ok = await workspaceCreateViaDialog(t('openDataFolderDialogTitle'));
       if (!ok) return;
 
       await refresh();
@@ -159,7 +197,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
     } finally {
       setBusy(false);
     }
-  }, [onWorkspaceReady, refresh]);
+  }, [onWorkspaceReady, refresh, t]);
 
   const workspaceListContent = useMemo(() => {
     if (loading) return <p className="muted centered">{t('loading')}</p>;
@@ -168,13 +206,17 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
     if (!workspaces.length) {
       return (
         <div className="empty empty--dashed">
-          <p className="empty-text">{t('empty')}</p>
+          <p className="empty-text">{t('workspaceinfo')}</p>
         </div>
       );
     }
 
+    const workspaceListStyle = workspaceListMaxHeight !== null
+      ? { maxHeight: `${workspaceListMaxHeight}px` }
+      : undefined;
+
     return (
-      <div className="workspace-list">
+      <div className="workspace-list" ref={workspaceListRef} style={workspaceListStyle}>
         {workspaces.map((workspace) => {
           const isSelected = workspace.id === selectedId;
           const statusLabel = workspace.exists ? (workspace.valid ? null : t('invalid')) : t('missing');
@@ -203,8 +245,8 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
                 <button
                   type="button"
                   className="btn btn-icon workspace-actionbar"
-                  aria-label={t('actions')}
-                  title={t('actions')}
+                  aria-label={tCommon('common.moreActions')}
+                  title={tCommon('common.moreActions')}
                   aria-haspopup="menu"
                   aria-expanded={isActionsOpen}
                   aria-controls={isActionsOpen ? `workspace-actions-menu-${workspace.id}` : undefined}
@@ -259,7 +301,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
               id={`workspace-actions-menu-${actionsWorkspace.id}`}
               className="workspace-actionmenu-panel"
               role="menu"
-              aria-label={t('actions')}
+              aria-label={tCommon('common.moreActions')}
               style={{ top: actionsMenu.top, right: actionsMenu.right }}
               onClick={(e) => e.stopPropagation()}
             >
@@ -300,12 +342,14 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
     setSelectedId,
     t,
     toggleActionsMenu,
+    tCommon,
+    workspaceListMaxHeight,
     workspaces,
   ]);
 
   return (
     <div className="screen-shell">
-      <div className="screen-card screen-card--xl workspace-card-mock">
+      <div className="screen-card workspace-card">
         <header className="workspace-header">
           <h1 className="workspace-title">{t('title')}</h1>
           <p className="workspace-subtitle">{t('subtitle')}</p>
@@ -329,7 +373,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
               onClick={handleCreate}
               disabled={busy}
             >
-              {t('create')}
+              {t('selectStorageFolder')}
             </button>
 
             <button
@@ -352,7 +396,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ onWorkspaceReady }) => {
 
             <button
               type="button"
-              className="btn btn-secondary workspace-cta-secondary"
+              className="btn btn-primary workspace-cta"
               onClick={handleOpenDataFolder}
               disabled={busy}
             >

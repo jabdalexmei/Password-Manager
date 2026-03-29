@@ -16,6 +16,7 @@ import {
   BackendVault,
   BackendAttachmentPreviewPayload,
   BackendPasswordHistoryRow,
+  BackendTrashCleanupResult,
 } from '../types/backend';
 import { mapPasswordHistoryFromBackend } from '../types/mappers';
 import { PasswordHistoryEntry } from '../types/ui';
@@ -38,6 +39,10 @@ export async function renameVault(id: string, name: string): Promise<boolean> {
 
 export async function deleteVault(id: string): Promise<boolean> {
   return invoke('delete_vault', { id });
+}
+
+export async function setDefaultVault(id: string): Promise<boolean> {
+  return invoke('set_default_vault', { id });
 }
 
 export async function setActiveVault(id: string): Promise<boolean> {
@@ -188,6 +193,10 @@ export async function updateSettings(settings: BackendUserSettings): Promise<boo
   return invoke('update_settings', { settings });
 }
 
+export async function runTrashAutoCleanupIfEnabled(): Promise<BackendTrashCleanupResult> {
+  return invoke('run_trash_auto_cleanup_if_enabled');
+}
+
 export async function createBackup(
   useDefaultPath: boolean,
   suggestedFileName?: string
@@ -253,6 +262,10 @@ export async function clearPasswordHistory(datacardId: string): Promise<void> {
   await invoke('clear_datacard_password_history', { datacardId });
 }
 
+export async function deletePasswordHistoryEntry(entryId: string): Promise<void> {
+  await invoke('delete_datacard_password_history_entry', { entryId });
+}
+
 export async function listAttachments(datacardId: string): Promise<BackendAttachmentMeta[]> {
   return invoke('list_attachments', { datacardId });
 }
@@ -310,6 +323,13 @@ export async function purgeAttachment(attachmentId: string): Promise<void> {
 
 export async function saveAttachmentViaDialog(attachmentId: string): Promise<boolean> {
   return invoke('save_attachment_via_dialog', { attachmentId });
+}
+
+export async function renameAttachment(
+  attachmentId: string,
+  fileName: string
+): Promise<BackendAttachmentMeta> {
+  return invoke('rename_attachment', { attachmentId, fileName });
 }
 
 export type AttachmentPreviewDto = {

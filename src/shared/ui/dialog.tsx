@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef } from 'react';
+import { useTranslation } from '../lib/i18n';
 
 type DialogProps = {
   open: boolean;
@@ -65,15 +66,22 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
 export function DialogContent({
   className,
   showCloseButton = true,
-  closeAriaLabel = 'Close',
+  closeAriaLabel,
   children,
   ...props
 }: DialogContentProps) {
   const ctx = useContext(DialogContext);
+  const { t: tCommon } = useTranslation('Common');
+  const resolvedCloseAriaLabel = closeAriaLabel ?? tCommon('action.close');
   return (
     <div className={mergeClasses('dialog', className)} role="dialog" aria-modal="true" {...props}>
       {showCloseButton && ctx?.canClose && (
-        <button className="dialog-close dialog-close--topright" type="button" aria-label={closeAriaLabel} onClick={ctx.close}>
+        <button
+          className="dialog-close dialog-close--topright"
+          type="button"
+          aria-label={resolvedCloseAriaLabel}
+          onClick={ctx.close}
+        >
           {'\u00D7'}
         </button>
       )}

@@ -4,7 +4,7 @@ export type PasswordGeneratorOptions = {
   uppercase: boolean;
   numbers: boolean;
   symbols: boolean;
-  excludeSimilar: boolean;
+  similarSymbols: boolean;
 };
 
 const LOWERCASE = 'abcdefghijklmnopqrstuvwxyz';
@@ -21,7 +21,7 @@ const buildCharset = (options: PasswordGeneratorOptions) => {
   if (options.numbers) charset += NUMBERS;
   if (options.symbols) charset += SYMBOLS;
 
-  if (options.excludeSimilar) {
+  if (!options.similarSymbols) {
     charset = charset.replace(SIMILAR, '');
   }
 

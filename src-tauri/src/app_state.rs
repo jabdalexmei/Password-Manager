@@ -40,6 +40,7 @@ pub struct AppState {
     pub active_profile: Mutex<Option<String>>,
     pub active_vault_id: Mutex<Option<String>>,
     pub storage_paths: Mutex<StoragePaths>,
+    app_config_dir: PathBuf,
 
     pub workspace_lock: Mutex<Option<std::fs::File>>,
 
@@ -58,11 +59,12 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub fn new(storage_paths: StoragePaths) -> Self {
+    pub fn new(storage_paths: StoragePaths, app_config_dir: PathBuf) -> Self {
         Self {
             active_profile: Mutex::new(None),
             active_vault_id: Mutex::new(None),
             storage_paths: Mutex::new(storage_paths),
+            app_config_dir,
 
             workspace_lock: Mutex::new(None),
 
@@ -75,6 +77,10 @@ impl AppState {
             pending_attachment_picks: Mutex::new(HashMap::new()),
             pending_backup_picks: Mutex::new(HashMap::new()),
         }
+    }
+
+    pub fn app_config_dir(&self) -> PathBuf {
+        self.app_config_dir.clone()
     }
 
     fn acquire_workspace_lock(workspace_root: &PathBuf) -> Result<std::fs::File> {

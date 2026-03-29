@@ -1,12 +1,4 @@
-.startup-footer {
-  margin-top: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.startup-header {
+﻿.startup-header {
   text-align: center;
   margin-bottom: 24px;
 }
@@ -15,29 +7,27 @@
   margin: 0;
   font-size: 28px;
   font-weight: 700;
-  color: var(--color-text);
+  color: var(--sem-text-primary);
 }
 
 .startup-subtitle {
   margin: 6px 0 0 0;
-  color: var(--color-text-muted);
+  color: var(--sem-text-muted);
   font-size: 15px;
 }
 
-.startup-footnote {
-  margin-top: 20px;
-  text-align: center;
-  color: var(--color-text-muted);
-  font-size: 12px;
+.select-profile-card .profiles-list {
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+/* Select profile cards: use the same blue hover border as selectable workspace tiles. */
+.profiles-list .profile-card:hover {
+  border-color: var(--sem-accent-primary);
 }
 
 @media (max-width: 720px) {
   .button-row {
     flex-direction: column;
-  }
-
-  .startup-footer {
-    flex-direction: column;
-    align-items: stretch;
   }
 }

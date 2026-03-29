@@ -17,3 +17,10 @@ pub fn clear_history(state: &Arc<AppState>, datacard_id: &str) -> Result<()> {
     security_service::request_persist_active_vault(state.clone());
     Ok(())
 }
+
+pub fn delete_history_entry(state: &Arc<AppState>, entry_id: &str) -> Result<()> {
+    let profile_id = security_service::require_unlocked_active_profile(state)?.profile_id;
+    repo_impl::delete_password_history_entry(state, &profile_id, entry_id)?;
+    security_service::request_persist_active_vault(state.clone());
+    Ok(())
+}

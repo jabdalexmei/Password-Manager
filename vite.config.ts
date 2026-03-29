@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
-    // говорим Vite, что корень проекта — src
+    // Tell Vite the project root is "src".
     root: 'src',
     resolve: {
       alias: {
@@ -29,7 +29,7 @@ export default defineConfig(({ mode }) => {
     },
     plugins,
     build: {
-      // а билдить нужно в ../dist относительно src → в корневую dist
+      // Build output goes to ../dist relative to src (root-level dist).
       outDir: '../dist',
       emptyOutDir: true,
     },

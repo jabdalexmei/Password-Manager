@@ -18,7 +18,5 @@
   "back": "Back",
 
   "validationName": "Enter profile name",
-  "validationMatch": "Passwords do not match",
-
-  "footnote": "Password Manager keeps your vault secure."
+  "validationMatch": "Passwords do not match"
 }

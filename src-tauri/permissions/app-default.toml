@@ -21,6 +21,7 @@ commands.allow = [
   "health_check",
 
   "list_attachments",
+  "rename_attachment",
   "attachments_pick_files",
   "attachments_discard_pick",
   "add_attachments_from_pick",
@@ -44,6 +45,7 @@ commands.allow = [
   "create_vault",
   "rename_vault",
   "delete_vault",
+  "set_default_vault",
   "set_active_vault",
   "create_folder",
   "rename_folder",
@@ -86,9 +88,15 @@ commands.allow = [
 
   "get_settings",
   "update_settings",
+  "resolve_app_theme",
+  "get_app_theme",
+  "set_app_theme",
+  "run_trash_auto_cleanup_if_enabled",
 
   "get_datacard_preview_fields",
   "set_datacard_preview_fields",
+  "get_datacard_preview_fields_folder_only_by_folder",
+  "set_datacard_preview_fields_folder_only_by_folder",
   "set_datacard_preview_fields_for_card",
   "get_bankcard_preview_fields",
   "set_bankcard_preview_fields",
