@@ -123,6 +123,81 @@ fn recover_pending_profile_renames(
     Ok(dirty)
 }
 
+fn prune_missing_profile_dirs(sp: &StoragePaths, registry: &mut ProfileRegistry) -> bool {
+    let original_len = registry.profiles.len();
+    registry.profiles.retain(|record| match profile_dir(sp, &record.id) {
+        Ok(dir) => dir.exists(),
+        Err(_) => false,
+    });
+    registry.profiles.len() != original_len
+}
+
+#[cfg(test)]
+fn delete_profile_failpoint_cell() -> &'static std::sync::Mutex<bool> {
+    static CELL: std::sync::OnceLock<std::sync::Mutex<bool>> = std::sync::OnceLock::new();
+    CELL.get_or_init(|| std::sync::Mutex::new(false))
+}
+
+#[cfg(test)]
+fn delete_profile_failpoint_lock() -> &'static std::sync::Mutex<()> {
+    static LOCK: std::sync::OnceLock<std::sync::Mutex<()>> = std::sync::OnceLock::new();
+    LOCK.get_or_init(|| std::sync::Mutex::new(()))
+}
+
+#[cfg(test)]
+fn set_delete_profile_failpoint(enabled: bool) {
+    *delete_profile_failpoint_cell().lock().unwrap() = enabled;
+}
+
+#[cfg(test)]
+fn delete_profile_failpoint_enabled() -> bool {
+    *delete_profile_failpoint_cell().lock().unwrap()
+}
+
+#[cfg(not(test))]
+fn delete_profile_failpoint_enabled() -> bool {
+    false
+}
+
+fn remove_profile_dir_retry(path: &std::path::Path) -> std::io::Result<()> {
+    use std::time::Duration;
+
+    const ATTEMPTS: usize = 200;
+    const SLEEP_MS: u64 = 50;
+
+    if delete_profile_failpoint_enabled() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::PermissionDenied,
+            "delete profile failpoint",
+        ));
+    }
+
+    let mut last_err: Option<std::io::Error> = None;
+    for _ in 0..ATTEMPTS {
+        match fs::remove_dir_all(path) {
+            Ok(()) => return Ok(()),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+            Err(e) if e.kind() == std::io::ErrorKind::PermissionDenied => {
+                last_err = Some(e);
+                std::thread::sleep(Duration::from_millis(SLEEP_MS));
+            }
+            Err(e) => {
+                match e.raw_os_error() {
+                    Some(5) | Some(32) | Some(33) => {
+                        last_err = Some(e);
+                        std::thread::sleep(Duration::from_millis(SLEEP_MS));
+                    }
+                    _ => return Err(e),
+                }
+            }
+        }
+    }
+
+    Err(last_err.unwrap_or_else(|| {
+        std::io::Error::new(std::io::ErrorKind::Other, "remove profile dir failed")
+    }))
+}
+
 fn load_registry(sp: &StoragePaths) -> Result<ProfileRegistry> {
     ensure_profiles_dir(sp)?;
     let path = registry_path(sp)?;
@@ -139,6 +214,8 @@ fn load_registry(sp: &StoragePaths) -> Result<ProfileRegistry> {
 
     // Crash-safe completion for rename_profile.
     dirty |= recover_pending_profile_renames(sp, &mut registry)?;
+    // If a directory is already gone, treat the registry entry as stale and self-heal it away.
+    dirty |= prune_missing_profile_dirs(sp, &mut registry);
 
     // Self-heal has_password based on on-disk evidence.
     for rec in registry.profiles.iter_mut() {
@@ -373,16 +450,37 @@ pub fn rename_profile(sp: &StoragePaths, id: &str, name: &str) -> Result<Profile
 pub fn delete_profile(sp: &StoragePaths, id: &str) -> Result<bool> {
     ensure_profiles_dir(sp)?;
     let mut registry = load_registry(sp)?;
+    let dir = crate::data::profiles::paths::profile_dir(sp, id)?;
+    if dir.exists() {
+        remove_profile_dir_retry(&dir).map_err(|e| {
+            log::warn!(
+                "[PROFILE][delete] failed_to_remove_dir profile_id={} path={:?} err={}",
+                id,
+                dir,
+                e
+            );
+            ErrorCodeString::new("PROFILE_STORAGE_WRITE")
+        })?;
+    }
+
     let original_len = registry.profiles.len();
     registry.profiles.retain(|p| p.id != id);
     if registry.profiles.len() == original_len {
         return Err(ErrorCodeString::new("PROFILE_NOT_FOUND"));
     }
-    save_registry(sp, &registry)?;
-    let dir = crate::data::profiles::paths::profile_dir(sp, id)?;
-    if dir.exists() {
-        let _ = fs::remove_dir_all(dir);
+
+    if let Err(err) = save_registry(sp, &registry) {
+        if !dir.exists() {
+            log::warn!(
+                "[PROFILE][delete] registry_save_failed_after_dir_removed profile_id={} err={}",
+                id,
+                err.code
+            );
+            return Ok(true);
+        }
+        return Err(err);
     }
+
     Ok(true)
 }
 
@@ -393,4 +491,65 @@ pub fn get_profile(sp: &StoragePaths, id: &str) -> Result<Option<ProfileRecord>>
         None => return Ok(None),
     };
     Ok(Some(registry.profiles[idx].clone()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use tempfile::tempdir;
+
+    fn configured_storage_paths(workspace_root: &std::path::Path) -> StoragePaths {
+        let mut sp = StoragePaths::new_unconfigured().unwrap();
+        sp.configure_workspace(workspace_root.to_path_buf()).unwrap();
+        sp
+    }
+
+    #[test]
+    fn delete_profile_keeps_registry_when_dir_removal_fails() {
+        let _failpoint_lock = delete_profile_failpoint_lock().lock().unwrap();
+        set_delete_profile_failpoint(false);
+        struct ResetFailpoint;
+        impl Drop for ResetFailpoint {
+            fn drop(&mut self) {
+                set_delete_profile_failpoint(false);
+            }
+        }
+        let _reset = ResetFailpoint;
+
+        let dir = tempdir().unwrap();
+        let workspace_root = dir.path().join("workspace");
+        std::fs::create_dir_all(&workspace_root).unwrap();
+        let sp = configured_storage_paths(&workspace_root);
+        let profile = create_profile(&sp, "Delete Me", None).unwrap();
+        let profile_root = profile_dir(&sp, &profile.id).unwrap();
+
+        set_delete_profile_failpoint(true);
+        let err = delete_profile(&sp, &profile.id).unwrap_err();
+        assert_eq!(err.code, "PROFILE_STORAGE_WRITE");
+
+        assert!(profile_root.exists());
+        assert!(list_profiles(&sp)
+            .unwrap()
+            .iter()
+            .any(|item| item.id == profile.id));
+    }
+
+    #[test]
+    fn load_registry_prunes_entries_with_missing_profile_dirs() {
+        let dir = tempdir().unwrap();
+        let workspace_root = dir.path().join("workspace");
+        std::fs::create_dir_all(&workspace_root).unwrap();
+        let sp = configured_storage_paths(&workspace_root);
+        let profile = create_profile(&sp, "Prune Me", None).unwrap();
+        let profile_root = profile_dir(&sp, &profile.id).unwrap();
+
+        std::fs::remove_dir_all(&profile_root).unwrap();
+
+        assert!(list_profiles(&sp)
+            .unwrap()
+            .iter()
+            .all(|item| item.id != profile.id));
+        assert!(get_profile(&sp, &profile.id).unwrap().is_none());
+    }
 }
