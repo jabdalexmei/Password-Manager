@@ -123,6 +123,36 @@ export type BackupPickPayload = {
   inspect: BackupInspectResult;
 };
 
+export type LegacyImportInspectResult = {
+  total_rows: number;
+  ready_rows: number;
+  skipped_rows: number;
+  unknown_folder_rows: number;
+  missing_title_rows: number;
+};
+
+export type LegacyImportPickPayload = {
+  token: string;
+  file_name: string;
+  byte_size: number;
+  inspect: LegacyImportInspectResult;
+};
+
+export type LegacyImportErrorRow = {
+  row_number: number;
+  title: string;
+  code: string;
+  message: string;
+};
+
+export type LegacyImportResult = {
+  imported_count: number;
+  skipped_count: number;
+  error_count: number;
+  report_path: string;
+  errors: LegacyImportErrorRow[];
+};
+
 export function backupPickFile(): Promise<BackupPickPayload | null> {
   return invoke('backup_pick_file');
 }
@@ -133,6 +163,18 @@ export function backupDiscardPick(token: string): Promise<void> {
 
 export function backupRestoreWorkflowFromPick(token: string): Promise<boolean> {
   return invoke('backup_restore_workflow_from_pick', { token });
+}
+
+export function legacyImportPickCsv(): Promise<LegacyImportPickPayload | null> {
+  return invoke('legacy_import_pick_csv');
+}
+
+export function legacyImportDiscardPick(token: string): Promise<void> {
+  return invoke('legacy_import_discard_pick', { token });
+}
+
+export function legacyImportFromPick(token: string): Promise<LegacyImportResult> {
+  return invoke('legacy_import_from_pick', { token });
 }
 
 export async function clipboardClearAll(): Promise<void> {

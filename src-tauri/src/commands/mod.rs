@@ -4,6 +4,7 @@ pub mod bank_cards;
 pub mod clipboard;
 pub mod datacards;
 pub mod folders;
+pub mod legacy_import;
 pub mod password_history;
 pub mod profiles;
 pub mod security;

@@ -43,6 +43,40 @@ pub struct BackupPickPayload {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct LegacyImportInspectResult {
+    pub total_rows: i64,
+    pub ready_rows: i64,
+    pub skipped_rows: i64,
+    pub unknown_folder_rows: i64,
+    pub missing_title_rows: i64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LegacyImportPickPayload {
+    pub token: String,
+    pub file_name: String,
+    pub byte_size: i64,
+    pub inspect: LegacyImportInspectResult,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct LegacyImportErrorRow {
+    pub row_number: i64,
+    pub title: String,
+    pub code: String,
+    pub message: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct LegacyImportResult {
+    pub imported_count: i64,
+    pub skipped_count: i64,
+    pub error_count: i64,
+    pub report_path: String,
+    pub errors: Vec<LegacyImportErrorRow>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AttachmentPreviewPayload {
     pub attachment_id: String,
     pub file_name: String,

@@ -240,6 +240,77 @@ export async function restoreBackupWorkflowFromPick(token: string): Promise<bool
   return invoke('backup_restore_workflow_from_pick', { token });
 }
 
+export type LegacyImportInspectDto = {
+  total_rows: number;
+  ready_rows: number;
+  skipped_rows: number;
+  unknown_folder_rows: number;
+  missing_title_rows: number;
+};
+
+type BackendLegacyImportPickPayload = {
+  token: string;
+  file_name: string;
+  byte_size: number;
+  inspect: LegacyImportInspectDto;
+};
+
+export type LegacyImportPickPayloadDto = {
+  token: string;
+  fileName: string;
+  byteSize: number;
+  inspect: LegacyImportInspectDto;
+};
+
+export type LegacyImportErrorRowDto = {
+  row_number: number;
+  title: string;
+  code: string;
+  message: string;
+};
+
+type BackendLegacyImportResult = {
+  imported_count: number;
+  skipped_count: number;
+  error_count: number;
+  report_path: string;
+  errors: LegacyImportErrorRowDto[];
+};
+
+export type LegacyImportResultDto = {
+  importedCount: number;
+  skippedCount: number;
+  errorCount: number;
+  reportPath: string;
+  errors: LegacyImportErrorRowDto[];
+};
+
+export async function legacyImportPickCsv(): Promise<LegacyImportPickPayloadDto | null> {
+  const payload = await invoke<BackendLegacyImportPickPayload | null>('legacy_import_pick_csv');
+  if (!payload) return null;
+  return {
+    token: payload.token,
+    fileName: payload.file_name,
+    byteSize: payload.byte_size,
+    inspect: payload.inspect,
+  };
+}
+
+export async function legacyImportDiscardPick(token: string): Promise<void> {
+  await invoke('legacy_import_discard_pick', { token });
+}
+
+export async function legacyImportFromPick(token: string): Promise<LegacyImportResultDto> {
+  const result = await invoke<BackendLegacyImportResult>('legacy_import_from_pick', { token });
+  return {
+    importedCount: result.imported_count,
+    skippedCount: result.skipped_count,
+    errorCount: result.error_count,
+    reportPath: result.report_path,
+    errors: result.errors,
+  };
+}
+
 export async function listBackups(): Promise<
   Array<{ id: string; created_at_utc: string; path: string; bytes: number }>
 > {

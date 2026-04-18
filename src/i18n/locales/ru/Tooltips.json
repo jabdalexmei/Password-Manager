@@ -1,6 +1,7 @@
 ﻿{
   "backup.export": "Экспорт резервной копии",
   "backup.import": "Импорт резервной копии",
+  "legacyImport.csv": "Импорт из проверенного CSV",
   "vault.settings": "Настройки",
   "vault.lock": "Заблокировать",
   "vault.logout": "Выйти",

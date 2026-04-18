@@ -36,6 +36,12 @@ pub struct PendingBackupPick {
     pub path: PathBuf,
 }
 
+#[derive(Clone)]
+pub struct PendingLegacyImportPick {
+    pub created_at_ms: u128,
+    pub path: PathBuf,
+}
+
 pub struct AppState {
     pub active_profile: Mutex<Option<String>>,
     pub active_vault_id: Mutex<Option<String>>,
@@ -56,6 +62,9 @@ pub struct AppState {
 
     // Same idea for backups: frontend must not pass arbitrary paths.
     pub pending_backup_picks: Mutex<HashMap<String, PendingBackupPick>>,
+
+    // Same idea for reviewed legacy-import CSV files.
+    pub pending_legacy_import_picks: Mutex<HashMap<String, PendingLegacyImportPick>>,
 }
 
 impl AppState {
@@ -76,6 +85,7 @@ impl AppState {
 
             pending_attachment_picks: Mutex::new(HashMap::new()),
             pending_backup_picks: Mutex::new(HashMap::new()),
+            pending_legacy_import_picks: Mutex::new(HashMap::new()),
         }
     }
 

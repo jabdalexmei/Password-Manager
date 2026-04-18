@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "legacy:txt-to-csv": "node scripts/legacy-txt-to-csv.mjs",
     "ci:install": "npm ci",
     "ci:build": "npm ci && npm run build",
     "ci:verify": "npm ci && npm run build && npm run security:all",

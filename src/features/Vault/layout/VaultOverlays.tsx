@@ -7,6 +7,12 @@ const LazyExportBackupModal = React.lazy(() =>
 const LazyImportBackupModal = React.lazy(() =>
   import('../components/modals/ImportBackupModal').then((m) => ({ default: m.ImportBackupModal }))
 );
+const LazyImportLegacyDataModal = React.lazy(() =>
+  import('../components/modals/ImportLegacyDataModal').then((m) => ({ default: m.ImportLegacyDataModal }))
+);
+const LazyImportLegacyDataResultModal = React.lazy(() =>
+  import('../components/modals/ImportLegacyDataResultModal').then((m) => ({ default: m.ImportLegacyDataResultModal }))
+);
 const LazySettingsModal = React.lazy(() =>
   import('../components/modals/SettingsModal').then((m) => ({ default: m.SettingsModal }))
 );
@@ -25,6 +31,7 @@ type VaultOverlaysProps = {
   handleDeleteFolderOnly: () => Promise<void>;
   handleDeleteFolderAndCards: () => Promise<void>;
   backupFlows: any;
+  legacyImportFlows: any;
   settingsFlows: any;
   vaultSettings: any;
 };
@@ -40,6 +47,7 @@ export function VaultOverlays({
   handleDeleteFolderOnly,
   handleDeleteFolderAndCards,
   backupFlows,
+  legacyImportFlows,
   settingsFlows,
   vaultSettings,
 }: VaultOverlaysProps) {
@@ -76,6 +84,29 @@ export function VaultOverlays({
             isSubmitting={backupFlows.isRestoringBackup}
             onCancel={backupFlows.handleCloseImport}
             onConfirm={backupFlows.handleConfirmImport}
+          />
+        </Suspense>
+      )}
+
+      {legacyImportFlows.pendingImportToken !== null && (
+        <Suspense fallback={null}>
+          <LazyImportLegacyDataModal
+            open={legacyImportFlows.pendingImportToken !== null}
+            fileName={legacyImportFlows.pendingImportLabel}
+            inspect={legacyImportFlows.pendingImportInspect}
+            isSubmitting={legacyImportFlows.isImporting}
+            onCancel={legacyImportFlows.handleCloseImport}
+            onConfirm={legacyImportFlows.handleConfirmImport}
+          />
+        </Suspense>
+      )}
+
+      {legacyImportFlows.lastImportResult !== null && (
+        <Suspense fallback={null}>
+          <LazyImportLegacyDataResultModal
+            open={legacyImportFlows.lastImportResult !== null}
+            result={legacyImportFlows.lastImportResult}
+            onClose={legacyImportFlows.handleCloseResult}
           />
         </Suspense>
       )}

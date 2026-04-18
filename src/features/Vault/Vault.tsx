@@ -11,6 +11,7 @@ import { useToaster } from '../../shared/components/Toaster';
 import { runTrashAutoCleanupIfEnabled } from './api/vaultApi';
 import type { VaultCategory } from './components/Sidebar/sidebarTypes';
 import { useBackupFlows } from './flows/useBackupFlows';
+import { useLegacyImportFlows } from './flows/useLegacyImportFlows';
 import { useSettingsFlows } from './flows/useSettingsFlows';
 import { useTrashCleanupBoot } from './flows/useTrashCleanupBoot';
 import { VaultLayout } from './layout/VaultLayout';
@@ -170,6 +171,15 @@ export default function Vault({
     backupsEnabled: vault.settings?.backups_enabled,
   });
 
+  const legacyImportFlows = useLegacyImportFlows({
+    showToast,
+    tCommon,
+    tVault,
+    onAfterImport: async () => {
+      await Promise.all([vault.refreshActive(), bankCards.refreshActive(), vault.refreshTrash(), bankCards.refreshTrash()]);
+    },
+  });
+
   const settingsFlows = useSettingsFlows({
     onUpdateVaultSettings: vault.updateSettings,
     onSetBankCardsSettings: bankCards.setSettings,
@@ -288,6 +298,7 @@ export default function Vault({
           onLock={vault.lock}
           onExportBackup={backupFlows.handleExportBackup}
           onImportBackup={backupFlows.handleImportBackup}
+          onImportLegacyData={legacyImportFlows.handleImportLegacyData}
           onOpenSettings={settingsFlows.handleOpenSettings}
         />
       }
@@ -365,6 +376,7 @@ export default function Vault({
           handleDeleteFolderOnly={handleDeleteFolderOnly}
           handleDeleteFolderAndCards={handleDeleteFolderAndCards}
           backupFlows={backupFlows}
+          legacyImportFlows={legacyImportFlows}
           settingsFlows={settingsFlows}
           vaultSettings={vault.settings}
         />

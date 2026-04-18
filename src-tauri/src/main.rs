@@ -45,6 +45,7 @@ mod services {
     pub mod clipboard_service;
     pub mod datacards_service;
     pub mod folders_service;
+    pub mod legacy_import_service;
     pub mod password_history_service;
     pub mod profiles_service;
     pub mod security_service;
@@ -61,8 +62,8 @@ use std::sync::Arc;
 use app_state::AppState;
 use commands::{
     attachments::*, backup::*, bank_cards::*, clipboard::*, datacards::*, folders::*,
-    password_history::*, profiles::*, security::*, settings::*, trash_auto_cleanup::*, ui_prefs::*,
-    vaults::*, workspace::*,
+    legacy_import::*, password_history::*, profiles::*, security::*, settings::*,
+    trash_auto_cleanup::*, ui_prefs::*, vaults::*, workspace::*,
 };
 use data::storage_paths::StoragePaths;
 use services::security_service;
@@ -182,6 +183,9 @@ fn main() {
             backup_pick_file,
             backup_discard_pick,
             backup_restore_workflow_from_pick,
+            legacy_import_pick_csv,
+            legacy_import_discard_pick,
+            legacy_import_from_pick,
             backup_list,
             backup_create_if_due_auto,
             list_folders,
