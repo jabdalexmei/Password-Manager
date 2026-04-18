@@ -376,6 +376,37 @@ select:autofill {
   opacity: 1;
 }
 
+/* Reusable text-only inline action for controls embedded inside input-like fields. */
+.input-action-inline-text {
+  min-width: auto !important;
+  min-height: 26px !important;
+  width: auto !important;
+  height: 26px !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  color: var(--sem-text-muted) !important;
+  opacity: 0.88;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  transition: color 0.15s ease, opacity 0.15s ease;
+}
+
+.input-action-inline-text:hover:not(:disabled),
+.input-action-inline-text:focus-visible,
+.input-action-inline-text:active {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--sem-text-primary) !important;
+  opacity: 1;
+}
+
 /* Read-only TOTP preview in forms: visually matches standard input fields. */
 .totp-preview-field {
   width: 100%;
@@ -424,33 +455,7 @@ select:autofill {
 .totp-preview-field__edit {
   flex: 0 0 auto;
   align-self: center;
-  min-width: auto !important;
-  min-height: 26px !important;
-  width: auto !important;
-  height: 26px !important;
-  padding: 0 !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  outline: none !important;
-  color: var(--sem-text-muted);
-  opacity: 0.88;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1;
-  transition: color 0.15s ease, opacity 0.15s ease;
-}
-
-.totp-preview-field__edit:hover:not(:disabled),
-.totp-preview-field__edit:focus-visible,
-.totp-preview-field__edit:active {
-  border: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  color: var(--sem-text-primary);
-  opacity: 1;
+  flex-shrink: 0;
 }
 
 /* Selected profile info block (summary panel) */

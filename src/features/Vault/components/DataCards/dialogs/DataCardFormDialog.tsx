@@ -326,7 +326,7 @@ export function DataCardFormDialog({
                 </div>
 
                 <button
-                  className="totp-preview-field__edit input-action-inline"
+                  className="icon-button input-action-inline input-action-inline-text totp-preview-field__edit"
                   type="button"
                   onClick={() => {
                     setTwoFactorTargetDialogId(dialogId);
