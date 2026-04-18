@@ -385,6 +385,10 @@ select:autofill {
   background: var(--cmp-input-bg);
   color: var(--cmp-input-text);
   padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
@@ -399,6 +403,7 @@ select:autofill {
   gap: 12px;
   flex-wrap: wrap;
   row-gap: 4px;
+  flex: 1;
   min-width: 0;
 }
 
@@ -414,6 +419,38 @@ select:autofill {
 .totp-preview-field__meta {
   font-size: 12px;
   line-height: 16px;
+}
+
+.totp-preview-field__edit {
+  flex: 0 0 auto;
+  align-self: center;
+  min-width: auto !important;
+  min-height: 26px !important;
+  width: auto !important;
+  height: 26px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  color: var(--sem-text-muted);
+  opacity: 0.88;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  transition: color 0.15s ease, opacity 0.15s ease;
+}
+
+.totp-preview-field__edit:hover:not(:disabled),
+.totp-preview-field__edit:focus-visible,
+.totp-preview-field__edit:active {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--sem-text-primary);
+  opacity: 1;
 }
 
 /* Selected profile info block (summary panel) */

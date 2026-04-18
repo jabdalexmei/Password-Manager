@@ -324,6 +324,19 @@ export function DataCardFormDialog({
                     </span>
                   )}
                 </div>
+
+                <button
+                  className="totp-preview-field__edit input-action-inline"
+                  type="button"
+                  onClick={() => {
+                    setTwoFactorTargetDialogId(dialogId);
+                    setIs2faModalOpen(true);
+                  }}
+                  aria-label={t('twoFactor.editAction')}
+                  title={t('twoFactor.editAction')}
+                >
+                  {t('action.edit')}
+                </button>
               </div>
             </div>
           )}
