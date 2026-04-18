@@ -58,6 +58,11 @@ export const Add2FAModal: React.FC<Props> = ({
     () => Boolean(selection && selection.width > 0 && selection.height > 0),
     [selection]
   );
+  const canAdd = useMemo(() => {
+    const trimmed = textValue.trim();
+    if (!trimmed) return false;
+    return normalizeTotpInput(trimmed, defaults).ok;
+  }, [defaults, textValue]);
 
   const clearSelectionState = useCallback(() => {
     setSelectionMode(false);
@@ -151,6 +156,7 @@ export const Add2FAModal: React.FC<Props> = ({
   const applyDecodedValue = (rawValue: string, showSuccessMessage: boolean) => {
     const result = normalizeTotpInput(rawValue, defaults);
     if (result.ok === false) {
+      setTextValue('');
       setQrMessage({ type: 'error', text: t(`twoFactor.error.${result.error}`) });
       return false;
     }
@@ -176,6 +182,7 @@ export const Add2FAModal: React.FC<Props> = ({
   };
 
   const handleQrFile = async (file: File) => {
+    setTextValue('');
     setTextError(null);
     setQrMessage(null);
     setBusy(true);
@@ -214,6 +221,8 @@ export const Add2FAModal: React.FC<Props> = ({
 
     const image = previewImageRef.current;
     if (!image || !selection) return;
+
+    setTextValue('');
 
     const renderedWidth = image.clientWidth;
     const renderedHeight = image.clientHeight;
@@ -450,7 +459,7 @@ export const Add2FAModal: React.FC<Props> = ({
             )}
           </div>
           <div className="dialog-footer-right">
-            <button className="btn btn-primary" type="button" onClick={handleSaveText}>
+            <button className="btn btn-primary" type="button" onClick={handleSaveText} disabled={!canAdd}>
               {t('action.add')}
             </button>
           </div>
