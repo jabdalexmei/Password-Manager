@@ -242,8 +242,6 @@ export async function restoreBackupWorkflowFromPick(token: string): Promise<bool
 
 export type LegacyImportInspectDto = {
   total_rows: number;
-  ready_rows: number;
-  skipped_rows: number;
   unknown_folder_rows: number;
   missing_title_rows: number;
 };
@@ -271,7 +269,6 @@ export type LegacyImportErrorRowDto = {
 
 type BackendLegacyImportResult = {
   imported_count: number;
-  skipped_count: number;
   error_count: number;
   report_path: string;
   errors: LegacyImportErrorRowDto[];
@@ -279,7 +276,6 @@ type BackendLegacyImportResult = {
 
 export type LegacyImportResultDto = {
   importedCount: number;
-  skippedCount: number;
   errorCount: number;
   reportPath: string;
   errors: LegacyImportErrorRowDto[];
@@ -304,7 +300,6 @@ export async function legacyImportFromPick(token: string): Promise<LegacyImportR
   const result = await invoke<BackendLegacyImportResult>('legacy_import_from_pick', { token });
   return {
     importedCount: result.imported_count,
-    skippedCount: result.skipped_count,
     errorCount: result.error_count,
     reportPath: result.report_path,
     errors: result.errors,

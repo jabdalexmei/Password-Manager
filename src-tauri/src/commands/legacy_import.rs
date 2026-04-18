@@ -58,7 +58,7 @@ pub async fn legacy_import_pick_csv(
         let mut dialog = app
             .dialog()
             .file()
-            .set_title("Select reviewed CSV for legacy import");
+            .set_title("Select CSV for legacy import");
 
         if let Ok(sp) = st.get_storage_paths() {
             if let Ok(workspace_root) = sp.workspace_root() {

@@ -107,7 +107,6 @@ function suggestFields(lines) {
     note,
     tags: '',
     folder: '',
-    status: 'review_required',
   };
 }
 
@@ -126,7 +125,6 @@ const headers = [
   'tags',
   'folder',
   'raw_block',
-  'status',
   'raw_line_1',
   'raw_line_2',
   'raw_line_3',

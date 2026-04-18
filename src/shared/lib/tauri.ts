@@ -125,8 +125,6 @@ export type BackupPickPayload = {
 
 export type LegacyImportInspectResult = {
   total_rows: number;
-  ready_rows: number;
-  skipped_rows: number;
   unknown_folder_rows: number;
   missing_title_rows: number;
 };
@@ -147,7 +145,6 @@ export type LegacyImportErrorRow = {
 
 export type LegacyImportResult = {
   imported_count: number;
-  skipped_count: number;
   error_count: number;
   report_path: string;
   errors: LegacyImportErrorRow[];

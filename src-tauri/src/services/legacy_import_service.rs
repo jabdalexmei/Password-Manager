@@ -27,14 +27,12 @@ struct LegacyCsvRow {
     note: String,
     tags: String,
     folder: String,
-    status: String,
 }
 
 #[derive(Debug, Serialize)]
 struct LegacyImportReport {
     generated_at_utc: String,
     imported_count: i64,
-    skipped_count: i64,
     error_count: i64,
     errors: Vec<LegacyImportErrorRow>,
 }
@@ -46,7 +44,13 @@ fn read_text_lossy(path: &Path) -> Result<String> {
 }
 
 fn normalize_header(value: &str) -> String {
-    value.trim().trim_start_matches('\u{feff}').to_lowercase()
+    value
+        .trim()
+        .trim_start_matches('\u{feff}')
+        .chars()
+        .filter(|ch| ch.is_ascii_alphanumeric())
+        .flat_map(|ch| ch.to_lowercase())
+        .collect()
 }
 
 fn split_tags(value: &str) -> Vec<String> {
@@ -62,10 +66,6 @@ fn split_tags(value: &str) -> Vec<String> {
         out.push(trimmed.to_string());
     }
     out
-}
-
-fn normalize_status(value: &str) -> String {
-    value.trim().to_lowercase()
 }
 
 fn fallback_title(row: &LegacyCsvRow) -> String {
@@ -146,13 +146,30 @@ fn parse_csv_rows(content: &str) -> Result<Vec<LegacyCsvRow>> {
         .map(|(idx, value)| (normalize_header(value), idx))
         .collect();
 
-    if !header_map.contains_key("status") {
+    let supported_headers = [
+        "title",
+        "url",
+        "email",
+        "recoveryemail",
+        "username",
+        "password",
+        "mobilephone",
+        "note",
+        "tags",
+        "folder",
+    ];
+
+    if !header_map
+        .keys()
+        .any(|key| supported_headers.contains(&key.as_str()))
+    {
         return Err(ErrorCodeString::new("LEGACY_IMPORT_CSV_HEADERS_INVALID"));
     }
 
     let get = |row: &[String], key: &str| -> String {
+        let normalized_key = normalize_header(key);
         header_map
-            .get(key)
+            .get(&normalized_key)
             .and_then(|idx| row.get(*idx))
             .map(|value| value.trim().to_string())
             .unwrap_or_default()
@@ -170,28 +187,13 @@ fn parse_csv_rows(content: &str) -> Result<Vec<LegacyCsvRow>> {
             title: get(row, "title"),
             url: get(row, "url"),
             email: get(row, "email"),
-            recovery_email: {
-                let camel = get(row, "recoveryEmail");
-                if camel.is_empty() {
-                    get(row, "recovery_email")
-                } else {
-                    camel
-                }
-            },
+            recovery_email: get(row, "recovery email"),
             username: get(row, "username"),
             password: get(row, "password"),
-            mobile_phone: {
-                let camel = get(row, "mobilePhone");
-                if camel.is_empty() {
-                    get(row, "mobile_phone")
-                } else {
-                    camel
-                }
-            },
+            mobile_phone: get(row, "mobile phone"),
             note: get(row, "note"),
             tags: get(row, "tags"),
             folder: get(row, "folder"),
-            status: get(row, "status"),
         });
     }
 
@@ -223,19 +225,10 @@ pub fn inspect_csv_file(path: &Path, state: &Arc<AppState>) -> Result<LegacyImpo
     let profile_id = security_service::require_unlocked_active_profile(state)?.profile_id;
     let folder_lookup = build_folder_lookup(state, &profile_id)?;
 
-    let mut ready_rows = 0_i64;
-    let mut skipped_rows = 0_i64;
     let mut unknown_folder_rows = 0_i64;
     let mut missing_title_rows = 0_i64;
 
     for row in &rows {
-        if normalize_status(&row.status) != "ready" {
-            skipped_rows += 1;
-            continue;
-        }
-
-        ready_rows += 1;
-
         if fallback_title(row).trim().is_empty() {
             missing_title_rows += 1;
         }
@@ -248,8 +241,6 @@ pub fn inspect_csv_file(path: &Path, state: &Arc<AppState>) -> Result<LegacyImpo
 
     Ok(LegacyImportInspectResult {
         total_rows: rows.len() as i64,
-        ready_rows,
-        skipped_rows,
         unknown_folder_rows,
         missing_title_rows,
     })
@@ -275,7 +266,6 @@ fn write_report(state: &Arc<AppState>, result: &LegacyImportResult) -> Result<St
     let payload = LegacyImportReport {
         generated_at_utc: Utc::now().to_rfc3339(),
         imported_count: result.imported_count,
-        skipped_count: result.skipped_count,
         error_count: result.error_count,
         errors: result.errors.clone(),
     };
@@ -294,15 +284,9 @@ pub fn import_csv_file(path: &Path, state: &Arc<AppState>) -> Result<LegacyImpor
     let folder_lookup = build_folder_lookup(state, &profile_id)?;
 
     let mut imported_count = 0_i64;
-    let mut skipped_count = 0_i64;
     let mut errors: Vec<LegacyImportErrorRow> = Vec::new();
 
     for row in &rows {
-        if normalize_status(&row.status) != "ready" {
-            skipped_count += 1;
-            continue;
-        }
-
         let title = fallback_title(row);
         if title.trim().is_empty() {
             errors.push(make_error(
@@ -360,7 +344,6 @@ pub fn import_csv_file(path: &Path, state: &Arc<AppState>) -> Result<LegacyImpor
 
     let mut result = LegacyImportResult {
         imported_count,
-        skipped_count,
         error_count: errors.len() as i64,
         report_path: String::new(),
         errors,
@@ -375,12 +358,22 @@ mod tests {
 
     #[test]
     fn parse_csv_rows_handles_quotes_and_headers() {
-        let csv = "title,url,status\n\"Mail, personal\",mail.ru,ready\n";
+        let csv = "Title,URL,Recovery email,Mobile phone\n\"Mail, personal\",mail.ru,recovery@example.com,+123\n";
         let rows = parse_csv_rows(csv).unwrap();
         assert_eq!(rows.len(), 1);
         assert_eq!(rows[0].title, "Mail, personal");
         assert_eq!(rows[0].url, "mail.ru");
-        assert_eq!(rows[0].status, "ready");
+        assert_eq!(rows[0].recovery_email, "recovery@example.com");
+        assert_eq!(rows[0].mobile_phone, "+123");
+    }
+
+    #[test]
+    fn parse_csv_rows_ignores_unsupported_extra_columns() {
+        let csv = "title,status,url\nMail,review_required,mail.ru\n";
+        let rows = parse_csv_rows(csv).unwrap();
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].title, "Mail");
+        assert_eq!(rows[0].url, "mail.ru");
     }
 
     #[test]
@@ -397,7 +390,6 @@ mod tests {
             note: String::new(),
             tags: String::new(),
             folder: String::new(),
-            status: "ready".to_string(),
         };
         assert_eq!(fallback_title(&row), "mail.ru");
     }

@@ -45,8 +45,6 @@ pub struct BackupPickPayload {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct LegacyImportInspectResult {
     pub total_rows: i64,
-    pub ready_rows: i64,
-    pub skipped_rows: i64,
     pub unknown_folder_rows: i64,
     pub missing_title_rows: i64,
 }
@@ -70,7 +68,6 @@ pub struct LegacyImportErrorRow {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct LegacyImportResult {
     pub imported_count: i64,
-    pub skipped_count: i64,
     pub error_count: i64,
     pub report_path: String,
     pub errors: Vec<LegacyImportErrorRow>,

@@ -53,8 +53,6 @@ export function ImportLegacyDataModal({
           {fileName && <p className="dialog-description">{fileName}</p>}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 12 }}>
             <div className="dialog-description">{t('legacyImport.summary.totalRows', { count: inspect.total_rows })}</div>
-            <div className="dialog-description">{t('legacyImport.summary.readyRows', { count: inspect.ready_rows })}</div>
-            <div className="dialog-description">{t('legacyImport.summary.skippedRows', { count: inspect.skipped_rows })}</div>
             <div className="dialog-description">
               {t('legacyImport.summary.unknownFolders', { count: inspect.unknown_folder_rows })}
             </div>

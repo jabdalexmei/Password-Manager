@@ -40,7 +40,6 @@ export function ImportLegacyDataResultModal({ open, result, onClose }: Props) {
 
         <div className="dialog-body" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div className="dialog-description">{t('legacyImport.result.imported', { count: result.importedCount })}</div>
-          <div className="dialog-description">{t('legacyImport.result.skipped', { count: result.skippedCount })}</div>
           <div className="dialog-description">{t('legacyImport.result.errors', { count: result.errorCount })}</div>
           <div className="dialog-description">{t('legacyImport.result.reportPath', { path: result.reportPath })}</div>
 
