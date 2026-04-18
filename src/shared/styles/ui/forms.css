@@ -244,6 +244,20 @@ select:autofill {
   line-height: 16px;
 }
 
+.twofa-qr-message {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.twofa-qr-message--error {
+  color: var(--sem-accent-danger);
+}
+
+.twofa-qr-message--success {
+  color: var(--sem-accent-success);
+}
+
 /* Input with action buttons (copy/generate/etc.) */
 .input-with-actions {
   display: flex;

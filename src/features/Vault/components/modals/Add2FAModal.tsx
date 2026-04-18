@@ -181,7 +181,7 @@ export const Add2FAModal: React.FC<Props> = ({
     setBusy(true);
     try {
       const text = await decodeQrFromImageFile(file);
-      applyDecodedValue(text, false);
+      applyDecodedValue(text, true);
     } catch (err) {
       console.error('[2FA] Failed to decode QR image', err);
       setQrMessage({ type: 'error', text: t('twoFactor.error.QR_DECODE_FAILED') });
@@ -426,8 +426,7 @@ export const Add2FAModal: React.FC<Props> = ({
               </div>
               {qrMessage && (
                 <div
-                  className={qrMessage.type === 'error' ? 'form-error' : 'muted'}
-                  style={qrMessage.type === 'success' ? { color: 'var(--sem-accent-success)' } : undefined}
+                  className={`twofa-qr-message twofa-qr-message--${qrMessage.type}`}
                 >
                   {qrMessage.text}
                 </div>
