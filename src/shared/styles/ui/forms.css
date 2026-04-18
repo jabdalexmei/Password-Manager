@@ -114,12 +114,15 @@
 .form-field select,
 .form-field textarea,
 .form-textarea {
+  display: block;
   width: 100%;
+  min-height: 42px;
   border-radius: var(--sem-radius-sm);
   border: 1px solid var(--cmp-input-border);
   background: var(--cmp-input-bg);
   color: var(--cmp-input-text);
   padding: 10px 12px;
+  line-height: 20px;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
