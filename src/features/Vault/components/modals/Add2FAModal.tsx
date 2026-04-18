@@ -163,6 +163,10 @@ export const Add2FAModal: React.FC<Props> = ({
 
   const handleSaveText = () => {
     setTextError(null);
+    if (!textValue.trim()) {
+      onRemove();
+      return;
+    }
     const result = normalizeTotpInput(textValue, defaults);
     if (result.ok === false) {
       setTextError(t(`twoFactor.error.${result.error}`));
@@ -261,9 +265,10 @@ export const Add2FAModal: React.FC<Props> = ({
   };
 
   const handleRemove = () => {
-    onRemove();
     setTextValue('');
     setTextError(null);
+    setTab('text');
+    setQrMessage(null);
     clearQrState();
   };
 
@@ -455,4 +460,3 @@ export const Add2FAModal: React.FC<Props> = ({
     </div>
   );
 };
-

@@ -749,6 +749,8 @@ export function DataCards({
               } else {
                 viewModel.updateEditField('totpUri', '');
               }
+              setIs2faModalOpen(false);
+              setTwoFactorTargetDialogId(null);
             }}
           />
         </React.Suspense>
