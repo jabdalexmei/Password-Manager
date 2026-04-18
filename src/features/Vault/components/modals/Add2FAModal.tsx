@@ -451,7 +451,7 @@ export const Add2FAModal: React.FC<Props> = ({
           </div>
           <div className="dialog-footer-right">
             <button className="btn btn-primary" type="button" onClick={handleSaveText}>
-              {t('action.save')}
+              {t('action.add')}
             </button>
           </div>
         </div>

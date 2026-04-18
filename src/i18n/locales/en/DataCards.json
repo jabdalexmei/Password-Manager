@@ -37,6 +37,7 @@
   "action.hide": "Hide",
   "action.addFile": "Add file",
   "action.create": "Create",
+  "action.add": "Add",
   "action.cancel": "Cancel",
   "action.ok": "OK",
   "trash.restoreAll": "Restore all data",

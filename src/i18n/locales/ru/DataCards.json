@@ -37,6 +37,7 @@
   "action.hide": "Скрыть",
   "action.addFile": "Добавить файл",
   "action.create": "Создать",
+  "action.add": "Добавить",
   "action.cancel": "Отмена",
   "action.ok": "OK",
   "trash.restoreAll": "Восстановить всё",

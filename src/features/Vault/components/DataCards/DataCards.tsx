@@ -146,6 +146,7 @@ export function DataCards({
     'datacard-create-dialog' | 'datacard-edit-dialog' | null
   >(null);
   const [isCloseCreateConfirmOpen, setIsCloseCreateConfirmOpen] = useState(false);
+  const [isCloseEditConfirmOpen, setIsCloseEditConfirmOpen] = useState(false);
   const genPwdTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const genPwdLastCopiedRef = useRef<string | null>(null);
   const actionMenuRef = useRef<HTMLDivElement | null>(null);
@@ -232,8 +233,9 @@ export function DataCards({
     setCharsetSize(size);
   }, []);
 
-  const handleCloseEditModal = useCallback(() => {
+  const closeEditModalImmediately = useCallback(() => {
     viewModel.closeEditModal();
+    setIsCloseEditConfirmOpen(false);
     setIsEditFieldsMode(false);
     setIsRenameModalOpen(false);
     setRenameTargetRowId(null);
@@ -241,6 +243,15 @@ export function DataCards({
     setRenameName('');
     setRenameError(null);
   }, [viewModel]);
+
+  const handleCloseEditModal = useCallback(() => {
+    if (isEditSubmitting) return;
+    if (viewModel.isEditDirty) {
+      setIsCloseEditConfirmOpen(true);
+      return;
+    }
+    closeEditModalImmediately();
+  }, [closeEditModalImmediately, isEditSubmitting, viewModel.isEditDirty]);
 
   const closeCreateModalImmediately = useCallback(() => {
     viewModel.closeCreateModal();
@@ -374,6 +385,7 @@ export function DataCards({
     setIsSeedPhraseModalOpen(false);
     setSeedPhraseTargetDialogId(null);
     setIsCloseCreateConfirmOpen(false);
+    setIsCloseEditConfirmOpen(false);
   }, [isCreateOpen, isEditOpen]);
 
   useEffect(() => {
@@ -408,6 +420,10 @@ export function DataCards({
           setIsCloseCreateConfirmOpen(false);
           return;
         }
+        if (isCloseEditConfirmOpen) {
+          setIsCloseEditConfirmOpen(false);
+          return;
+        }
         if (isEditOpen) handleCloseEditModal();
         if (isCreateOpen) handleCloseCreateModal();
       }
@@ -423,6 +439,7 @@ export function DataCards({
     isSeedPhraseModalOpen,
     isCreateOpen,
     isCloseCreateConfirmOpen,
+    isCloseEditConfirmOpen,
     isCustomFieldModalOpen,
     isEditOpen,
     isRenameModalOpen,
@@ -459,7 +476,8 @@ export function DataCards({
     isRenameModalOpen ||
     is2faModalOpen ||
     isSeedPhraseModalOpen ||
-    isCloseCreateConfirmOpen;
+    isCloseCreateConfirmOpen ||
+    isCloseEditConfirmOpen;
 
   if (suppressEmptyState && cards.length === 0 && !hasAnyOverlayOpen) {
     return null;
@@ -622,6 +640,17 @@ export function DataCards({
         confirmOnLeft
         onCancel={() => setIsCloseCreateConfirmOpen(false)}
         onConfirm={closeCreateModalImmediately}
+      />
+
+      <ConfirmDialog
+        open={isCloseEditConfirmOpen}
+        title={t('dialog.closeUnsavedCreate.title')}
+        description={t('dialog.closeUnsavedCreate.description')}
+        confirmLabel={t('dialog.closeUnsavedCreate.confirm')}
+        cancelLabel={t('dialog.closeUnsavedCreate.cancel')}
+        confirmOnLeft
+        onCancel={() => setIsCloseEditConfirmOpen(false)}
+        onConfirm={closeEditModalImmediately}
       />
 
       {isCustomFieldModalOpen && (

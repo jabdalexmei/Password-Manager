@@ -85,6 +85,7 @@ export type DataCardsViewModel = {
   isCreateSubmitting: boolean;
   isEditSubmitting: boolean;
   isCreateDirty: boolean;
+  isEditDirty: boolean;
   updateCreateField: (field: keyof DataCardFormState, value: string | boolean | number | null) => void;
   updateEditField: (field: keyof DataCardFormState, value: string | boolean | number | null) => void;
   submitCreate: () => Promise<void>;
@@ -249,6 +250,7 @@ export function useDataCards({
     buildInitialForm(defaultFolderId, findFolderName(defaultFolderId, folders))
   );
   const [editForm, setEditForm] = useState<DataCardFormState | null>(null);
+  const [initialEditForm, setInitialEditForm] = useState<DataCardFormState | null>(null);
   const [editCardId, setEditCardId] = useState<string | null>(null);
   const [isCreateOpen, setCreateOpen] = useState(false);
   const [isEditOpen, setEditOpen] = useState(false);
@@ -269,6 +271,10 @@ export function useDataCards({
   const isCreateDirty = useMemo(
     () => !areFormStatesEqual(createForm, initialCreateForm) || createAttachments.length > 0,
     [createAttachments.length, createForm, initialCreateForm]
+  );
+  const isEditDirty = useMemo(
+    () => Boolean(editForm && initialEditForm && !areFormStatesEqual(editForm, initialEditForm)),
+    [editForm, initialEditForm]
   );
 
   const resetCreateForm = useCallback(() => {
@@ -298,11 +304,7 @@ export function useDataCards({
   }, [createAttachmentPickToken]);
 
   const openEditModal = useCallback((card: DataCard) => {
-    setEditError(null);
-    setEditFolderError(null);
-    setIsEditSubmitting(false);
-    setEditCardId(card.id);
-    setEditForm({
+    const nextEditForm = {
       title: card.title,
       folderId: card.folderId,
       folderName: findFolderName(card.folderId, folders),
@@ -323,7 +325,13 @@ export function useDataCards({
         value: field.value,
         type: field.type,
       })),
-    });
+    };
+    setEditError(null);
+    setEditFolderError(null);
+    setIsEditSubmitting(false);
+    setEditCardId(card.id);
+    setEditForm(nextEditForm);
+    setInitialEditForm(nextEditForm);
     setEditOpen(true);
     setShowPassword(false);
   }, [folders]);
@@ -332,6 +340,7 @@ export function useDataCards({
     setIsEditSubmitting(false);
     setEditOpen(false);
     setEditForm(null);
+    setInitialEditForm(null);
     setEditCardId(null);
   }, []);
 
@@ -675,6 +684,7 @@ export function useDataCards({
     isCreateSubmitting,
     isEditSubmitting,
     isCreateDirty,
+    isEditDirty,
     updateCreateField,
     updateEditField,
     submitCreate,
