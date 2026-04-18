@@ -158,20 +158,20 @@ export function CoreFieldsSection({
               <button
                 className="icon-button"
                 type="button"
-                aria-label={detailActions.showPassword ? t('action.hide') : t('action.reveal')}
-                title={detailActions.showPassword ? tTip('action.hide') : tTip('action.reveal')}
-                onClick={detailActions.togglePasswordVisibility}
-              >
-                {detailActions.showPassword ? <IconPreviewOff /> : <IconPreview />}
-              </button>
-              <button
-                className="icon-button"
-                type="button"
                 aria-label={t('action.copy')}
                 title={tTip('action.copy')}
                 onClick={() => detailActions.copyToClipboard(card.password, { isSecret: true })}
               >
                 <IconCopy />
+              </button>
+              <button
+                className="icon-button"
+                type="button"
+                aria-label={detailActions.showPassword ? t('action.hide') : t('action.reveal')}
+                title={detailActions.showPassword ? tTip('action.hide') : tTip('action.reveal')}
+                onClick={detailActions.togglePasswordVisibility}
+              >
+                {detailActions.showPassword ? <IconPreviewOff /> : <IconPreview />}
               </button>
               <button
                 className="icon-button"
