@@ -9,7 +9,7 @@ use serde::Serialize;
 use crate::app_state::AppState;
 use crate::data::sqlite::repo_impl;
 use crate::error::{ErrorCodeString, Result};
-use crate::services::{datacards_service, security_service};
+use crate::services::security_service;
 use crate::types::{
     CreateDataCardInput, LegacyImportErrorRow, LegacyImportInspectResult, LegacyImportResult,
 };
@@ -332,7 +332,7 @@ pub fn import_csv_file(path: &Path, state: &Arc<AppState>) -> Result<LegacyImpor
             folder_id,
         };
 
-        match datacards_service::create_datacard(input, state) {
+        match repo_impl::create_datacard(state, &profile_id, &input) {
             Ok(_) => imported_count += 1,
             Err(err) => errors.push(make_error(
                 row,
@@ -340,6 +340,10 @@ pub fn import_csv_file(path: &Path, state: &Arc<AppState>) -> Result<LegacyImpor
                 "Failed to create data card from CSV row.",
             )),
         }
+    }
+
+    if imported_count > 0 {
+        security_service::request_persist_active_vault(state.clone());
     }
 
     let mut result = LegacyImportResult {
@@ -354,7 +358,13 @@ pub fn import_csv_file(path: &Path, state: &Arc<AppState>) -> Result<LegacyImpor
 
 #[cfg(test)]
 mod tests {
-    use super::{fallback_title, parse_csv_rows, split_tags, LegacyCsvRow};
+    use std::fs;
+
+    use tempfile::tempdir;
+
+    use super::{fallback_title, import_csv_file, parse_csv_rows, split_tags, LegacyCsvRow};
+    use crate::data::sqlite::repo_impl;
+    use crate::services::test_support::ServiceTestHarness;
 
     #[test]
     fn parse_csv_rows_handles_quotes_and_headers() {
@@ -397,5 +407,28 @@ mod tests {
     #[test]
     fn split_tags_trims_and_deduplicates() {
         assert_eq!(split_tags(" work, personal, work ,, "), vec!["work", "personal"]);
+    }
+
+    #[test]
+    fn import_csv_file_supports_more_than_99_rows() {
+        let harness = ServiceTestHarness::new();
+        let temp = tempdir().unwrap();
+        let csv_path = temp.path().join("legacy-import.csv");
+
+        let mut csv = String::from("Title,Password\n");
+        for idx in 1..=120 {
+            csv.push_str(&format!("Entry {idx},password-{idx}\n"));
+        }
+        fs::write(&csv_path, csv).unwrap();
+
+        let result = import_csv_file(&csv_path, &harness.state).unwrap();
+
+        assert_eq!(result.imported_count, 120);
+        assert_eq!(result.error_count, 0);
+
+        let rows =
+            repo_impl::list_datacards_summary(&harness.state, &harness.profile_id, "updated_at", "DESC")
+                .unwrap();
+        assert_eq!(rows.len(), 120);
     }
 }
