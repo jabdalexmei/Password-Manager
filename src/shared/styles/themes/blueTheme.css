@@ -62,7 +62,7 @@
   --fd-scrollbar-size: 10px;
   --fd-scrollbar-track: #0f172a;
   --fd-scrollbar-thumb: rgba(255, 255, 255, 0.08);
-  --fd-scrollbar-thumb-hover: rgba(255, 255, 255, 0.16);
+  --fd-scrollbar-thumb-hover: rgba(255, 255, 255, 0.03);
 
   --fd-vault-columns-bg: #0f172a;
   --fd-vault-detail-value-box-bg: #0c1324da;
