@@ -16,8 +16,7 @@
   flex-direction: column;
   gap: 12px;
   min-width: 0;
-  isolation: isolate;
-  contain: paint;
+  position: relative;
 }
 
 @supports not (scrollbar-gutter: stable) {

@@ -82,6 +82,8 @@ export function useDetails({
   const [previewPayload, setPreviewPayload] = useState<AttachmentPreviewState>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const previewUrlRef = useRef<string | null>(null);
+  const attachmentsRequestIdRef = useRef(0);
+  const previewRequestIdRef = useRef(0);
 
   const clearPendingTimeout = useCallback(() => {
     if (timeoutRef.current) {
@@ -134,23 +136,30 @@ export function useDetails({
       setAttachments([]);
       return;
     }
+    const currentCardId = card.id;
+    const requestId = ++attachmentsRequestIdRef.current;
     try {
-      const items = await listAttachments(card.id);
+      const items = await listAttachments(currentCardId);
+      if (requestId !== attachmentsRequestIdRef.current) return;
       const mapped = items.map(mapAttachmentFromBackend);
       setAttachments(mapped);
-      onAttachmentPresenceChange?.(card.id, mapped.length > 0);
+      onAttachmentPresenceChange?.(currentCardId, mapped.length > 0);
     } catch (err) {
+      if (requestId !== attachmentsRequestIdRef.current) return;
       console.error(err);
       setAttachments([]);
-      onAttachmentPresenceChange?.(card.id, false);
+      onAttachmentPresenceChange?.(currentCardId, false);
       showToast(t('toast.attachmentLoadError'), 'error');
     }
   }, [card?.id, onAttachmentPresenceChange, showToast, t]);
 
   useLayoutEffect(() => {
+    attachmentsRequestIdRef.current += 1;
+    previewRequestIdRef.current += 1;
     setShowPassword(false);
     clearPendingTimeout();
     setAttachments([]);
+    setIsPreviewLoading(false);
     setPreviewOpen(false);
     setPreviewPayload(null);
     revokePreviewUrl();
@@ -269,12 +278,14 @@ export function useDetails({
   const onPreviewAttachment = useCallback(
     async (attachmentId: string) => {
       if (!card) return;
+      const requestId = ++previewRequestIdRef.current;
       setIsPreviewLoading(true);
       setPreviewOpen(true);
       setPreviewPayload(null);
       revokePreviewUrl();
       try {
         const payload = await getAttachmentBytesBase64(attachmentId);
+        if (requestId !== previewRequestIdRef.current) return;
         const bytes = base64ToBytes(payload.bytesBase64);
         const mimeType = payload.mimeType || 'application/octet-stream';
         const objectUrl = URL.createObjectURL(new Blob([bytes], { type: mimeType }));
@@ -286,6 +297,7 @@ export function useDetails({
           objectUrl,
         });
       } catch (err: any) {
+        if (requestId !== previewRequestIdRef.current) return;
         console.error(err);
         const errorMessage = err?.code === 'ATTACHMENT_TOO_LARGE_FOR_PREVIEW'
           ? t('attachments.previewTooLarge')
@@ -293,7 +305,9 @@ export function useDetails({
         showToast(errorMessage, 'error');
         setPreviewOpen(false);
       } finally {
-        setIsPreviewLoading(false);
+        if (requestId === previewRequestIdRef.current) {
+          setIsPreviewLoading(false);
+        }
       }
     },
     [base64ToBytes, card, revokePreviewUrl, showToast, t]
@@ -336,6 +350,8 @@ export function useDetails({
   );
 
   const closePreview = useCallback(() => {
+    previewRequestIdRef.current += 1;
+    setIsPreviewLoading(false);
     setPreviewOpen(false);
     setPreviewPayload(null);
     revokePreviewUrl();
