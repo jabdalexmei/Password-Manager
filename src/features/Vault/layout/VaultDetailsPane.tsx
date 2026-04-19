@@ -33,6 +33,7 @@ export function VaultDetailsPane({
   if (activeDetailsKind === 'bank') {
     return (
       <BankCardDetails
+        key={bankCards.selectedCard?.id ?? 'bank-empty'}
         card={bankCards.selectedCard}
         dateTimeFormat={bankCards.settings?.date_time_format ?? 'auto'}
         onEdit={(card) => bankCardsViewModel.openEditModal(card)}
@@ -51,6 +52,7 @@ export function VaultDetailsPane({
     return (
       <Suspense fallback={<p aria-busy="true">{tCommon('label.loading')}</p>}>
         <LazyDetails
+          key={vault.selectedCard.id}
           card={vault.selectedCard}
           folders={foldersForCards}
           activeFolderId={vault.selectedFolderId}

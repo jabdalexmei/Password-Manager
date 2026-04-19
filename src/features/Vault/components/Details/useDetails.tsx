@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Attachment, DataCard } from '../../types/ui';
 import { useTranslation } from '../../../../shared/lib/i18n';
 import { useToaster } from '../../../../shared/components/Toaster';
@@ -147,14 +147,18 @@ export function useDetails({
     }
   }, [card?.id, onAttachmentPresenceChange, showToast, t]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     setShowPassword(false);
     clearPendingTimeout();
-    refreshAttachments();
+    setAttachments([]);
     setPreviewOpen(false);
     setPreviewPayload(null);
     revokePreviewUrl();
-  }, [card?.id, clearPendingTimeout, refreshAttachments, revokePreviewUrl]);
+  }, [card?.id, clearPendingTimeout, revokePreviewUrl]);
+
+  useEffect(() => {
+    void refreshAttachments();
+  }, [refreshAttachments]);
 
   useEffect(() => revokePreviewUrl, [revokePreviewUrl]);
 
