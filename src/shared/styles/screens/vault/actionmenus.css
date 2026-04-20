@@ -108,6 +108,7 @@
   border-radius: var(--sem-radius-sm);
   cursor: pointer;
   font-size: 13px;
+  font-weight: 400;
   transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
 }
 
