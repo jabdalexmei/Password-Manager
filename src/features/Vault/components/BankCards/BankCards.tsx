@@ -322,7 +322,7 @@ export function BankCards({
               </label>
               <input
                 id={`${dialogId}-tags-input`}
-                className="input"
+                className="input form-placeholder-visible"
                 autoComplete="off"
                 value={form.tagsText}
                 onChange={(e) => onFieldChange('tagsText', e.target.value)}

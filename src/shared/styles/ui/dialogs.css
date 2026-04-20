@@ -33,6 +33,8 @@
   --form-input-color: #fff;
   --form-input-font-size: 14px;
   --form-input-line-height: 20px;
+  --form-placeholder-color: transparent;
+  --form-placeholder-opacity: 0;
   border-radius: var(--sem-radius-lg);
   background: var(--cmp-dialog-panel-bg);
   border: 1px solid var(--sem-border-default);

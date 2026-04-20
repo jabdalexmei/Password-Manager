@@ -132,7 +132,13 @@
 .form-field input::placeholder,
 .form-field textarea::placeholder,
 .form-textarea::placeholder {
-  color: var(--cmp-input-placeholder);
+  color: var(--form-placeholder-color, var(--cmp-input-placeholder));
+  opacity: var(--form-placeholder-opacity, 1);
+}
+
+.form-placeholder-visible {
+  --form-placeholder-color: var(--cmp-input-placeholder);
+  --form-placeholder-opacity: 1;
 }
 
 .input:hover,

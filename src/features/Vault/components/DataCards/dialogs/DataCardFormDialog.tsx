@@ -464,7 +464,7 @@ export function DataCardFormDialog({
             </label>
             <input
               id={`${dialogId}-tags`}
-              className="input"
+              className="input form-placeholder-visible"
               autoComplete="off"
               value={form.tagsText}
               placeholder={t('label.tagsPlaceholder')}
