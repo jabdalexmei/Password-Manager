@@ -224,8 +224,11 @@ export function DataCardFormDialog({
             <input
               id={`${dialogId}-email`}
               className="input"
-              type="email"
+              type="text"
+              inputMode="email"
               autoComplete="off"
+              autoCapitalize="none"
+              spellCheck={false}
               value={form.email}
               onChange={(event) => onFieldChange('email', event.target.value)}
             />
@@ -238,8 +241,11 @@ export function DataCardFormDialog({
             <input
               id={`${dialogId}-recovery-email`}
               className="input"
-              type="email"
+              type="text"
+              inputMode="email"
               autoComplete="off"
+              autoCapitalize="none"
+              spellCheck={false}
               value={form.recoveryEmail}
               onChange={(event) => onFieldChange('recoveryEmail', event.target.value)}
             />
