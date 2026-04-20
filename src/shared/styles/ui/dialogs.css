@@ -27,6 +27,12 @@
   --dialog-header-padding-y: 18px;
   --dialog-body-padding-y: 18px;
   --dialog-footer-padding-y: 20px;
+  --form-label-color: var(--sem-text-primary);
+  --form-label-font-size: 12px;
+  --form-label-line-height: 16px;
+  --form-input-color: #fff;
+  --form-input-font-size: 14px;
+  --form-input-line-height: 20px;
   border-radius: var(--sem-radius-lg);
   background: var(--cmp-dialog-panel-bg);
   border: 1px solid var(--sem-border-default);
@@ -281,12 +287,12 @@
   justify-content: space-between;
   min-height: 42px;
   padding: 10px 12px;
-  line-height: 20px;
   border-radius: var(--sem-radius-sm);
   border: 1px solid var(--cmp-input-border);
   background: var(--cmp-input-bg);
-  color: var(--cmp-input-text);
-  font-size: 14px;
+  color: var(--form-input-color, var(--cmp-input-text));
+  font-size: var(--form-input-font-size, 14px);
+  line-height: var(--form-input-line-height, 20px);
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
@@ -347,7 +353,9 @@
   border-radius: var(--sem-radius-sm);
   background: transparent;
   border: none;
-  color: var(--sem-text-primary);
+  color: var(--form-input-color, var(--sem-text-primary));
+  font-size: var(--form-input-font-size, 14px);
+  line-height: var(--form-input-line-height, 20px);
   cursor: pointer;
   box-shadow: inset 0 0 0 1px transparent;
 }

@@ -94,9 +94,9 @@
 }
 
 .form-label {
-  font-size: 12px;
-  line-height: 16px;
-  color: var(--sem-text-muted);
+  font-size: var(--form-label-font-size, 12px);
+  line-height: var(--form-label-line-height, 16px);
+  color: var(--form-label-color, var(--sem-text-muted));
 }
 
 /* Settings modal: make selected "toggle titles" look like headers (white, not muted) */
@@ -120,9 +120,10 @@
   border-radius: var(--sem-radius-sm);
   border: 1px solid var(--cmp-input-border);
   background: var(--cmp-input-bg);
-  color: var(--cmp-input-text);
+  color: var(--form-input-color, var(--cmp-input-text));
+  font-size: var(--form-input-font-size, inherit);
   padding: 10px 12px;
-  line-height: 20px;
+  line-height: var(--form-input-line-height, 20px);
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
