@@ -119,8 +119,12 @@ export function DataCardFormDialog({
     placement: null,
   });
   const dragSourceRowIdRef = React.useRef<string | null>(null);
+  const dragPointerOffsetXRef = React.useRef(0);
   const dragPointerOffsetYRef = React.useRef(0);
+  const dragCurrentPointerXRef = React.useRef(0);
   const dragCurrentPointerYRef = React.useRef(0);
+  const dragTranslateXRef = React.useRef(0);
+  const dragTranslateYRef = React.useRef(0);
 
   const updateCustomFieldDragState = React.useCallback(
     (nextState: CustomFieldDragState | ((prev: CustomFieldDragState) => CustomFieldDragState)) => {
@@ -152,8 +156,12 @@ export function DataCardFormDialog({
       activeRowElement.addEventListener('transitionend', cleanup, { once: true });
     }
     dragSourceRowIdRef.current = null;
+    dragPointerOffsetXRef.current = 0;
     dragPointerOffsetYRef.current = 0;
+    dragCurrentPointerXRef.current = 0;
     dragCurrentPointerYRef.current = 0;
+    dragTranslateXRef.current = 0;
+    dragTranslateYRef.current = 0;
     updateCustomFieldDragState({
       activeRowId: null,
       overRowId: null,
@@ -193,12 +201,17 @@ export function DataCardFormDialog({
     const activeRowElement = rowElementsRef.current.get(activeRowId);
     if (!activeRowElement) return;
 
-    const offsetParent = (activeRowElement.offsetParent as HTMLElement | null) ?? activeRowElement.parentElement;
-    const offsetParentTop = offsetParent?.getBoundingClientRect().top ?? 0;
-    const baseTop = offsetParentTop + activeRowElement.offsetTop;
-    const translateY = dragCurrentPointerYRef.current - dragPointerOffsetYRef.current - baseTop;
+    const rect = activeRowElement.getBoundingClientRect();
+    const layoutLeft = rect.left - dragTranslateXRef.current;
+    const layoutTop = rect.top - dragTranslateYRef.current;
+    const targetLeft = dragCurrentPointerXRef.current - dragPointerOffsetXRef.current;
+    const targetTop = dragCurrentPointerYRef.current - dragPointerOffsetYRef.current;
+    const translateX = targetLeft - layoutLeft;
+    const translateY = targetTop - layoutTop;
 
-    activeRowElement.style.transform = `translate3d(0, ${translateY}px, 0)`;
+    activeRowElement.style.transform = `translate3d(${translateX}px, ${translateY}px, 0)`;
+    dragTranslateXRef.current = translateX;
+    dragTranslateYRef.current = translateY;
   }, []);
 
   const updateCustomFieldDragHover = React.useCallback(
@@ -266,10 +279,8 @@ export function DataCardFormDialog({
       const element = rowElementsRef.current.get(row.id);
       if (!element) return;
 
-      const offsetParent = (element.offsetParent as HTMLElement | null) ?? element.parentElement;
-      const offsetParentTop = offsetParent?.getBoundingClientRect().top ?? 0;
-      const nextTop =
-        row.id === activeRowId ? offsetParentTop + element.offsetTop : element.getBoundingClientRect().top;
+      const rect = element.getBoundingClientRect();
+      const nextTop = row.id === activeRowId ? rect.top - dragTranslateYRef.current : rect.top;
       nextTopMap.set(row.id, nextTop);
 
       if (row.id === activeRowId) return;
@@ -313,6 +324,7 @@ export function DataCardFormDialog({
     applyDraggedRowTransform();
 
     const handlePointerMove = (event: PointerEvent) => {
+      dragCurrentPointerXRef.current = event.clientX;
       dragCurrentPointerYRef.current = event.clientY;
       applyDraggedRowTransform();
       updateCustomFieldDragHover(event.clientX, event.clientY);
@@ -665,7 +677,9 @@ export function DataCardFormDialog({
                         const rowElement = rowElementsRef.current.get(row.id);
                         if (!rowElement) return;
                         dragSourceRowIdRef.current = row.id;
+                        dragCurrentPointerXRef.current = event.clientX;
                         dragCurrentPointerYRef.current = event.clientY;
+                        dragPointerOffsetXRef.current = event.clientX - rowElement.getBoundingClientRect().left;
                         dragPointerOffsetYRef.current = event.clientY - rowElement.getBoundingClientRect().top;
                         updateCustomFieldDragState({
                           activeRowId: row.id,
