@@ -151,6 +151,7 @@ pub struct DataCard {
     pub seed_phrase: Option<String>,
     pub seed_phrase_word_count: Option<i32>,
     pub custom_fields: Vec<CustomField>,
+    pub attachments: Vec<AttachmentMeta>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

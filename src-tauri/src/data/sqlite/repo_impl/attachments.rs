@@ -57,19 +57,7 @@ pub fn list_attachments_by_datacard(
     datacard_id: &str,
 ) -> Result<Vec<AttachmentMeta>> {
     with_connection_in_active_vault(state, profile_id, |conn, active_vault_id| {
-        let mut stmt = conn
-            .prepare(
-                "SELECT a.* FROM attachments a INNER JOIN datacards d ON d.id = a.datacard_id WHERE a.datacard_id = ?1 AND d.vault_id = ?2 AND a.deleted_at IS NULL ORDER BY a.created_at DESC",
-            )
-            .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
-
-        let rows = stmt
-            .query_map(params![datacard_id, active_vault_id], map_attachment)
-            .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?
-            .collect::<rusqlite::Result<Vec<_>>>()
-            .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
-
-        Ok(rows)
+        list_active_attachments_by_datacard_conn(conn, datacard_id, active_vault_id)
     })
 }
 

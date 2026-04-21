@@ -48,6 +48,7 @@ export type DataCard = {
   seedPhraseWordCount: number | null;
   customFields: CustomField[];
   previewFields: string[];
+  attachments: Attachment[];
 };
 
 export type PasswordHistoryEntry = {

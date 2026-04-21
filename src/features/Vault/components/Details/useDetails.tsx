@@ -25,6 +25,7 @@ type UseDetailsParams = {
   onRestore: (id: string) => void;
   onPurge: (id: string) => void;
   onAttachmentPresenceChange?: (cardId: string, hasAttachments: boolean) => void;
+  onAttachmentsChange?: (cardId: string, attachments: Attachment[]) => void;
   isTrashMode: boolean;
   clipboardAutoClearEnabled?: boolean;
   clipboardClearTimeoutSeconds?: number;
@@ -67,6 +68,7 @@ export function useDetails({
   onRestore,
   onPurge,
   onAttachmentPresenceChange,
+  onAttachmentsChange,
   isTrashMode,
   clipboardAutoClearEnabled,
   clipboardClearTimeoutSeconds,
@@ -143,22 +145,24 @@ export function useDetails({
       if (requestId !== attachmentsRequestIdRef.current) return;
       const mapped = items.map(mapAttachmentFromBackend);
       setAttachments(mapped);
+      onAttachmentsChange?.(currentCardId, mapped);
       onAttachmentPresenceChange?.(currentCardId, mapped.length > 0);
     } catch (err) {
       if (requestId !== attachmentsRequestIdRef.current) return;
       console.error(err);
       setAttachments([]);
+      onAttachmentsChange?.(currentCardId, []);
       onAttachmentPresenceChange?.(currentCardId, false);
       showToast(t('toast.attachmentLoadError'), 'error');
     }
-  }, [card?.id, onAttachmentPresenceChange, showToast, t]);
+  }, [card?.id, onAttachmentPresenceChange, onAttachmentsChange, showToast, t]);
 
   useLayoutEffect(() => {
     attachmentsRequestIdRef.current += 1;
     previewRequestIdRef.current += 1;
     setShowPassword(false);
     clearPendingTimeout();
-    setAttachments([]);
+    setAttachments(card?.attachments ?? []);
     setIsPreviewLoading(false);
     setPreviewOpen(false);
     setPreviewPayload(null);
@@ -166,8 +170,8 @@ export function useDetails({
   }, [card?.id, clearPendingTimeout, revokePreviewUrl]);
 
   useEffect(() => {
-    void refreshAttachments();
-  }, [refreshAttachments]);
+    setAttachments(card?.attachments ?? []);
+  }, [card?.attachments, card?.id]);
 
   useEffect(() => revokePreviewUrl, [revokePreviewUrl]);
 

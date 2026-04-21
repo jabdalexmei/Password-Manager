@@ -16,7 +16,7 @@ import {
 } from '../../api/vaultApi';
 import { mapCardFromBackend, mapCardToSummary, mapCreateCardToBackend, mapUpdateCardToBackend } from '../../types/mappers';
 import type { BackendUserSettings } from '../../types/backend';
-import type { CreateDataCardInput, DataCard, DataCardSummary, UpdateDataCardInput } from '../../types/ui';
+import type { Attachment, CreateDataCardInput, DataCard, DataCardSummary, UpdateDataCardInput } from '../../types/ui';
 import type { SelectedNav } from './types';
 
 type UseVaultCardsParams = {
@@ -67,29 +67,14 @@ export function useVaultCards({
 
         if (mapped.deletedAt) {
           setDeletedCards((prev) => {
-            const existing = prev.find((item) => item.id === id) ?? cards.find((item) => item.id === id);
-            const merged = {
-              ...summary,
-              hasAttachments: existing?.hasAttachments ?? summary.hasAttachments,
-              hasTotp: summary.hasTotp || (existing?.hasTotp ?? false),
-              hasSeedPhrase: summary.hasSeedPhrase || (existing?.hasSeedPhrase ?? false),
-              deletedAt: mapped.deletedAt,
-            };
             const filtered = prev.filter((item) => item.id !== id);
-            return sortCardsWithSettings([...filtered, merged]);
+            return sortCardsWithSettings([...filtered, summary]);
           });
           setCards((prev) => prev.filter((item) => item.id !== id));
         } else {
           setCards((prev) => {
-            const existing = prev.find((item) => item.id === id) ?? deletedCards.find((item) => item.id === id);
-            const merged = {
-              ...summary,
-              hasAttachments: existing?.hasAttachments ?? summary.hasAttachments,
-              hasTotp: summary.hasTotp || (existing?.hasTotp ?? false),
-              hasSeedPhrase: summary.hasSeedPhrase || (existing?.hasSeedPhrase ?? false),
-            };
             const filtered = prev.filter((item) => item.id !== id);
-            return sortCardsWithSettings([...filtered, merged]);
+            return sortCardsWithSettings([...filtered, summary]);
           });
           setDeletedCards((prev) => prev.filter((item) => item.id !== id));
         }
@@ -145,6 +130,26 @@ export function useVaultCards({
     [setCards, setDeletedCards]
   );
 
+  const setCardAttachments = useCallback(
+    (cardId: string, attachments: Attachment[]) => {
+      const hasAttachments = attachments.length > 0;
+      setCardDetailsById((prev) =>
+        prev[cardId]
+          ? {
+              ...prev,
+              [cardId]: {
+                ...prev[cardId],
+                attachments,
+              },
+            }
+          : prev
+      );
+      setCards((prev) => prev.map((card) => (card.id === cardId ? { ...card, hasAttachments } : card)));
+      setDeletedCards((prev) => prev.map((card) => (card.id === cardId ? { ...card, hasAttachments } : card)));
+    },
+    [setCardDetailsById, setCards, setDeletedCards]
+  );
+
   const updateCardAction = useCallback(
     async (input: UpdateDataCardInput) => {
       try {
@@ -176,7 +181,7 @@ export function useVaultCards({
         const cachedSummary = existingSummary
           ? existingSummary
           : cardDetailsById[id]
-            ? { ...mapCardToSummary(cardDetailsById[id], dtf), hasAttachments: false }
+            ? mapCardToSummary(cardDetailsById[id], dtf)
             : null;
 
         setCards((prev) => prev.filter((card) => card.id !== id));
@@ -355,6 +360,7 @@ export function useVaultCards({
     createCardAction,
     uploadAttachments,
     setCardHasAttachments,
+    setCardAttachments,
     updateCardAction,
     deleteCardAction,
     restoreCardAction,

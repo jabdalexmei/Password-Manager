@@ -1,6 +1,7 @@
 ﻿use chrono::Utc;
 use rusqlite::params;
-use rusqlite::types::Type;
+use rusqlite::params_from_iter;
+use rusqlite::types::{Type, Value};
 use rusqlite::Connection;
 use rusqlite::OptionalExtension;
 use uuid::Uuid;
@@ -15,6 +16,7 @@ use crate::types::{
     UpdateBankCardInput, UpdateDataCardInput, Vault,
 };
 
+use std::collections::HashMap;
 use std::sync::Arc;
 
 mod connection;
@@ -240,6 +242,7 @@ fn map_datacard(row: &rusqlite::Row) -> rusqlite::Result<DataCard> {
         seed_phrase: row.get("seed_phrase_value")?,
         seed_phrase_word_count: row.get("seed_phrase_word_count")?,
         custom_fields: deserialize_json(row.get::<_, String>("custom_fields_json")?)?,
+        attachments: Vec::new(),
     })
 }
 
@@ -350,6 +353,81 @@ fn map_attachment(row: &rusqlite::Row) -> rusqlite::Result<AttachmentMeta> {
     })
 }
 
+fn list_active_attachments_for_datacards_conn(
+    conn: &Connection,
+    active_vault_id: &str,
+    datacard_ids: &[String],
+) -> Result<Vec<AttachmentMeta>> {
+    if datacard_ids.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let placeholders = (0..datacard_ids.len())
+        .map(|idx| format!("?{}", idx + 2))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let query = format!(
+        "SELECT a.* FROM attachments a INNER JOIN datacards d ON d.id = a.datacard_id WHERE d.vault_id = ?1 AND a.deleted_at IS NULL AND a.datacard_id IN ({placeholders}) ORDER BY a.created_at DESC"
+    );
+    let mut stmt = conn
+        .prepare(&query)
+        .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
+
+    let mut sql_params: Vec<Value> = Vec::with_capacity(datacard_ids.len() + 1);
+    sql_params.push(Value::from(active_vault_id.to_string()));
+    for datacard_id in datacard_ids {
+        sql_params.push(Value::from(datacard_id.clone()));
+    }
+
+    let attachments = stmt
+        .query_map(params_from_iter(sql_params.iter()), map_attachment)
+        .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?
+        .collect::<rusqlite::Result<Vec<_>>>()
+        .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
+
+    Ok(attachments)
+}
+
+fn list_active_attachments_by_datacard_conn(
+    conn: &Connection,
+    datacard_id: &str,
+    active_vault_id: &str,
+) -> Result<Vec<AttachmentMeta>> {
+    list_active_attachments_for_datacards_conn(conn, active_vault_id, &[datacard_id.to_string()])
+}
+
+fn hydrate_datacards_attachments_conn(
+    conn: &Connection,
+    cards: &mut [DataCard],
+    active_vault_id: &str,
+) -> Result<()> {
+    let datacard_ids = cards.iter().map(|card| card.id.clone()).collect::<Vec<_>>();
+    let attachments = list_active_attachments_for_datacards_conn(conn, active_vault_id, &datacard_ids)?;
+    let mut attachments_by_datacard: HashMap<String, Vec<AttachmentMeta>> = HashMap::new();
+
+    for attachment in attachments {
+        attachments_by_datacard
+            .entry(attachment.datacard_id.clone())
+            .or_default()
+            .push(attachment);
+    }
+
+    for card in cards.iter_mut() {
+        card.attachments = attachments_by_datacard.remove(&card.id).unwrap_or_default();
+    }
+
+    Ok(())
+}
+
+fn hydrate_datacard_attachments_conn(
+    conn: &Connection,
+    card: &mut DataCard,
+    active_vault_id: &str,
+) -> Result<()> {
+    card.attachments = list_active_attachments_by_datacard_conn(conn, &card.id, active_vault_id)?;
+    Ok(())
+}
+
 fn map_password_history_row(row: &rusqlite::Row) -> rusqlite::Result<PasswordHistoryRow> {
     Ok(PasswordHistoryRow {
         id: row.get("id")?,
@@ -415,8 +493,11 @@ fn get_datacard_by_id_conn(conn: &Connection, id: &str, vault_id: &str) -> Resul
         .prepare("SELECT * FROM datacards WHERE id = ?1 AND vault_id = ?2")
         .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
 
-    stmt.query_row(params![id, vault_id], map_datacard)
-        .map_err(|_| ErrorCodeString::new("DATACARD_NOT_FOUND"))
+    let mut card = stmt
+        .query_row(params![id, vault_id], map_datacard)
+        .map_err(|_| ErrorCodeString::new("DATACARD_NOT_FOUND"))?;
+    hydrate_datacard_attachments_conn(conn, &mut card, vault_id)?;
+    Ok(card)
 }
 
 fn get_bank_card_by_id_conn(conn: &Connection, id: &str, vault_id: &str) -> Result<BankCardItem> {

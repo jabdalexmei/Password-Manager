@@ -1,14 +1,12 @@
 import { useCallback } from 'react';
 import type React from 'react';
 import {
-  listDataCardSummaries,
   listDataCards,
-  listDeletedDataCardSummaries,
   listDeletedDataCards,
   listFolders,
   listVaults,
 } from '../../api/vaultApi';
-import { mapCardFromBackend, mapCardSummaryFromBackend, mapFolderFromBackend, mapVaultFromBackend } from '../../types/mappers';
+import { mapCardFromBackend, mapCardToSummary, mapFolderFromBackend, mapVaultFromBackend } from '../../types/mappers';
 import { sortFolders } from '../../types/sort';
 import type { DataCard, DataCardSummary, Folder, VaultItem } from '../../types/ui';
 import { sortVaultItems } from './lib/sortVaultItems';
@@ -44,14 +42,10 @@ export function useVaultRefresh({
     setLoading(true);
     setError(null);
     try {
-      const [fetchedFolders, fetchedCardSummaries, fetchedCards] = await Promise.all([
-        listFolders(),
-        listDataCardSummaries(),
-        listDataCards(),
-      ]);
+      const [fetchedFolders, fetchedCards] = await Promise.all([listFolders(), listDataCards()]);
       const mappedCards = fetchedCards.map(mapCardFromBackend);
       setFolders(fetchedFolders.map(mapFolderFromBackend).sort(sortFolders));
-      setCards(sortCardsWithSettings(fetchedCardSummaries.map((card) => mapCardSummaryFromBackend(card, dtf))));
+      setCards(sortCardsWithSettings(mappedCards.map((card) => mapCardToSummary(card, dtf))));
       setCardDetailsById((prev) => {
         const next = { ...prev };
         for (const card of mappedCards) {
@@ -68,9 +62,9 @@ export function useVaultRefresh({
 
   const refreshTrash = useCallback(async () => {
     try {
-      const [trashCardSummaries, trashCards] = await Promise.all([listDeletedDataCardSummaries(), listDeletedDataCards()]);
+      const trashCards = await listDeletedDataCards();
       const mappedCards = trashCards.map(mapCardFromBackend);
-      setDeletedCards(sortCardsWithSettings(trashCardSummaries.map((card) => mapCardSummaryFromBackend(card, dtf))));
+      setDeletedCards(sortCardsWithSettings(mappedCards.map((card) => mapCardToSummary(card, dtf))));
       setCardDetailsById((prev) => {
         const next = { ...prev };
         for (const card of mappedCards) {

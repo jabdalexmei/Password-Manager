@@ -1,5 +1,5 @@
 ﻿import React, { Suspense, useEffect, useMemo, useState } from 'react';
-import { DataCard, Folder } from '../../types/ui';
+import { Attachment, DataCard, Folder } from '../../types/ui';
 import { useI18n, useTranslation } from '../../../../shared/lib/i18n';
 import { useDetails } from './useDetails';
 import { wasActuallyUpdated } from '../../utils/updatedAt';
@@ -40,6 +40,7 @@ export type DetailsProps = {
   onPurge: (id: string) => void;
   onToggleFavorite: (id: string) => void;
   onAttachmentPresenceChange?: (cardId: string, hasAttachments: boolean) => void;
+  onAttachmentsChange?: (cardId: string, attachments: Attachment[]) => void;
   onReloadCard?: (id: string) => void;
   isTrashMode: boolean;
   clipboardAutoClearEnabled?: boolean;
@@ -57,6 +58,7 @@ export function Details({
   onPurge,
   onToggleFavorite,
   onAttachmentPresenceChange,
+  onAttachmentsChange,
   onReloadCard,
   isTrashMode,
   clipboardAutoClearEnabled,
@@ -76,6 +78,7 @@ export function Details({
     onPurge,
     onToggleFavorite,
     onAttachmentPresenceChange,
+    onAttachmentsChange,
     isTrashMode,
     clipboardAutoClearEnabled,
     clipboardClearTimeoutSeconds,

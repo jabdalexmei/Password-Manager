@@ -53,6 +53,7 @@ export type BackendDataCard = {
   seed_phrase_word_count: number | null;
   custom_fields: BackendCustomField[];
   preview_fields: string[];
+  attachments: BackendAttachmentMeta[];
 };
 
 export type BackendDataCardSummary = {

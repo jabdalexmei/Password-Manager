@@ -5,10 +5,8 @@ import {
   getBankCard,
   getSettings,
   listBankCards,
-  updateSettings,
   listDeletedBankCards,
-  listBankCardSummaries,
-  listDeletedBankCardSummaries,
+  updateSettings,
   purgeBankCard,
   purgeAllDeletedBankCards,
   restoreBankCard,
@@ -23,7 +21,6 @@ import { useI18n, useTranslation } from '../../../shared/lib/i18n';
 import { useToaster } from '../../../shared/components/Toaster';
 import {
   mapBankCardFromBackend,
-  mapBankCardSummaryFromBackend,
   mapBankCardToSummary,
   mapCreateBankCardToBackend,
   mapUpdateBankCardToBackend,
@@ -195,9 +192,9 @@ export function useBankCards(
     setLoading(true);
     setError(null);
     try {
-      const [fetchedCardSummaries, fetchedCards] = await Promise.all([listBankCardSummaries(), listBankCards()]);
+      const fetchedCards = await listBankCards();
       const mappedCards = fetchedCards.map(mapBankCardFromBackend);
-      setCards(sortCardsWithSettings(fetchedCardSummaries.map((card) => mapBankCardSummaryFromBackend(card, dtf))));
+      setCards(sortCardsWithSettings(mappedCards.map((card) => mapBankCardToSummary(card, dtf))));
       setCardDetailsById((prev) => {
         const next = { ...prev };
         for (const card of mappedCards) {
@@ -214,9 +211,9 @@ export function useBankCards(
 
   const refreshTrash = useCallback(async () => {
     try {
-      const [trashCardSummaries, trashCards] = await Promise.all([listDeletedBankCardSummaries(), listDeletedBankCards()]);
+      const trashCards = await listDeletedBankCards();
       const mappedCards = trashCards.map(mapBankCardFromBackend);
-      setDeletedCards(sortCardsWithSettings(trashCardSummaries.map((card) => mapBankCardSummaryFromBackend(card, dtf))));
+      setDeletedCards(sortCardsWithSettings(mappedCards.map((card) => mapBankCardToSummary(card, dtf))));
       setCardDetailsById((prev) => {
         const next = { ...prev };
         for (const card of mappedCards) {
@@ -306,11 +303,8 @@ export function useBankCards(
   const selectCard = useCallback(
     (id: string | null) => {
       setSelectedCardId(id);
-      if (id && !cardDetailsById[id]) {
-        loadCard(id);
-      }
     },
-    [cardDetailsById, loadCard]
+    [setSelectedCardId]
   );
 
   const createCardAction = useCallback(
@@ -490,12 +484,9 @@ export function useBankCards(
   }, [cards, debouncedSearchQuery, deletedCards, searchMatchIds, selectedNav]);
 
   const selectedCard = useMemo(() => {
-    if (selectedCardId && cardDetailsById[selectedCardId]) {
-      return cardDetailsById[selectedCardId];
-    }
-    const pool = isTrashMode ? deletedCards : cards;
-    return pool.find((card) => card.id === selectedCardId) ?? null;
-  }, [cardDetailsById, cards, deletedCards, isTrashMode, selectedCardId]);
+    if (!selectedCardId) return null;
+    return cardDetailsById[selectedCardId] ?? null;
+  }, [cardDetailsById, selectedCardId]);
 
   const currentSectionTitle = useMemo(() => {
     if (selectedFolderId) {

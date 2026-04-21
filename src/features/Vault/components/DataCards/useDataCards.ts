@@ -2,7 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from '../../../../shared/lib/i18n';
 import { useToaster } from '../../../../shared/components/Toaster';
 import { addAttachmentsFromPick, attachmentsDiscardPick, attachmentsPickFiles, listAttachments } from '../../api/vaultApi';
+import { mapAttachmentFromBackend } from '../../types/mappers';
 import {
+  Attachment,
   CreateDataCardInput,
   CustomField,
   CustomFieldType,
@@ -49,6 +51,7 @@ type UseDataCardsParams = {
   onCreateCard: (input: CreateDataCardInput) => Promise<DataCard | void | null>;
   onUploadAttachments: (cardId: string, paths: string[]) => Promise<string[]>;
   onAttachmentPresenceChange?: (cardId: string, hasAttachments: boolean) => void;
+  onAttachmentsChange?: (cardId: string, attachments: Attachment[]) => void;
   onUpdateCard: (input: UpdateDataCardInput) => Promise<boolean>;
   onDeleteCard: (id: string) => Promise<void> | void;
   onRestoreCard: (id: string) => Promise<void> | void;
@@ -237,6 +240,7 @@ export function useDataCards({
   onCreateCard,
   onUploadAttachments,
   onAttachmentPresenceChange,
+  onAttachmentsChange,
   onUpdateCard,
   onDeleteCard,
   onRestoreCard,
@@ -564,14 +568,18 @@ export function useDataCards({
         try {
           const fileIds = createAttachments.map((a) => a.id);
           const uploaded = await addAttachmentsFromPick(created.id, createAttachmentPickToken, fileIds);
-          onAttachmentPresenceChange?.(created.id, uploaded.length > 0);
+          const mappedAttachments = uploaded.map(mapAttachmentFromBackend);
+          onAttachmentsChange?.(created.id, mappedAttachments);
+          onAttachmentPresenceChange?.(created.id, mappedAttachments.length > 0);
         } catch (err) {
           console.error(err);
           showToast(t('toast.attachmentUploadError'), 'error');
-          if (onAttachmentPresenceChange) {
+          if (onAttachmentPresenceChange || onAttachmentsChange) {
             try {
               const existing = await listAttachments(created.id);
-              onAttachmentPresenceChange(created.id, existing.length > 0);
+              const mappedAttachments = existing.map(mapAttachmentFromBackend);
+              onAttachmentsChange?.(created.id, mappedAttachments);
+              onAttachmentPresenceChange?.(created.id, mappedAttachments.length > 0);
             } catch {
               // ignore
             }
@@ -600,6 +608,7 @@ export function useDataCards({
     isCreateSubmitting,
     onCreateCard,
     onAttachmentPresenceChange,
+    onAttachmentsChange,
     resetCreateForm,
     showToast,
     t,

@@ -77,6 +77,7 @@ export function mapCardFromBackend(card: BackendDataCard): DataCard {
       type: field.type,
     })),
     previewFields: card.preview_fields ?? [],
+    attachments: (card.attachments ?? []).map(mapAttachmentFromBackend),
   };
 }
 
@@ -115,6 +116,7 @@ export function mapCardSummaryFromBackend(
       type: field.type,
     })),
     previewFields: card.preview_fields ?? [],
+    attachments: [],
     isFavorite: card.is_favorite,
     hasTotp: card.has_totp,
     hasSeedPhrase: card.has_seed_phrase,
@@ -134,6 +136,7 @@ export function mapCardToSummary(card: DataCard, formatter: Intl.DateTimeFormat)
 
   return {
     ...card,
+    attachments: [],
     updatedAtLabel,
     createdAtLabel,
     metaLine: metaFromCard(card, ''),
@@ -142,8 +145,7 @@ export function mapCardToSummary(card: DataCard, formatter: Intl.DateTimeFormat)
     hasRecoveryEmail: (card.recoveryEmail ?? '').trim().length > 0,
     hasPhone: (card.mobilePhone ?? '').trim().length > 0,
     hasNotes: (card.note ?? '').trim().length > 0,
-    // attachments are not present in DataCard payload; caller should preserve/override
-    hasAttachments: false,
+    hasAttachments: card.attachments.length > 0,
   };
 }
 

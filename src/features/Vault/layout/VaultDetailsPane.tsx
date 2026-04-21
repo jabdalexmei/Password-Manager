@@ -58,6 +58,7 @@ export function VaultDetailsPane({
           activeFolderId={vault.selectedFolderId}
           dateTimeFormat={vault.settings?.date_time_format ?? 'auto'}
           onAttachmentPresenceChange={vault.setCardHasAttachments}
+          onAttachmentsChange={vault.setCardAttachments}
           onEdit={(card) => dataCardsViewModel.openEditModal(card)}
           onDelete={vault.deleteCard}
           onRestore={vault.restoreCard}

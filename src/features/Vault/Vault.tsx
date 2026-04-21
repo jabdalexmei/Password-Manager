@@ -73,6 +73,7 @@ export default function Vault({
     onCreateCard: vault.createCard,
     onUploadAttachments: vault.uploadAttachments,
     onAttachmentPresenceChange: vault.setCardHasAttachments,
+    onAttachmentsChange: vault.setCardAttachments,
     onUpdateCard: vault.updateCard,
     onDeleteCard: vault.deleteCard,
     onRestoreCard: vault.restoreCard,

@@ -230,6 +230,8 @@ pub fn list_datacards(
             .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?
             .collect::<rusqlite::Result<Vec<_>>>()
             .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
+        let mut cards = cards;
+        hydrate_datacards_attachments_conn(conn, &mut cards, active_vault_id)?;
         Ok(cards)
     })
 }

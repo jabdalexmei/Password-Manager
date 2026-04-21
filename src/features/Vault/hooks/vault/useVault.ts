@@ -150,6 +150,7 @@ export function useVault(profileId: string, onLocked: () => void) {
     createCardAction,
     uploadAttachments,
     setCardHasAttachments,
+    setCardAttachments,
     updateCardAction,
     deleteCardAction,
     restoreCardAction,
@@ -209,11 +210,8 @@ export function useVault(profileId: string, onLocked: () => void) {
   const selectCard = useCallback(
     (id: string | null) => {
       setSelectedCardId(id);
-      if (id && !cardDetailsById[id]) {
-        void loadCard(id);
-      }
     },
-    [cardDetailsById, loadCard, setSelectedCardId]
+    [setSelectedCardId]
   );
 
   const lock = useCallback(async () => {
@@ -328,12 +326,9 @@ export function useVault(profileId: string, onLocked: () => void) {
   }, [cards, debouncedSearchQuery, deletedCards, filters, searchMatchIds, selectedNav]);
 
   const selectedCard = useMemo(() => {
-    if (selectedCardId && cardDetailsById[selectedCardId]) {
-      return cardDetailsById[selectedCardId];
-    }
-    const pool = isTrashMode ? deletedCards : cards;
-    return pool.find((card) => card.id === selectedCardId) ?? null;
-  }, [cardDetailsById, cards, deletedCards, isTrashMode, selectedCardId]);
+    if (!selectedCardId) return null;
+    return cardDetailsById[selectedCardId] ?? null;
+  }, [cardDetailsById, selectedCardId]);
 
   const currentSectionTitle = useMemo(() => {
     if (selectedFolderId) {
@@ -407,6 +402,7 @@ export function useVault(profileId: string, onLocked: () => void) {
     deleteFolderAndCards: deleteFolderAndCardsAction,
     createCard: createCardAction,
     setCardHasAttachments,
+    setCardAttachments,
     uploadAttachments,
     updateCard: updateCardAction,
     deleteCard: deleteCardAction,
