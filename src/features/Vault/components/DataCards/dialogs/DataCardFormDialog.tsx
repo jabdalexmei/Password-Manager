@@ -377,7 +377,7 @@ export function DataCardFormDialog({
               <label className="form-label" htmlFor={`${dialogId}-cf-${row.id}`}>
                 {row.key}
               </label>
-              <div className="input-with-actions">
+              <div className={`input-with-actions${isEditFieldsMode ? ' input-with-actions--inline-actions' : ''}`}>
                 <input
                   id={`${dialogId}-cf-${row.id}`}
                   className="input"
@@ -395,7 +395,7 @@ export function DataCardFormDialog({
                   <div className="input-actions">
                     <button
                       type="button"
-                      className="icon-button"
+                      className="icon-button input-action-inline"
                       aria-label={t('customFields.rename')}
                       title={tTip('action.rename')}
                       onClick={() => {
@@ -410,7 +410,7 @@ export function DataCardFormDialog({
                     </button>
                     <button
                       type="button"
-                      className="icon-button icon-button-danger"
+                      className="icon-button input-action-inline icon-button-danger"
                       aria-label={t('customFields.delete')}
                       title={tTip('action.delete')}
                       onClick={() => {
