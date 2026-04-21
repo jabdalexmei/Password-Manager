@@ -1,0 +1,381 @@
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Attachment, DataCard } from '../../types/ui';
+import { useTranslation } from '../../../../shared/lib/i18n';
+import { useToaster } from '../../../../shared/components/Toaster';
+import { clipboardClearAll } from '../../../../shared/lib/tauri';
+import {
+  addAttachmentsFromPick,
+  addAttachmentsViaDialog,
+  attachmentsDiscardPick,
+  getAttachmentBytesBase64,
+  listAttachments,
+  renameAttachment,
+  removeAttachment,
+  saveAttachmentViaDialog,
+} from '../../api/vaultApi';
+import { mapAttachmentFromBackend } from '../../types/mappers';
+
+const DEFAULT_CLIPBOARD_CLEAR_TIMEOUT_SECONDS = 20;
+
+type UseDetailsParams = {
+  card: DataCard | null;
+  onEdit: (card: DataCard) => void;
+  onDelete: (id: string) => void;
+  onToggleFavorite: (id: string) => void;
+  onRestore: (id: string) => void;
+  onPurge: (id: string) => void;
+  onAttachmentPresenceChange?: (cardId: string, hasAttachments: boolean) => void;
+  isTrashMode: boolean;
+  clipboardAutoClearEnabled?: boolean;
+  clipboardClearTimeoutSeconds?: number;
+};
+
+export type UseDetailsResult = {
+  showPassword: boolean;
+  togglePasswordVisibility: () => void;
+  copyToClipboard: (value: string | null | undefined, opts?: { isSecret?: boolean }) => Promise<void>;
+  deleteCard: () => void;
+  editCard: () => void;
+  toggleFavorite: () => void;
+  restoreCard: () => void;
+  purgeCard: () => void;
+  attachments: Attachment[];
+  onAddAttachment: () => Promise<void>;
+  onAddAttachmentsFromPick: (token: string, fileIds: string[]) => Promise<void>;
+  onDeleteAttachment: (attachmentId: string) => Promise<void>;
+  onPreviewAttachment: (attachmentId: string) => Promise<void>;
+  onDownloadAttachment: (attachmentId: string, defaultName: string) => Promise<void>;
+  onRenameAttachment: (attachmentId: string, nextName: string) => Promise<boolean>;
+  previewOpen: boolean;
+  closePreview: () => void;
+  previewPayload: AttachmentPreviewState;
+  isPreviewLoading: boolean;
+};
+
+type AttachmentPreviewState = {
+  attachmentId: string;
+  fileName: string;
+  mimeType: string;
+  objectUrl: string;
+} | null;
+
+export function useDetails({
+  card,
+  onEdit,
+  onDelete,
+  onToggleFavorite,
+  onRestore,
+  onPurge,
+  onAttachmentPresenceChange,
+  isTrashMode,
+  clipboardAutoClearEnabled,
+  clipboardClearTimeoutSeconds,
+}: UseDetailsParams): UseDetailsResult {
+  const [showPassword, setShowPassword] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastCopiedValueRef = useRef<string | null>(null);
+  const { show: showToast } = useToaster();
+  const { t } = useTranslation('Details');
+  const { t: tCommon } = useTranslation('Common');
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewPayload, setPreviewPayload] = useState<AttachmentPreviewState>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const previewUrlRef = useRef<string | null>(null);
+  const attachmentsRequestIdRef = useRef(0);
+  const previewRequestIdRef = useRef(0);
+
+  const clearPendingTimeout = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    lastCopiedValueRef.current = null;
+  }, []);
+
+  useEffect(() => clearPendingTimeout, [clearPendingTimeout]);
+
+  const base64ToBytes = useCallback((base64Data: string) => {
+    const binaryString = atob(base64Data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i += 1) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes;
+  }, []);
+
+  const revokePreviewUrl = useCallback(() => {
+    if (previewUrlRef.current) {
+      URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = null;
+    }
+  }, []);
+
+  const clearClipboardBestEffort = useCallback(async () => {
+    try {
+      const expected = lastCopiedValueRef.current;
+      if (!expected) return;
+      const currentClipboard = await navigator.clipboard.readText();
+      if (currentClipboard === expected) {
+        await clipboardClearAll();
+      }
+    } catch (err) {
+      console.error(err);
+      try {
+        await clipboardClearAll();
+      } catch (wipeErr) {
+        console.error(wipeErr);
+      }
+    } finally {
+      timeoutRef.current = null;
+      lastCopiedValueRef.current = null;
+    }
+  }, []);
+  const refreshAttachments = useCallback(async () => {
+    if (!card?.id) {
+      setAttachments([]);
+      return;
+    }
+    const currentCardId = card.id;
+    const requestId = ++attachmentsRequestIdRef.current;
+    try {
+      const items = await listAttachments(currentCardId);
+      if (requestId !== attachmentsRequestIdRef.current) return;
+      const mapped = items.map(mapAttachmentFromBackend);
+      setAttachments(mapped);
+      onAttachmentPresenceChange?.(currentCardId, mapped.length > 0);
+    } catch (err) {
+      if (requestId !== attachmentsRequestIdRef.current) return;
+      console.error(err);
+      setAttachments([]);
+      onAttachmentPresenceChange?.(currentCardId, false);
+      showToast(t('toast.attachmentLoadError'), 'error');
+    }
+  }, [card?.id, onAttachmentPresenceChange, showToast, t]);
+
+  useLayoutEffect(() => {
+    attachmentsRequestIdRef.current += 1;
+    previewRequestIdRef.current += 1;
+    setShowPassword(false);
+    clearPendingTimeout();
+    setAttachments([]);
+    setIsPreviewLoading(false);
+    setPreviewOpen(false);
+    setPreviewPayload(null);
+    revokePreviewUrl();
+  }, [card?.id, clearPendingTimeout, revokePreviewUrl]);
+
+  useEffect(() => {
+    void refreshAttachments();
+  }, [refreshAttachments]);
+
+  useEffect(() => revokePreviewUrl, [revokePreviewUrl]);
+
+  const copyToClipboard = useCallback(
+    async (value: string | null | undefined, opts: { isSecret?: boolean } = {}) => {
+      if (!value || !value.trim()) return;
+      clearPendingTimeout();
+      try {
+        await navigator.clipboard.writeText(value);
+        showToast(t('toast.copySuccess'), 'success');
+        const autoClearEnabled = clipboardAutoClearEnabled ?? true;
+        if (opts.isSecret && autoClearEnabled) {
+          lastCopiedValueRef.current = value;
+          const timeoutMs = (clipboardClearTimeoutSeconds ?? DEFAULT_CLIPBOARD_CLEAR_TIMEOUT_SECONDS) * 1000;
+          timeoutRef.current = window.setTimeout(() => {
+            void clearClipboardBestEffort();
+          }, timeoutMs);
+        }
+      } catch (err) {
+        console.error(err);
+        showToast(t('toast.copyError'), 'error');
+        lastCopiedValueRef.current = null;
+      }
+    },
+    [clearPendingTimeout, clearClipboardBestEffort, clipboardAutoClearEnabled, clipboardClearTimeoutSeconds, showToast, t]
+  );
+
+  const deleteCard = useCallback(() => {
+    if (!card || isTrashMode) return;
+    onDelete(card.id);
+  }, [card, isTrashMode, onDelete]);
+
+  const editCard = useCallback(() => {
+    if (!card || isTrashMode) return;
+    onEdit(card);
+  }, [card, isTrashMode, onEdit]);
+
+  const toggleFavorite = useCallback(() => {
+    if (!card || isTrashMode) return;
+    onToggleFavorite(card.id);
+  }, [card, isTrashMode, onToggleFavorite]);
+
+  const restoreCard = useCallback(() => {
+    if (card) onRestore(card.id);
+  }, [card, onRestore]);
+
+  const purgeCard = useCallback(() => {
+    if (card) onPurge(card.id);
+  }, [card, onPurge]);
+
+  const togglePasswordVisibility = useCallback(() => {
+    setShowPassword((prev) => !prev);
+  }, []);
+
+  const onAddAttachment = useCallback(async () => {
+    if (!card || isTrashMode) return;
+    try {
+      const added = await addAttachmentsViaDialog(card.id);
+      if (!added.length) return;
+      await refreshAttachments();
+      showToast(t('toast.attachmentAddSuccess'), 'success');
+    } catch (err) {
+      console.error(err);
+      showToast(t('toast.attachmentAddError'), 'error');
+    }
+  }, [card, isTrashMode, refreshAttachments, showToast, t]);
+
+  const onAddAttachmentsFromPick = useCallback(
+    async (token: string, fileIds: string[]) => {
+      if (!token) return;
+
+      if (!card || isTrashMode || !fileIds.length) {
+        try {
+          await attachmentsDiscardPick(token);
+        } catch (err) {
+          console.error(err);
+        }
+        return;
+      }
+
+      try {
+        const added = await addAttachmentsFromPick(card.id, token, fileIds);
+        if (!added.length) return;
+        await refreshAttachments();
+        showToast(t('toast.attachmentAddSuccess'), 'success');
+      } catch (err) {
+        console.error(err);
+        showToast(t('toast.attachmentAddError'), 'error');
+      }
+    },
+    [card, isTrashMode, refreshAttachments, showToast, t]
+  );
+
+  const onDeleteAttachment = useCallback(
+    async (attachmentId: string) => {
+      if (!card) return;
+      try {
+        await removeAttachment(attachmentId);
+        await refreshAttachments();
+      } catch (err) {
+        console.error(err);
+        showToast(t('toast.attachmentRemoveError'), 'error');
+      }
+    },
+    [card, refreshAttachments, showToast, t]
+  );
+
+  const onPreviewAttachment = useCallback(
+    async (attachmentId: string) => {
+      if (!card) return;
+      const requestId = ++previewRequestIdRef.current;
+      setIsPreviewLoading(true);
+      setPreviewOpen(true);
+      setPreviewPayload(null);
+      revokePreviewUrl();
+      try {
+        const payload = await getAttachmentBytesBase64(attachmentId);
+        if (requestId !== previewRequestIdRef.current) return;
+        const bytes = base64ToBytes(payload.bytesBase64);
+        const mimeType = payload.mimeType || 'application/octet-stream';
+        const objectUrl = URL.createObjectURL(new Blob([bytes], { type: mimeType }));
+        previewUrlRef.current = objectUrl;
+        setPreviewPayload({
+          attachmentId,
+          fileName: payload.fileName,
+          mimeType,
+          objectUrl,
+        });
+      } catch (err: any) {
+        if (requestId !== previewRequestIdRef.current) return;
+        console.error(err);
+        const errorMessage = err?.code === 'ATTACHMENT_TOO_LARGE_FOR_PREVIEW'
+          ? t('attachments.previewTooLarge')
+          : t('attachments.previewError');
+        showToast(errorMessage, 'error');
+        setPreviewOpen(false);
+      } finally {
+        if (requestId === previewRequestIdRef.current) {
+          setIsPreviewLoading(false);
+        }
+      }
+    },
+    [base64ToBytes, card, revokePreviewUrl, showToast, t]
+  );
+
+  const onDownloadAttachment = useCallback(
+    async (attachmentId: string, defaultName: string) => {
+      if (!card) return;
+      try {
+        const ok = await saveAttachmentViaDialog(attachmentId);
+        if (ok) showToast(t('attachments.downloadSuccess'), 'success');
+      } catch (err: any) {
+        console.error(err);
+        const code = err?.code ?? err?.error;
+        if (code === 'ATTACHMENT_TARGET_PATH_FORBIDDEN') {
+          showToast(tCommon('error.operationBlocked'), 'error');
+        } else {
+          showToast(t('attachments.downloadError'), 'error');
+        }
+      }
+    },
+    [card, showToast, t, tCommon]
+  );
+
+  const onRenameAttachment = useCallback(
+    async (attachmentId: string, nextName: string) => {
+      if (!card || isTrashMode) return false;
+      try {
+        await renameAttachment(attachmentId, nextName);
+        await refreshAttachments();
+        showToast(t('toast.attachmentRenameSuccess'), 'success');
+        return true;
+      } catch (err) {
+        console.error(err);
+        showToast(t('toast.attachmentRenameError'), 'error');
+        return false;
+      }
+    },
+    [card, isTrashMode, refreshAttachments, showToast, t]
+  );
+
+  const closePreview = useCallback(() => {
+    previewRequestIdRef.current += 1;
+    setIsPreviewLoading(false);
+    setPreviewOpen(false);
+    setPreviewPayload(null);
+    revokePreviewUrl();
+  }, [revokePreviewUrl]);
+
+  return {
+    showPassword,
+    togglePasswordVisibility,
+    copyToClipboard,
+    deleteCard,
+    editCard,
+    toggleFavorite,
+    restoreCard,
+    purgeCard,
+    attachments,
+    onAddAttachment,
+    onAddAttachmentsFromPick,
+    onDeleteAttachment,
+    onPreviewAttachment,
+    onDownloadAttachment,
+    onRenameAttachment,
+    previewOpen,
+    closePreview,
+    previewPayload,
+    isPreviewLoading,
+  };
+}
