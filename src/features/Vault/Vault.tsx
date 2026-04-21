@@ -270,6 +270,11 @@ export default function Vault({
     [bankCards.counts.all, vault.counts.all]
   );
 
+  const activeVaultName = useMemo(
+    () => vault.vaults.find((item) => item.id === vault.activeVaultId)?.name ?? vault.activeVaultId,
+    [vault.activeVaultId, vault.vaults]
+  );
+
   const handleNavClick = useCallback(
     (nav: SelectedNav) => {
       setSelectedCategory('all_items');
@@ -371,6 +376,7 @@ export default function Vault({
         <VaultOverlays
           profileId={profileId}
           profileName={profileName}
+          activeVaultName={activeVaultName}
           isPasswordless={isPasswordless}
           onProfileRenamed={onProfileRenamed}
           onProfileUpdated={onProfileUpdated}

@@ -26,6 +26,7 @@ const LazyDeleteFolderModal = React.lazy(() =>
 type VaultOverlaysProps = {
   profileId: string;
   profileName: string;
+  activeVaultName: string;
   isPasswordless: boolean;
   onProfileRenamed?: (name: string) => void;
   onProfileUpdated?: (profile: ProfileMeta) => void;
@@ -44,6 +45,7 @@ type VaultOverlaysProps = {
 export function VaultOverlays({
   profileId,
   profileName,
+  activeVaultName,
   isPasswordless,
   onProfileRenamed,
   onProfileUpdated,
@@ -112,6 +114,7 @@ export function VaultOverlays({
         <Suspense fallback={null}>
           <LazyExportLegacyDataModal
             open={legacyExportModalOpen}
+            vaultName={activeVaultName}
             profileId={profileId}
             onClose={closeLegacyExportModal}
           />

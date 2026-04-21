@@ -5,20 +5,23 @@ import { legacyExportCsvViaDialog } from '../../api/vaultApi';
 
 export type ExportLegacyDataModalProps = {
   open: boolean;
+  vaultName: string;
   profileId: string;
   onClose: () => void;
 };
 
-const formatTimestamp = () => {
-  const now = new Date();
-  return now
-    .toISOString()
-    .replace(/\..+/, '')
-    .replace('T', '_')
-    .replace(/:/g, '-');
+const normalizeFileNamePart = (value: string) => {
+  const normalized = value
+    .trim()
+    .replace(/[<>:"/\\|?*\x00-\x1F]/g, '_')
+    .replace(/\s+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '');
+
+  return normalized || 'vault';
 };
 
-export function ExportLegacyDataModal({ open, profileId, onClose }: ExportLegacyDataModalProps) {
+export function ExportLegacyDataModal({ open, vaultName, profileId, onClose }: ExportLegacyDataModalProps) {
   const { t } = useTranslation('Vault');
   const { t: tCommon } = useTranslation('Common');
   const { show: showToast } = useToaster();
@@ -28,9 +31,9 @@ export function ExportLegacyDataModal({ open, profileId, onClose }: ExportLegacy
   useEffect(() => {
     if (!open) return;
     setIsSaving(false);
-    const timestamp = formatTimestamp();
-    setSuggestedFileName(`data-cards_${timestamp}_${profileId}.csv`);
-  }, [open, profileId]);
+    const safeVaultName = normalizeFileNamePart(vaultName);
+    setSuggestedFileName(`vault-name_${safeVaultName}_data-cards_profile-id_${profileId}.csv`);
+  }, [open, profileId, vaultName]);
 
   if (!open) return null;
 
