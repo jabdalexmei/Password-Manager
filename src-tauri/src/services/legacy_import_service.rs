@@ -68,24 +68,8 @@ fn split_tags(value: &str) -> Vec<String> {
     out
 }
 
-fn fallback_title(row: &LegacyCsvRow) -> String {
-    let title = row.title.trim();
-    if !title.is_empty() {
-        return title.to_string();
-    }
-    let url = row.url.trim();
-    if !url.is_empty() {
-        return url.to_string();
-    }
-    let email = row.email.trim();
-    if !email.is_empty() {
-        return email.to_string();
-    }
-    let username = row.username.trim();
-    if !username.is_empty() {
-        return username.to_string();
-    }
-    String::new()
+fn normalized_title(row: &LegacyCsvRow) -> String {
+    row.title.trim().to_string()
 }
 
 fn parse_csv_records(content: &str) -> Vec<Vec<String>> {
@@ -229,7 +213,7 @@ pub fn inspect_csv_file(path: &Path, state: &Arc<AppState>) -> Result<LegacyImpo
     let mut missing_title_rows = 0_i64;
 
     for row in &rows {
-        if fallback_title(row).trim().is_empty() {
+        if normalized_title(row).trim().is_empty() {
             missing_title_rows += 1;
         }
 
@@ -249,7 +233,7 @@ pub fn inspect_csv_file(path: &Path, state: &Arc<AppState>) -> Result<LegacyImpo
 fn make_error(row: &LegacyCsvRow, code: &str, message: &str) -> LegacyImportErrorRow {
     LegacyImportErrorRow {
         row_number: row.row_number,
-        title: fallback_title(row),
+        title: normalized_title(row),
         code: code.to_string(),
         message: message.to_string(),
     }
@@ -287,15 +271,7 @@ pub fn import_csv_file(path: &Path, state: &Arc<AppState>) -> Result<LegacyImpor
     let mut errors: Vec<LegacyImportErrorRow> = Vec::new();
 
     for row in &rows {
-        let title = fallback_title(row);
-        if title.trim().is_empty() {
-            errors.push(make_error(
-                row,
-                "LEGACY_IMPORT_TITLE_REQUIRED",
-                "Row does not have title or fallback value (url/email/username).",
-            ));
-            continue;
-        }
+        let title = normalized_title(row);
 
         let folder_id = {
             let folder_name = row.folder.trim();
@@ -362,7 +338,7 @@ mod tests {
 
     use tempfile::tempdir;
 
-    use super::{fallback_title, import_csv_file, parse_csv_rows, split_tags, LegacyCsvRow};
+    use super::{import_csv_file, normalized_title, parse_csv_rows, split_tags, LegacyCsvRow};
     use crate::data::sqlite::repo_impl;
     use crate::services::test_support::ServiceTestHarness;
 
@@ -387,7 +363,7 @@ mod tests {
     }
 
     #[test]
-    fn fallback_title_prefers_title_then_url_then_email_then_username() {
+    fn normalized_title_keeps_empty_title_even_when_url_exists() {
         let row = LegacyCsvRow {
             row_number: 2,
             title: String::new(),
@@ -401,7 +377,7 @@ mod tests {
             tags: String::new(),
             folder: String::new(),
         };
-        assert_eq!(fallback_title(&row), "mail.ru");
+        assert_eq!(normalized_title(&row), "");
     }
 
     #[test]
@@ -430,5 +406,27 @@ mod tests {
             repo_impl::list_datacards_summary(&harness.state, &harness.profile_id, "updated_at", "DESC")
                 .unwrap();
         assert_eq!(rows.len(), 120);
+    }
+
+    #[test]
+    fn import_csv_file_keeps_empty_title_instead_of_using_url() {
+        let harness = ServiceTestHarness::new();
+        let temp = tempdir().unwrap();
+        let csv_path = temp.path().join("legacy-import-empty-title.csv");
+
+        fs::write(&csv_path, "Title,URL,Username\n,https://example.com,user1\n").unwrap();
+
+        let result = import_csv_file(&csv_path, &harness.state).unwrap();
+
+        assert_eq!(result.imported_count, 1);
+        assert_eq!(result.error_count, 0);
+
+        let cards =
+            repo_impl::list_datacards(&harness.state, &harness.profile_id, false, "updated_at", "DESC")
+                .unwrap();
+        assert_eq!(cards.len(), 1);
+        assert_eq!(cards[0].title, "");
+        assert_eq!(cards[0].url.as_deref(), Some("https://example.com"));
+        assert_eq!(cards[0].username.as_deref(), Some("user1"));
     }
 }

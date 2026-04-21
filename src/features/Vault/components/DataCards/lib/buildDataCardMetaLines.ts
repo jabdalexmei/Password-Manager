@@ -62,14 +62,21 @@ export const buildDataCardMetaLines = ({
 
   const formatMetaLine = (label: string, value: string) => `${label}: ${value}`;
 
-  const coreEntries: Array<{ field: 'title' | 'url' | 'email'; value: string }> = [];
-  if (isTitleVisible && titleText.length > 0) coreEntries.push({ field: 'title', value: titleText });
-  if (isUrlVisible && urlText.length > 0) coreEntries.push({ field: 'url', value: urlText });
-  if (isEmailVisible && emailText.length > 0) coreEntries.push({ field: 'email', value: emailText });
+  const secondaryCoreEntries: Array<{ field: 'url' | 'email'; value: string }> = [];
+  if (isUrlVisible && urlText.length > 0) secondaryCoreEntries.push({ field: 'url', value: urlText });
+  if (isEmailVisible && emailText.length > 0) secondaryCoreEntries.push({ field: 'email', value: emailText });
 
-  const isUntitledPlaceholder = coreEntries.length === 0;
-  const displayTitleText = isUntitledPlaceholder ? t('label.untitled') : coreEntries[0].value;
-  const metaCoreLines = coreEntries.slice(1, 3).map((entry) => {
+  const hasVisibleTitle = isTitleVisible && titleText.length > 0;
+  const isUntitledPlaceholder = isTitleVisible
+    ? titleText.length === 0
+    : secondaryCoreEntries.length === 0;
+  const displayTitleText = hasVisibleTitle
+    ? titleText
+    : isTitleVisible
+      ? t('label.untitled')
+      : (secondaryCoreEntries[0]?.value ?? t('label.untitled'));
+  const metaCoreSource = hasVisibleTitle || isTitleVisible ? secondaryCoreEntries : secondaryCoreEntries.slice(1);
+  const metaCoreLines = metaCoreSource.slice(0, 2).map((entry) => {
     switch (entry.field) {
       case 'url':
         return formatMetaLine(t('label.url'), entry.value);
