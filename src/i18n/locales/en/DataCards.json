@@ -78,6 +78,7 @@
   "toast.attachmentUploadError": "Some files failed to upload",
   "customFields.add": "Add field",
   "customFields.editFields": "Edit fields",
+  "customFields.stopEditFields": "Stop edit fields",
   "customFields.modalTitle": "Add custom field",
   "customFields.nameLabel": "Field name",
   "customFields.rename": "Rename field",

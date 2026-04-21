@@ -426,6 +426,7 @@ export function DataCardFormDialog({
                 hasTotp={Boolean(form.totpUri?.trim())}
                 seedPhraseWordCount={seedPhraseWordCount}
                 hasCustomFields={visibleCustomFields.length > 0}
+                isEditFieldsMode={isEditFieldsMode}
                 onAddCustomField={() => {
                   setIsActionMenuOpen(false);
                   setCustomFieldTargetDialogId(dialogId);

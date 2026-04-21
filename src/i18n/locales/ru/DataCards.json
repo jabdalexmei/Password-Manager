@@ -78,6 +78,7 @@
   "toast.attachmentUploadError": "Не удалось загрузить некоторые файлы",
   "customFields.add": "Добавить поле",
   "customFields.editFields": "Изменить поля",
+  "customFields.stopEditFields": "Закончить редактирование полей",
   "customFields.modalTitle": "Добавить пользовательское поле",
   "customFields.nameLabel": "Название поля",
   "customFields.rename": "Переименовать поле",

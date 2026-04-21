@@ -14,6 +14,7 @@ type DataCardDialogActionMenuProps = {
   hasTotp: boolean;
   seedPhraseWordCount: number;
   hasCustomFields: boolean;
+  isEditFieldsMode: boolean;
   onAddCustomField: () => void;
   onOpenTwoFactor: () => void;
   onOpenSeedPhrase: () => void;
@@ -32,6 +33,7 @@ export function DataCardDialogActionMenu({
   hasTotp,
   seedPhraseWordCount,
   hasCustomFields,
+  isEditFieldsMode,
   onAddCustomField,
   onOpenTwoFactor,
   onOpenSeedPhrase,
@@ -63,9 +65,9 @@ export function DataCardDialogActionMenu({
           <button type="button" className="dialog-actionmenu-item" onClick={onAddCustomField}>
             {t('customFields.add')}
           </button>
-          {hasCustomFields && (
+          {(hasCustomFields || isEditFieldsMode) && (
             <button type="button" className="dialog-actionmenu-item" onClick={onToggleEditFields}>
-              {t('customFields.editFields')}
+              {isEditFieldsMode ? t('customFields.stopEditFields') : t('customFields.editFields')}
             </button>
           )}
           <button type="button" className="dialog-actionmenu-item" onClick={onOpenTwoFactor}>
