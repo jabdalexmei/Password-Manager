@@ -446,14 +446,31 @@ select:autofill {
 
 .customfield-row {
   position: relative;
+  will-change: transform;
+}
+
+.customfield-row .input-with-actions {
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
 }
 
 .customfield-row--dragging {
-  opacity: 0.72;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.customfield-row--dragging .input-with-actions {
+  border-color: var(--sem-accent-primary);
+  background: var(--sem-surface-elevated);
+  box-shadow: var(--sem-shadow-lg);
 }
 
 .customfield-row--dragging .input-action-drag-handle {
   cursor: grabbing;
+  color: var(--sem-accent-primary);
 }
 
 .customfield-row--drop-before .input-with-actions {
