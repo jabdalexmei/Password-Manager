@@ -21,6 +21,8 @@ type CustomFieldFormRow = {
   type: CustomFieldType;
 };
 
+type CustomFieldMovePlacement = 'before' | 'after';
+
 export type DataCardFormState = {
   title: string;
   folderId: string | null;
@@ -106,6 +108,7 @@ export type DataCardsViewModel = {
     nextName: string
   ) => { ok: true } | { ok: false; reason: 'EMPTY' };
   removeCreateCustomFieldById: (rowId: string) => void;
+  moveCreateCustomField: (sourceRowId: string, targetRowId: string, placement: CustomFieldMovePlacement) => void;
   addEditCustomFieldByName: (name: string) => { ok: true } | { ok: false; reason: 'EMPTY' };
   updateEditCustomFieldValue: (rowId: string, value: string) => void;
   renameEditCustomFieldById: (
@@ -113,6 +116,7 @@ export type DataCardsViewModel = {
     nextName: string
   ) => { ok: true } | { ok: false; reason: 'EMPTY' };
   removeEditCustomFieldById: (rowId: string) => void;
+  moveEditCustomField: (sourceRowId: string, targetRowId: string, placement: CustomFieldMovePlacement) => void;
   setCreateSeedPhrase: (phrase: string, words: number) => void;
   setEditSeedPhrase: (phrase: string, words: number) => void;
 };
@@ -141,6 +145,25 @@ const normalizeTags = (value: string) => {
 
 const makeRowId = () =>
   globalThis.crypto?.randomUUID?.() ?? `cf_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+
+const moveCustomFieldRow = (
+  rows: CustomFieldFormRow[],
+  sourceRowId: string,
+  targetRowId: string,
+  placement: CustomFieldMovePlacement
+) => {
+  const sourceIndex = rows.findIndex((row) => row.id === sourceRowId);
+  const targetIndex = rows.findIndex((row) => row.id === targetRowId);
+  if (sourceIndex === -1 || targetIndex === -1 || sourceIndex === targetIndex) return rows;
+
+  const nextRows = [...rows];
+  const [movedRow] = nextRows.splice(sourceIndex, 1);
+  const adjustedTargetIndex = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
+  const insertIndex = placement === 'after' ? adjustedTargetIndex + 1 : adjustedTargetIndex;
+
+  nextRows.splice(insertIndex, 0, movedRow);
+  return nextRows;
+};
 
 const buildCreateInput = (form: DataCardFormState): CreateDataCardInput => ({
   folderId: form.folderId,
@@ -424,6 +447,16 @@ export function useDataCards({
     }));
   }, []);
 
+  const moveCreateCustomField = useCallback(
+    (sourceRowId: string, targetRowId: string, placement: CustomFieldMovePlacement) => {
+      setCreateForm((prev) => ({
+        ...prev,
+        customFields: moveCustomFieldRow(prev.customFields, sourceRowId, targetRowId, placement),
+      }));
+    },
+    []
+  );
+
   const addEditCustomFieldByName = useCallback(
     (name: string) => {
       const trimmed = name.trim();
@@ -479,6 +512,19 @@ export function useDataCards({
       };
     });
   }, []);
+
+  const moveEditCustomField = useCallback(
+    (sourceRowId: string, targetRowId: string, placement: CustomFieldMovePlacement) => {
+      setEditForm((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          customFields: moveCustomFieldRow(prev.customFields, sourceRowId, targetRowId, placement),
+        };
+      });
+    },
+    []
+  );
 
   const setCreateSeedPhrase = useCallback((phrase: string, words: number) => {
     setCreateForm((prev) => ({ ...prev, seedPhrase: phrase, seedPhraseWordCount: words }));
@@ -708,10 +754,12 @@ export function useDataCards({
     updateCreateCustomFieldValue,
     renameCreateCustomFieldById,
     removeCreateCustomFieldById,
+    moveCreateCustomField,
     addEditCustomFieldByName,
     updateEditCustomFieldValue,
     renameEditCustomFieldById,
     removeEditCustomFieldById,
+    moveEditCustomField,
     setCreateSeedPhrase,
     setEditSeedPhrase,
   };

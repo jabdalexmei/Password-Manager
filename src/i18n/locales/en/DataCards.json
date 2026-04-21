@@ -82,6 +82,7 @@
   "customFields.nameLabel": "Field name",
   "customFields.rename": "Rename field",
   "customFields.delete": "Delete field",
+  "customFields.reorder": "Reorder field",
   "customFields.renameTitle": "Rename field",
   "customFields.errorEmpty": "Field name is required",
   "customFields.errorDuplicate": "Field with this name already exists",

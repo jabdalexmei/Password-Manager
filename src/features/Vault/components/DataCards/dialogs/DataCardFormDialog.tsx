@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   IconAttachment,
+  IconGripVertical,
   IconPreview,
   IconPreviewOff,
   IconRegenerate,
@@ -14,6 +15,12 @@ import type { DataCardFormState, DataCardsViewModel } from '../useDataCards';
 import { DataCardDialogActionMenu } from './DataCardDialogActionMenu';
 
 type TranslateFn = (key: string, params?: Record<string, string | number>) => string;
+type CustomFieldDragPlacement = 'before' | 'after';
+type CustomFieldDragState = {
+  activeRowId: string | null;
+  overRowId: string | null;
+  placement: CustomFieldDragPlacement | null;
+};
 
 export type DataCardDialogId = 'datacard-create-dialog' | 'datacard-edit-dialog';
 
@@ -99,6 +106,145 @@ export function DataCardFormDialog({
   tCommon,
 }: DataCardFormDialogProps) {
   const { t: tTip } = useTranslation('Tooltips');
+  const customFieldDragStateRef = React.useRef<CustomFieldDragState>({
+    activeRowId: null,
+    overRowId: null,
+    placement: null,
+  });
+  const [customFieldDragState, setCustomFieldDragState] = React.useState<CustomFieldDragState>({
+    activeRowId: null,
+    overRowId: null,
+    placement: null,
+  });
+  const dragSourceRowIdRef = React.useRef<string | null>(null);
+
+  const updateCustomFieldDragState = React.useCallback(
+    (nextState: CustomFieldDragState | ((prev: CustomFieldDragState) => CustomFieldDragState)) => {
+      setCustomFieldDragState((prev) => {
+        const resolved = typeof nextState === 'function' ? nextState(prev) : nextState;
+        customFieldDragStateRef.current = resolved;
+        if (
+          prev.activeRowId === resolved.activeRowId &&
+          prev.overRowId === resolved.overRowId &&
+          prev.placement === resolved.placement
+        ) {
+          return prev;
+        }
+        return resolved;
+      });
+    },
+    []
+  );
+
+  const resetCustomFieldDragState = React.useCallback(() => {
+    dragSourceRowIdRef.current = null;
+    updateCustomFieldDragState({
+      activeRowId: null,
+      overRowId: null,
+      placement: null,
+    });
+  }, [updateCustomFieldDragState]);
+
+  const getDropPlacement = React.useCallback((clientY: number, bounds: DOMRect): CustomFieldDragPlacement => {
+    return clientY >= bounds.top + bounds.height / 2 ? 'after' : 'before';
+  }, []);
+
+  const moveCustomField = React.useCallback(
+    (sourceRowId: string, targetRowId: string, placement: CustomFieldDragPlacement) => {
+      if (dialogId === 'datacard-create-dialog') {
+        viewModel.moveCreateCustomField(sourceRowId, targetRowId, placement);
+        return;
+      }
+      viewModel.moveEditCustomField(sourceRowId, targetRowId, placement);
+    },
+    [dialogId, viewModel]
+  );
+
+  const visibleCustomFields = form?.customFields ?? [];
+
+  const updateCustomFieldDragHover = React.useCallback(
+    (clientX: number, clientY: number) => {
+      const dragSourceRowId = dragSourceRowIdRef.current;
+      if (!dragSourceRowId) return;
+
+      const target = document.elementFromPoint(clientX, clientY);
+      const rowElement = target instanceof HTMLElement ? target.closest<HTMLElement>('[data-customfield-row-id]') : null;
+
+      if (!rowElement) {
+        updateCustomFieldDragState((prev) =>
+          prev.overRowId === null && prev.placement === null ? prev : { ...prev, overRowId: null, placement: null }
+        );
+        return;
+      }
+
+      const rowId = rowElement.dataset.customfieldRowId;
+      if (!rowId || rowId === dragSourceRowId) {
+        updateCustomFieldDragState((prev) =>
+          prev.overRowId === null && prev.placement === null ? prev : { ...prev, overRowId: null, placement: null }
+        );
+        return;
+      }
+
+      const placement = getDropPlacement(clientY, rowElement.getBoundingClientRect());
+      updateCustomFieldDragState((prev) => {
+        if (prev.activeRowId === dragSourceRowId && prev.overRowId === rowId && prev.placement === placement) {
+          return prev;
+        }
+        return {
+          activeRowId: dragSourceRowId,
+          overRowId: rowId,
+          placement,
+        };
+      });
+    },
+    [getDropPlacement, updateCustomFieldDragState]
+  );
+
+  React.useEffect(() => {
+    if (!isEditFieldsMode) {
+      resetCustomFieldDragState();
+    }
+  }, [isEditFieldsMode, resetCustomFieldDragState]);
+
+  React.useEffect(() => {
+    const dragSourceRowId = dragSourceRowIdRef.current;
+    if (!dragSourceRowId) return;
+    if (!visibleCustomFields.some((row) => row.id === dragSourceRowId)) {
+      resetCustomFieldDragState();
+    }
+  }, [resetCustomFieldDragState, visibleCustomFields]);
+
+  React.useEffect(() => {
+    if (!customFieldDragState.activeRowId) return undefined;
+
+    const previousUserSelect = document.body.style.userSelect;
+    document.body.style.userSelect = 'none';
+
+    const handlePointerMove = (event: PointerEvent) => {
+      updateCustomFieldDragHover(event.clientX, event.clientY);
+    };
+
+    const handlePointerEnd = () => {
+      const { activeRowId, overRowId, placement } = customFieldDragStateRef.current;
+      document.body.style.userSelect = previousUserSelect;
+      if (activeRowId && overRowId && placement) {
+        moveCustomField(activeRowId, overRowId, placement);
+      }
+      resetCustomFieldDragState();
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerEnd);
+    window.addEventListener('pointercancel', handlePointerEnd);
+
+    return () => {
+      document.body.style.userSelect = previousUserSelect;
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerEnd);
+      window.removeEventListener('pointercancel', handlePointerEnd);
+    };
+  }, [customFieldDragState.activeRowId, moveCustomField, resetCustomFieldDragState, updateCustomFieldDragHover]);
+
   if (!form) return null;
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -113,7 +259,6 @@ export function DataCardFormDialog({
   const titleElementId = 'dialog-title';
   const isCreateDialog = dialogId === 'datacard-create-dialog';
   const seedPhraseWordCount = form.seedPhraseWordCount;
-  const visibleCustomFields = form.customFields;
 
   const totpUri = (form.totpUri ?? '').trim();
   let totpData: { token: string; remaining: number } | null = null;
@@ -124,6 +269,20 @@ export function DataCardFormDialog({
       totpData = null;
     }
   }
+
+  const getCustomFieldRowClassName = (rowId: string) => {
+    const classes = ['form-field', 'customfield-row'];
+    if (customFieldDragState.activeRowId === rowId) {
+      classes.push('customfield-row--dragging');
+    }
+    if (customFieldDragState.overRowId === rowId && customFieldDragState.placement === 'before') {
+      classes.push('customfield-row--drop-before');
+    }
+    if (customFieldDragState.overRowId === rowId && customFieldDragState.placement === 'after') {
+      classes.push('customfield-row--drop-after');
+    }
+    return classes.join(' ');
+  };
 
   return (
     <div
@@ -373,11 +532,19 @@ export function DataCardFormDialog({
           )}
 
           {visibleCustomFields.map((row) => (
-            <div className="form-field" key={row.id}>
+            <div
+              className={getCustomFieldRowClassName(row.id)}
+              key={row.id}
+              data-customfield-row-id={row.id}
+            >
               <label className="form-label" htmlFor={`${dialogId}-cf-${row.id}`}>
                 {row.key}
               </label>
-              <div className={`input-with-actions${isEditFieldsMode ? ' input-with-actions--inline-actions' : ''}`}>
+              <div
+                className={`input-with-actions${
+                  isEditFieldsMode ? ' input-with-actions--inline-actions input-with-actions--customfield-actions' : ''
+                }`}
+              >
                 <input
                   id={`${dialogId}-cf-${row.id}`}
                   className="input"
@@ -393,6 +560,26 @@ export function DataCardFormDialog({
                 />
                 {isEditFieldsMode && (
                   <div className="input-actions">
+                    <button
+                      type="button"
+                      className="icon-button input-action-inline input-action-drag-handle"
+                      aria-label={t('customFields.reorder')}
+                      title={t('customFields.reorder')}
+                      onPointerDown={(event) => {
+                        if (!isEditFieldsMode) return;
+                        event.preventDefault();
+                        event.stopPropagation();
+                        dragSourceRowIdRef.current = row.id;
+                        updateCustomFieldDragState({
+                          activeRowId: row.id,
+                          overRowId: null,
+                          placement: null,
+                        });
+                        updateCustomFieldDragHover(event.clientX, event.clientY);
+                      }}
+                    >
+                      <IconGripVertical />
+                    </button>
                     <button
                       type="button"
                       className="icon-button input-action-inline"

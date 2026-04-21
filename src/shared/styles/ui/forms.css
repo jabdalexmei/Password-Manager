@@ -330,6 +330,10 @@ select:autofill {
   padding-right: 72px;
 }
 
+.input-with-actions--customfield-actions .input {
+  padding-right: 102px;
+}
+
 .input-with-actions--inline-actions .input-actions {
   position: absolute;
   top: 50%;
@@ -400,6 +404,15 @@ select:autofill {
   opacity: 1;
 }
 
+.input-actions .input-action-drag-handle {
+  cursor: grab;
+  touch-action: none;
+}
+
+.input-actions .input-action-drag-handle:active {
+  cursor: grabbing;
+}
+
 /* Reusable text-only inline action for controls embedded inside input-like fields. */
 .input-action-inline-text {
   min-width: auto !important;
@@ -429,6 +442,26 @@ select:autofill {
   box-shadow: none !important;
   color: var(--sem-text-primary) !important;
   opacity: 1;
+}
+
+.customfield-row {
+  position: relative;
+}
+
+.customfield-row--dragging {
+  opacity: 0.72;
+}
+
+.customfield-row--dragging .input-action-drag-handle {
+  cursor: grabbing;
+}
+
+.customfield-row--drop-before .input-with-actions {
+  box-shadow: inset 0 2px 0 var(--sem-accent-primary);
+}
+
+.customfield-row--drop-after .input-with-actions {
+  box-shadow: inset 0 -2px 0 var(--sem-accent-primary);
 }
 
 /* Read-only TOTP preview in forms: visually matches standard input fields. */

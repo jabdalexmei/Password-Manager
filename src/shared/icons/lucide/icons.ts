@@ -30,4 +30,5 @@ export {
 
   RefreshCw as IconRegenerate,
   History as IconHistory,
+  GripVertical as IconGripVertical,
 } from "lucide-react";

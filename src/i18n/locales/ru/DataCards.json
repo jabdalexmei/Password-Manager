@@ -82,6 +82,7 @@
   "customFields.nameLabel": "Название поля",
   "customFields.rename": "Переименовать поле",
   "customFields.delete": "Удалить поле",
+  "customFields.reorder": "Переместить поле",
   "customFields.renameTitle": "Переименовать поле",
   "customFields.errorEmpty": "Требуется название поля",
   "customFields.errorDuplicate": "Поле с таким именем уже существует",
