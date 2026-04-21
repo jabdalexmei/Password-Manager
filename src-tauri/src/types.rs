@@ -46,6 +46,7 @@ pub struct BackupPickPayload {
 pub struct LegacyImportInspectResult {
     pub total_rows: i64,
     pub unknown_folder_rows: i64,
+    pub folders_to_create_count: i64,
     pub missing_title_rows: i64,
 }
 

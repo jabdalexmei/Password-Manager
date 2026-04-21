@@ -191,6 +191,15 @@ fn load_rows(path: &Path) -> Result<Vec<LegacyCsvRow>> {
     parse_csv_rows(&content)
 }
 
+fn normalize_folder_key(value: &str) -> Option<String> {
+    let trimmed = value.trim();
+    if trimmed.is_empty() {
+        None
+    } else {
+        Some(trimmed.to_lowercase())
+    }
+}
+
 fn build_folder_lookup(
     state: &Arc<AppState>,
     profile_id: &str,
@@ -204,6 +213,28 @@ fn build_folder_lookup(
         out.insert(folder.name.trim().to_lowercase(), folder.id);
     }
     Ok(out)
+}
+
+fn collect_missing_folders(
+    rows: &[LegacyCsvRow],
+    folder_lookup: &HashMap<String, String>,
+) -> HashMap<String, String> {
+    let mut out = HashMap::new();
+
+    for row in rows {
+        let folder_name = row.folder.trim();
+        let Some(folder_key) = normalize_folder_key(folder_name) else {
+            continue;
+        };
+
+        if folder_lookup.contains_key(&folder_key) || out.contains_key(&folder_key) {
+            continue;
+        }
+
+        out.insert(folder_key, folder_name.to_string());
+    }
+
+    out
 }
 
 fn build_folder_name_lookup(
@@ -225,24 +256,20 @@ pub fn inspect_csv_file(path: &Path, state: &Arc<AppState>) -> Result<LegacyImpo
     let rows = load_rows(path)?;
     let profile_id = security_service::require_unlocked_active_profile(state)?.profile_id;
     let folder_lookup = build_folder_lookup(state, &profile_id)?;
+    let folders_to_create = collect_missing_folders(&rows, &folder_lookup);
 
-    let mut unknown_folder_rows = 0_i64;
     let mut missing_title_rows = 0_i64;
 
     for row in &rows {
         if normalized_title(row).trim().is_empty() {
             missing_title_rows += 1;
         }
-
-        let folder = row.folder.trim();
-        if !folder.is_empty() && !folder_lookup.contains_key(&folder.to_lowercase()) {
-            unknown_folder_rows += 1;
-        }
     }
 
     Ok(LegacyImportInspectResult {
         total_rows: rows.len() as i64,
-        unknown_folder_rows,
+        unknown_folder_rows: 0,
+        folders_to_create_count: folders_to_create.len() as i64,
         missing_title_rows,
     })
 }
@@ -354,7 +381,22 @@ pub fn export_csv_file(path: &Path, state: &Arc<AppState>) -> Result<String> {
 pub fn import_csv_file(path: &Path, state: &Arc<AppState>) -> Result<LegacyImportResult> {
     let rows = load_rows(path)?;
     let profile_id = security_service::require_unlocked_active_profile(state)?.profile_id;
-    let folder_lookup = build_folder_lookup(state, &profile_id)?;
+    let mut folder_lookup = build_folder_lookup(state, &profile_id)?;
+    let folders_to_create = collect_missing_folders(&rows, &folder_lookup);
+    let mut folder_creation_errors: HashMap<String, String> = HashMap::new();
+    let mut created_folder_count = 0_i64;
+
+    for (folder_key, folder_name) in folders_to_create {
+        match repo_impl::create_folder(state, &profile_id, &folder_name, &None) {
+            Ok(folder) => {
+                folder_lookup.insert(folder_key, folder.id);
+                created_folder_count += 1;
+            }
+            Err(err) => {
+                folder_creation_errors.insert(folder_key, err.code);
+            }
+        }
+    }
 
     let mut imported_count = 0_i64;
     let mut errors: Vec<LegacyImportErrorRow> = Vec::new();
@@ -362,19 +404,26 @@ pub fn import_csv_file(path: &Path, state: &Arc<AppState>) -> Result<LegacyImpor
     for row in &rows {
         let title = normalized_title(row);
 
-        let folder_id = {
-            let folder_name = row.folder.trim();
-            if folder_name.is_empty() {
-                None
-            } else if let Some(folder_id) = folder_lookup.get(&folder_name.to_lowercase()) {
-                Some(folder_id.clone())
-            } else {
-                errors.push(make_error(
-                    row,
-                    "LEGACY_IMPORT_FOLDER_NOT_FOUND",
-                    "Folder from CSV was not found in the current vault.",
-                ));
-                continue;
+        let folder_id = match normalize_folder_key(&row.folder) {
+            None => None,
+            Some(folder_key) => {
+                if let Some(folder_id) = folder_lookup.get(&folder_key) {
+                    Some(folder_id.clone())
+                } else if let Some(code) = folder_creation_errors.get(&folder_key) {
+                    errors.push(make_error(
+                        row,
+                        code,
+                        "Folder from CSV could not be created in the current vault.",
+                    ));
+                    continue;
+                } else {
+                    errors.push(make_error(
+                        row,
+                        "LEGACY_IMPORT_FOLDER_NOT_FOUND",
+                        "Folder from CSV could not be resolved in the current vault.",
+                    ));
+                    continue;
+                }
             }
         };
 
@@ -407,7 +456,7 @@ pub fn import_csv_file(path: &Path, state: &Arc<AppState>) -> Result<LegacyImpor
         }
     }
 
-    if imported_count > 0 {
+    if imported_count > 0 || created_folder_count > 0 {
         security_service::request_persist_active_vault(state.clone());
     }
 
@@ -428,8 +477,8 @@ mod tests {
     use tempfile::tempdir;
 
     use super::{
-        export_csv_file, import_csv_file, normalized_title, parse_csv_rows, split_tags,
-        LegacyCsvRow,
+        export_csv_file, import_csv_file, inspect_csv_file, normalized_title, parse_csv_rows,
+        split_tags, LegacyCsvRow,
     };
     use crate::data::sqlite::repo_impl;
     use crate::services::test_support::ServiceTestHarness;
@@ -521,6 +570,75 @@ mod tests {
         assert_eq!(cards[0].title, "");
         assert_eq!(cards[0].url.as_deref(), Some("https://example.com"));
         assert_eq!(cards[0].username.as_deref(), Some("user1"));
+    }
+
+    #[test]
+    fn inspect_csv_file_reports_folders_to_create() {
+        let harness = ServiceTestHarness::new();
+        let _existing = harness.create_folder("Work", None);
+        let temp = tempdir().unwrap();
+        let csv_path = temp.path().join("legacy-import-inspect.csv");
+
+        fs::write(
+            &csv_path,
+            "Title,Folder\nPersonal mail,Personal\nWork mail,Work\nPersonal docs, Personal \n",
+        )
+        .unwrap();
+
+        let inspect = inspect_csv_file(&csv_path, &harness.state).unwrap();
+
+        assert_eq!(inspect.total_rows, 3);
+        assert_eq!(inspect.unknown_folder_rows, 0);
+        assert_eq!(inspect.folders_to_create_count, 1);
+        assert_eq!(inspect.missing_title_rows, 0);
+    }
+
+    #[test]
+    fn import_csv_file_creates_missing_folders_once_and_assigns_cards() {
+        let harness = ServiceTestHarness::new();
+        let existing = harness.create_folder("Work", None);
+        let temp = tempdir().unwrap();
+        let csv_path = temp.path().join("legacy-import-folders.csv");
+
+        fs::write(
+            &csv_path,
+            "Title,Folder\nPersonal mail,Personal\nPersonal docs, personal \nWork wiki,Work\n",
+        )
+        .unwrap();
+
+        let result = import_csv_file(&csv_path, &harness.state).unwrap();
+
+        assert_eq!(result.imported_count, 3);
+        assert_eq!(result.error_count, 0);
+
+        let folders = repo_impl::list_folders(&harness.state, &harness.profile_id).unwrap();
+        let personal_folders: Vec<_> = folders
+            .iter()
+            .filter(|folder| !folder.is_system && folder.name == "Personal")
+            .collect();
+        assert_eq!(personal_folders.len(), 1);
+
+        let personal_folder_id = personal_folders[0].id.clone();
+        let cards = repo_impl::list_datacards(
+            &harness.state,
+            &harness.profile_id,
+            false,
+            "updated_at",
+            "DESC",
+        )
+        .unwrap();
+
+        let personal_cards: Vec<_> = cards
+            .iter()
+            .filter(|card| card.folder_id.as_deref() == Some(personal_folder_id.as_str()))
+            .collect();
+        assert_eq!(personal_cards.len(), 2);
+
+        let work_cards: Vec<_> = cards
+            .iter()
+            .filter(|card| card.folder_id.as_deref() == Some(existing.id.as_str()))
+            .collect();
+        assert_eq!(work_cards.len(), 1);
     }
 
     #[test]

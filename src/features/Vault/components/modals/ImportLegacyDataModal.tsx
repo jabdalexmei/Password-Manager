@@ -54,7 +54,7 @@ export function ImportLegacyDataModal({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 12 }}>
             <div className="dialog-description">{t('legacyImport.summary.totalRows', { count: inspect.total_rows })}</div>
             <div className="dialog-description">
-              {t('legacyImport.summary.unknownFolders', { count: inspect.unknown_folder_rows })}
+              {t('legacyImport.summary.foldersToCreate', { count: inspect.folders_to_create_count })}
             </div>
             <div className="dialog-description">
               {t('legacyImport.summary.missingTitles', { count: inspect.missing_title_rows })}

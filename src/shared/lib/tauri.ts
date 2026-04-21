@@ -126,6 +126,7 @@ export type BackupPickPayload = {
 export type LegacyImportInspectResult = {
   total_rows: number;
   unknown_folder_rows: number;
+  folders_to_create_count: number;
   missing_title_rows: number;
 };
 
