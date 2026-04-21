@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::Path;
 use std::sync::Arc;
@@ -12,8 +12,8 @@ use crate::error::{ErrorCodeString, Result};
 use crate::services::datacards_service;
 use crate::services::security_service;
 use crate::types::{
-    CreateDataCardInput, DataCard, LegacyImportErrorRow, LegacyImportInspectResult,
-    LegacyImportResult,
+    CreateDataCardInput, CustomField, CustomFieldType, DataCard, LegacyImportErrorRow,
+    LegacyImportInspectResult, LegacyImportResult,
 };
 
 #[derive(Debug, Clone)]
@@ -29,6 +29,13 @@ struct LegacyCsvRow {
     note: String,
     tags: String,
     folder: String,
+    custom_fields: Vec<CustomField>,
+}
+
+#[derive(Debug, Clone)]
+struct LegacyCustomColumn {
+    key: String,
+    index: usize,
 }
 
 #[derive(Debug, Serialize)]
@@ -55,6 +62,25 @@ fn normalize_header(value: &str) -> String {
         .collect()
 }
 
+fn trim_csv_header(value: &str) -> &str {
+    value.trim().trim_start_matches('\u{feff}')
+}
+
+fn parse_custom_header_key(value: &str) -> Option<String> {
+    let trimmed = trim_csv_header(value);
+    let (prefix, rest) = trimmed.split_once(':')?;
+    if !prefix.eq_ignore_ascii_case("custom field") && !prefix.eq_ignore_ascii_case("custom") {
+        return None;
+    }
+
+    let key = rest.trim();
+    if key.is_empty() {
+        None
+    } else {
+        Some(key.to_string())
+    }
+}
+
 fn split_tags(value: &str) -> Vec<String> {
     let mut out: Vec<String> = Vec::new();
     for tag in value.split(',') {
@@ -72,6 +98,43 @@ fn split_tags(value: &str) -> Vec<String> {
 
 fn normalized_title(row: &LegacyCsvRow) -> String {
     row.title.trim().to_string()
+}
+
+fn build_custom_fields(row: &[String], custom_columns: &[LegacyCustomColumn]) -> Vec<CustomField> {
+    let mut values_by_key: HashMap<String, String> = HashMap::new();
+    let mut key_order: Vec<String> = Vec::new();
+
+    for column in custom_columns {
+        let value = row
+            .get(column.index)
+            .map(|cell| cell.trim().to_string())
+            .unwrap_or_default();
+
+        if let Some(existing) = values_by_key.get_mut(&column.key) {
+            if !value.is_empty() || existing.is_empty() {
+                *existing = value;
+            }
+            continue;
+        }
+
+        key_order.push(column.key.clone());
+        values_by_key.insert(column.key.clone(), value);
+    }
+
+    let mut out = Vec::new();
+    for key in key_order {
+        let value = values_by_key.remove(&key).unwrap_or_default();
+        if value.is_empty() {
+            continue;
+        }
+        out.push(CustomField {
+            key,
+            value,
+            field_type: CustomFieldType::Text,
+        });
+    }
+
+    out
 }
 
 fn parse_csv_records(content: &str) -> Vec<Vec<String>> {
@@ -145,10 +208,18 @@ fn parse_csv_rows(content: &str) -> Result<Vec<LegacyCsvRow>> {
         "folder",
     ];
 
-    if !header_map
+    let has_supported_header = header_map
         .keys()
-        .any(|key| supported_headers.contains(&key.as_str()))
-    {
+        .any(|key| supported_headers.contains(&key.as_str()));
+    let custom_columns: Vec<LegacyCustomColumn> = headers
+        .iter()
+        .enumerate()
+        .filter_map(|(idx, value)| {
+            parse_custom_header_key(value).map(|key| LegacyCustomColumn { key, index: idx })
+        })
+        .collect();
+
+    if !has_supported_header && custom_columns.is_empty() {
         return Err(ErrorCodeString::new("LEGACY_IMPORT_CSV_HEADERS_INVALID"));
     }
 
@@ -180,6 +251,7 @@ fn parse_csv_rows(content: &str) -> Result<Vec<LegacyCsvRow>> {
             note: get(row, "note"),
             tags: get(row, "tags"),
             folder: get(row, "folder"),
+            custom_fields: build_custom_fields(row, &custom_columns),
         });
     }
 
@@ -318,17 +390,65 @@ fn csv_escape(value: &str) -> String {
     format!("\"{}\"", value.replace('"', "\"\""))
 }
 
-fn serialize_csv_line(fields: &[&str]) -> String {
+fn serialize_csv_line<T: AsRef<str>>(fields: &[T]) -> String {
     fields
         .iter()
-        .map(|value| csv_escape(value))
+        .map(|value| csv_escape(value.as_ref()))
         .collect::<Vec<_>>()
         .join(",")
 }
 
+fn collect_export_custom_field_keys(cards: &[DataCard]) -> Vec<String> {
+    let mut seen = HashSet::new();
+    let mut keys: Vec<String> = Vec::new();
+
+    for card in cards {
+        for field in &card.custom_fields {
+            let key = field.key.trim();
+            if key.is_empty() {
+                continue;
+            }
+            if seen.insert(key.to_string()) {
+                keys.push(key.to_string());
+            }
+        }
+    }
+
+    keys.sort_by(|left, right| {
+        left.to_lowercase()
+            .cmp(&right.to_lowercase())
+            .then_with(|| left.cmp(right))
+    });
+    keys
+}
+
+fn build_export_custom_field_value_lookup(fields: &[CustomField]) -> HashMap<String, String> {
+    let mut values_by_key: HashMap<String, String> = HashMap::new();
+
+    for field in fields {
+        let key = field.key.trim();
+        if key.is_empty() {
+            continue;
+        }
+
+        let value = field.value.clone();
+        if let Some(existing) = values_by_key.get_mut(key) {
+            if !value.trim().is_empty() || existing.trim().is_empty() {
+                *existing = value;
+            }
+            continue;
+        }
+
+        values_by_key.insert(key.to_string(), value);
+    }
+
+    values_by_key
+}
+
 fn build_export_content(cards: &[DataCard], folder_names_by_id: &HashMap<String, String>) -> String {
+    let custom_keys = collect_export_custom_field_keys(cards);
     let mut lines: Vec<String> = Vec::with_capacity(cards.len() + 1);
-    lines.push(serialize_csv_line(&[
+    let mut header_fields: Vec<String> = vec![
         "Title",
         "URL",
         "Email",
@@ -339,7 +459,12 @@ fn build_export_content(cards: &[DataCard], folder_names_by_id: &HashMap<String,
         "Note",
         "Tags",
         "Folder",
-    ]));
+    ]
+    .into_iter()
+    .map(|value| value.to_string())
+    .collect();
+    header_fields.extend(custom_keys.iter().map(|key| format!("Custom field:{key}")));
+    lines.push(serialize_csv_line(&header_fields));
 
     for card in cards {
         let tags = stringify_tags(&card.tags);
@@ -349,19 +474,27 @@ fn build_export_content(cards: &[DataCard], folder_names_by_id: &HashMap<String,
             .and_then(|folder_id| folder_names_by_id.get(folder_id))
             .cloned()
             .unwrap_or_default();
+        let custom_values = build_export_custom_field_value_lookup(&card.custom_fields);
 
-        lines.push(serialize_csv_line(&[
-            card.title.as_str(),
-            card.url.as_deref().unwrap_or_default(),
-            card.email.as_deref().unwrap_or_default(),
-            card.recovery_email.as_deref().unwrap_or_default(),
-            card.username.as_deref().unwrap_or_default(),
-            card.password.as_deref().unwrap_or_default(),
-            card.mobile_phone.as_deref().unwrap_or_default(),
-            card.note.as_deref().unwrap_or_default(),
-            tags.as_str(),
-            folder_name.as_str(),
-        ]));
+        let mut row_fields = vec![
+            card.title.clone(),
+            card.url.clone().unwrap_or_default(),
+            card.email.clone().unwrap_or_default(),
+            card.recovery_email.clone().unwrap_or_default(),
+            card.username.clone().unwrap_or_default(),
+            card.password.clone().unwrap_or_default(),
+            card.mobile_phone.clone().unwrap_or_default(),
+            card.note.clone().unwrap_or_default(),
+            tags,
+            folder_name,
+        ];
+        row_fields.extend(
+            custom_keys
+                .iter()
+                .map(|key| custom_values.get(key).cloned().unwrap_or_default()),
+        );
+
+        lines.push(serialize_csv_line(&row_fields));
     }
 
     format!("\u{feff}{}\r\n", lines.join("\r\n"))
@@ -442,7 +575,7 @@ pub fn import_csv_file(path: &Path, state: &Arc<AppState>) -> Result<LegacyImpor
             totp_uri: None,
             seed_phrase: None,
             seed_phrase_word_count: None,
-            custom_fields: Vec::new(),
+            custom_fields: row.custom_fields.clone(),
             folder_id,
         };
 
@@ -477,12 +610,12 @@ mod tests {
     use tempfile::tempdir;
 
     use super::{
-        export_csv_file, import_csv_file, inspect_csv_file, normalized_title, parse_csv_rows,
-        split_tags, LegacyCsvRow,
+        export_csv_file, import_csv_file, inspect_csv_file, normalized_title, parse_csv_records,
+        parse_csv_rows, split_tags, LegacyCsvRow,
     };
     use crate::data::sqlite::repo_impl;
     use crate::services::test_support::ServiceTestHarness;
-    use crate::types::CreateDataCardInput;
+    use crate::types::{CreateDataCardInput, CustomField, CustomFieldType};
 
     #[test]
     fn parse_csv_rows_handles_quotes_and_headers() {
@@ -505,6 +638,38 @@ mod tests {
     }
 
     #[test]
+    fn parse_csv_rows_reads_custom_columns_as_text_fields() {
+        let csv =
+            "Title,Custom field:API Key,custom field:Server,Custom field:API Key\nMail,alpha,prod,override\n";
+        let rows = parse_csv_rows(csv).unwrap();
+
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].custom_fields.len(), 2);
+        assert_eq!(rows[0].custom_fields[0].key, "API Key");
+        assert_eq!(rows[0].custom_fields[0].value, "override");
+        assert!(matches!(
+            rows[0].custom_fields[0].field_type,
+            CustomFieldType::Text
+        ));
+        assert_eq!(rows[0].custom_fields[1].key, "Server");
+        assert_eq!(rows[0].custom_fields[1].value, "prod");
+    }
+
+    #[test]
+    fn parse_csv_rows_allows_custom_only_headers() {
+        let csv = "Custom field:API Key,Custom field:Comment\nsecret,hello\n";
+        let rows = parse_csv_rows(csv).unwrap();
+
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].title, "");
+        assert_eq!(rows[0].custom_fields.len(), 2);
+        assert_eq!(rows[0].custom_fields[0].key, "API Key");
+        assert_eq!(rows[0].custom_fields[0].value, "secret");
+        assert_eq!(rows[0].custom_fields[1].key, "Comment");
+        assert_eq!(rows[0].custom_fields[1].value, "hello");
+    }
+
+    #[test]
     fn normalized_title_keeps_empty_title_even_when_url_exists() {
         let row = LegacyCsvRow {
             row_number: 2,
@@ -518,6 +683,7 @@ mod tests {
             note: String::new(),
             tags: String::new(),
             folder: String::new(),
+            custom_fields: Vec::new(),
         };
         assert_eq!(normalized_title(&row), "");
     }
@@ -570,6 +736,38 @@ mod tests {
         assert_eq!(cards[0].title, "");
         assert_eq!(cards[0].url.as_deref(), Some("https://example.com"));
         assert_eq!(cards[0].username.as_deref(), Some("user1"));
+    }
+
+    #[test]
+    fn import_csv_file_creates_text_custom_fields_from_custom_columns() {
+        let harness = ServiceTestHarness::new();
+        let temp = tempdir().unwrap();
+        let csv_path = temp.path().join("legacy-import-custom-fields.csv");
+
+        fs::write(
+            &csv_path,
+            "Title,Custom field:API Key,Custom field:Server,Custom field:Empty\nMail,alpha,prod,\n",
+        )
+        .unwrap();
+
+        let result = import_csv_file(&csv_path, &harness.state).unwrap();
+
+        assert_eq!(result.imported_count, 1);
+        assert_eq!(result.error_count, 0);
+
+        let cards =
+            repo_impl::list_datacards(&harness.state, &harness.profile_id, false, "updated_at", "DESC")
+                .unwrap();
+        assert_eq!(cards.len(), 1);
+        assert_eq!(cards[0].custom_fields.len(), 2);
+        assert_eq!(cards[0].custom_fields[0].key, "API Key");
+        assert_eq!(cards[0].custom_fields[0].value, "alpha");
+        assert!(matches!(
+            cards[0].custom_fields[0].field_type,
+            CustomFieldType::Text
+        ));
+        assert_eq!(cards[0].custom_fields[1].key, "Server");
+        assert_eq!(cards[0].custom_fields[1].value, "prod");
     }
 
     #[test]
@@ -668,7 +866,18 @@ mod tests {
                         .to_string(),
                 ),
                 seed_phrase_word_count: Some(12),
-                custom_fields: Vec::new(),
+                custom_fields: vec![
+                    CustomField {
+                        key: "API Key".to_string(),
+                        value: "secret, value".to_string(),
+                        field_type: CustomFieldType::Secret,
+                    },
+                    CustomField {
+                        key: "Comment".to_string(),
+                        value: "Line A\nLine B".to_string(),
+                        field_type: CustomFieldType::Text,
+                    },
+                ],
                 folder_id: Some(folder.id.clone()),
             },
         )
@@ -691,5 +900,162 @@ mod tests {
         assert_eq!(rows[0].note, "Line 1\nLine \"2\"");
         assert_eq!(rows[0].tags, "work, personal");
         assert_eq!(rows[0].folder, "Work");
+        assert_eq!(rows[0].custom_fields.len(), 2);
+        assert_eq!(rows[0].custom_fields[0].key, "API Key");
+        assert_eq!(rows[0].custom_fields[0].value, "secret, value");
+        assert!(matches!(
+            rows[0].custom_fields[0].field_type,
+            CustomFieldType::Text
+        ));
+        assert_eq!(rows[0].custom_fields[1].key, "Comment");
+        assert_eq!(rows[0].custom_fields[1].value, "Line A\nLine B");
+    }
+
+    #[test]
+    fn export_csv_file_builds_union_of_custom_columns_for_multiple_cards() {
+        let harness = ServiceTestHarness::new();
+        let temp = tempdir().unwrap();
+        let csv_path = temp.path().join("legacy-export-custom-union.csv");
+
+        let _first = repo_impl::create_datacard(
+            &harness.state,
+            &harness.profile_id,
+            &CreateDataCardInput {
+                title: "Mail".to_string(),
+                url: None,
+                email: None,
+                recovery_email: None,
+                username: None,
+                mobile_phone: None,
+                note: None,
+                tags: Vec::new(),
+                password: None,
+                totp_uri: None,
+                seed_phrase: None,
+                seed_phrase_word_count: None,
+                custom_fields: vec![CustomField {
+                    key: "API Key".to_string(),
+                    value: "alpha".to_string(),
+                    field_type: CustomFieldType::Secret,
+                }],
+                folder_id: None,
+            },
+        )
+        .unwrap();
+
+        let _second = repo_impl::create_datacard(
+            &harness.state,
+            &harness.profile_id,
+            &CreateDataCardInput {
+                title: "Infra".to_string(),
+                url: None,
+                email: None,
+                recovery_email: None,
+                username: None,
+                mobile_phone: None,
+                note: None,
+                tags: Vec::new(),
+                password: None,
+                totp_uri: None,
+                seed_phrase: None,
+                seed_phrase_word_count: None,
+                custom_fields: vec![CustomField {
+                    key: "Server".to_string(),
+                    value: "prod".to_string(),
+                    field_type: CustomFieldType::Text,
+                }],
+                folder_id: None,
+            },
+        )
+        .unwrap();
+
+        export_csv_file(&csv_path, &harness.state).unwrap();
+
+        let content = fs::read_to_string(&csv_path).unwrap();
+        let records: Vec<Vec<String>> = parse_csv_records(&content)
+            .into_iter()
+            .filter(|row| row.iter().any(|value| !value.is_empty()))
+            .collect();
+
+        assert_eq!(records.len(), 3);
+        assert_eq!(records[0][0].trim_start_matches('\u{feff}'), "Title");
+        assert_eq!(records[0][10], "Custom field:API Key");
+        assert_eq!(records[0][11], "Custom field:Server");
+
+        let mail_row = records.iter().find(|row| row.first().map(|v| v.as_str()) == Some("Mail")).unwrap();
+        assert_eq!(mail_row[10], "alpha");
+        assert_eq!(mail_row[11], "");
+
+        let infra_row = records.iter().find(|row| row.first().map(|v| v.as_str()) == Some("Infra")).unwrap();
+        assert_eq!(infra_row[10], "");
+        assert_eq!(infra_row[11], "prod");
+    }
+
+    #[test]
+    fn export_and_reimport_roundtrip_preserves_custom_field_values() {
+        let export_harness = ServiceTestHarness::new();
+        let temp = tempdir().unwrap();
+        let csv_path = temp.path().join("legacy-export-roundtrip.csv");
+
+        let _card = repo_impl::create_datacard(
+            &export_harness.state,
+            &export_harness.profile_id,
+            &CreateDataCardInput {
+                title: "Mail".to_string(),
+                url: None,
+                email: None,
+                recovery_email: None,
+                username: None,
+                mobile_phone: None,
+                note: None,
+                tags: Vec::new(),
+                password: None,
+                totp_uri: None,
+                seed_phrase: None,
+                seed_phrase_word_count: None,
+                custom_fields: vec![
+                    CustomField {
+                        key: "API Key".to_string(),
+                        value: "alpha".to_string(),
+                        field_type: CustomFieldType::Secret,
+                    },
+                    CustomField {
+                        key: "Server".to_string(),
+                        value: "prod".to_string(),
+                        field_type: CustomFieldType::Url,
+                    },
+                ],
+                folder_id: None,
+            },
+        )
+        .unwrap();
+
+        export_csv_file(&csv_path, &export_harness.state).unwrap();
+
+        let import_harness = ServiceTestHarness::new();
+        let result = import_csv_file(&csv_path, &import_harness.state).unwrap();
+
+        assert_eq!(result.imported_count, 1);
+        assert_eq!(result.error_count, 0);
+
+        let cards = repo_impl::list_datacards(
+            &import_harness.state,
+            &import_harness.profile_id,
+            false,
+            "updated_at",
+            "DESC",
+        )
+        .unwrap();
+
+        assert_eq!(cards.len(), 1);
+        assert_eq!(cards[0].custom_fields.len(), 2);
+        assert_eq!(cards[0].custom_fields[0].key, "API Key");
+        assert_eq!(cards[0].custom_fields[0].value, "alpha");
+        assert!(matches!(
+            cards[0].custom_fields[0].field_type,
+            CustomFieldType::Text
+        ));
+        assert_eq!(cards[0].custom_fields[1].key, "Server");
+        assert_eq!(cards[0].custom_fields[1].value, "prod");
     }
 }
