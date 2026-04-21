@@ -9,6 +9,7 @@ export {
   FileSpreadsheet as IconImportCsv,
   // Up arrow = Export (upload / send out of the app)
   Upload as IconExport,
+  FileUp as IconExportCsv,
 
   Pencil as IconRename,
   Trash2 as IconDelete,

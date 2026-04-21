@@ -1,5 +1,12 @@
 import React from 'react';
-import { IconExport, IconImport, IconImportCsv, IconLock, IconSettings } from '@/shared/icons/lucide/icons';
+import {
+  IconExport,
+  IconExportCsv,
+  IconImport,
+  IconImportCsv,
+  IconLock,
+  IconSettings,
+} from '@/shared/icons/lucide/icons';
 import { useTranslation } from '../../../../shared/lib/i18n';
 
 type Props = {
@@ -9,6 +16,7 @@ type Props = {
   onLock: () => void;
   onExportBackup: () => void;
   onImportBackup: () => void;
+  onExportLegacyData: () => void;
   onImportLegacyData: () => void;
   onOpenSettings: () => void;
 };
@@ -20,6 +28,7 @@ export function VaultHeader({
   onLock,
   onExportBackup,
   onImportBackup,
+  onExportLegacyData,
   onImportLegacyData,
   onOpenSettings,
 }: Props) {
@@ -53,6 +62,15 @@ export function VaultHeader({
           title={tTip('backup.import')}
         >
           <IconImport />
+        </button>
+        <button
+          type="button"
+          className="vault-action-button"
+          onClick={onExportLegacyData}
+          aria-label={tTip('legacyExport.csv')}
+          title={tTip('legacyExport.csv')}
+        >
+          <IconExportCsv />
         </button>
         <button
           type="button"

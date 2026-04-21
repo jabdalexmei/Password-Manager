@@ -51,6 +51,7 @@ export default function Vault({
   const [selectedCategory, setSelectedCategory] = useState<VaultCategory>('data_cards');
   const [activeDetailsKind, setActiveDetailsKind] = useState<'data' | 'bank'>('data');
   const [isAddCardMenuOpen, setIsAddCardMenuOpen] = useState(false);
+  const [legacyExportModalOpen, setLegacyExportModalOpen] = useState(false);
   const [pendingFolderDelete, setPendingFolderDelete] = useState<{
     id: string;
     name: string;
@@ -299,6 +300,7 @@ export default function Vault({
           onLock={vault.lock}
           onExportBackup={backupFlows.handleExportBackup}
           onImportBackup={backupFlows.handleImportBackup}
+          onExportLegacyData={() => setLegacyExportModalOpen(true)}
           onImportLegacyData={legacyImportFlows.handleImportLegacyData}
           onOpenSettings={settingsFlows.handleOpenSettings}
         />
@@ -376,6 +378,8 @@ export default function Vault({
           closeDeleteModal={closeDeleteModal}
           handleDeleteFolderOnly={handleDeleteFolderOnly}
           handleDeleteFolderAndCards={handleDeleteFolderAndCards}
+          legacyExportModalOpen={legacyExportModalOpen}
+          closeLegacyExportModal={() => setLegacyExportModalOpen(false)}
           backupFlows={backupFlows}
           legacyImportFlows={legacyImportFlows}
           settingsFlows={settingsFlows}

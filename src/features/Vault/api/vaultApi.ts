@@ -322,6 +322,12 @@ export async function legacyImportFromPick(token: string): Promise<LegacyImportR
   };
 }
 
+export async function legacyExportCsvViaDialog(
+  suggestedFileName?: string
+): Promise<string | null> {
+  return invoke('legacy_export_csv_via_dialog', { suggestedFileName: suggestedFileName ?? null });
+}
+
 export async function listBackups(): Promise<
   Array<{ id: string; created_at_utc: string; path: string; bytes: number }>
 > {

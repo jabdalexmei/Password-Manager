@@ -25,6 +25,14 @@ fn file_path_to_pathbuf(fp: FilePath) -> Result<PathBuf> {
     }
 }
 
+fn ensure_csv_extension(path: PathBuf) -> PathBuf {
+    if path.extension().is_some() {
+        path
+    } else {
+        path.with_extension("csv")
+    }
+}
+
 fn cleanup_stale_legacy_import_picks(state: &AppState, now: u128) -> Result<()> {
     const MAX_AGE_MS: u128 = 10 * 60 * 1000;
     const MAX_ENTRIES: usize = 16;
@@ -103,6 +111,39 @@ pub async fn legacy_import_pick_csv(
             byte_size: byte_size as i64,
             inspect,
         }))
+    })
+    .await
+    .map_err(|_| ErrorCodeString::new("TASK_JOIN_FAILED"))?
+}
+
+#[tauri::command]
+pub async fn legacy_export_csv_via_dialog(
+    app: AppHandle,
+    suggested_file_name: Option<String>,
+    state: State<'_, Arc<AppState>>,
+) -> Result<Option<String>> {
+    let st = state.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let mut dialog = app.dialog().file().set_title("Export Data Cards as CSV");
+
+        if let Some(name) = suggested_file_name {
+            dialog = dialog.set_file_name(name);
+        }
+
+        if let Ok(sp) = st.get_storage_paths() {
+            if let Ok(workspace_root) = sp.workspace_root() {
+                dialog = dialog.set_directory(workspace_root);
+            }
+        }
+
+        let selection = dialog.blocking_save_file();
+        let Some(fp) = selection else {
+            return Ok(None);
+        };
+
+        let path = ensure_csv_extension(file_path_to_pathbuf(fp)?);
+        let exported_path = legacy_import_service::export_csv_file(&path, &st)?;
+        Ok(Some(exported_path))
     })
     .await
     .map_err(|_| ErrorCodeString::new("TASK_JOIN_FAILED"))?

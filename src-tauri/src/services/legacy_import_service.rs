@@ -9,9 +9,11 @@ use serde::Serialize;
 use crate::app_state::AppState;
 use crate::data::sqlite::repo_impl;
 use crate::error::{ErrorCodeString, Result};
+use crate::services::datacards_service;
 use crate::services::security_service;
 use crate::types::{
-    CreateDataCardInput, LegacyImportErrorRow, LegacyImportInspectResult, LegacyImportResult,
+    CreateDataCardInput, DataCard, LegacyImportErrorRow, LegacyImportInspectResult,
+    LegacyImportResult,
 };
 
 #[derive(Debug, Clone)]
@@ -204,6 +206,21 @@ fn build_folder_lookup(
     Ok(out)
 }
 
+fn build_folder_name_lookup(
+    state: &Arc<AppState>,
+    profile_id: &str,
+) -> Result<HashMap<String, String>> {
+    let folders = repo_impl::list_folders(state, profile_id)?;
+    let mut out = HashMap::new();
+    for folder in folders {
+        if folder.is_system || folder.deleted_at.is_some() {
+            continue;
+        }
+        out.insert(folder.id, folder.name.trim().to_string());
+    }
+    Ok(out)
+}
+
 pub fn inspect_csv_file(path: &Path, state: &Arc<AppState>) -> Result<LegacyImportInspectResult> {
     let rows = load_rows(path)?;
     let profile_id = security_service::require_unlocked_active_profile(state)?.profile_id;
@@ -260,6 +277,78 @@ fn write_report(state: &Arc<AppState>, result: &LegacyImportResult) -> Result<St
         .map_err(|_| ErrorCodeString::new("LEGACY_IMPORT_REPORT_WRITE_FAILED"))?;
 
     Ok(report_path.to_string_lossy().to_string())
+}
+
+fn stringify_tags(tags: &[String]) -> String {
+    tags.iter()
+        .map(|tag| tag.trim())
+        .filter(|tag| !tag.is_empty())
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
+fn csv_escape(value: &str) -> String {
+    format!("\"{}\"", value.replace('"', "\"\""))
+}
+
+fn serialize_csv_line(fields: &[&str]) -> String {
+    fields
+        .iter()
+        .map(|value| csv_escape(value))
+        .collect::<Vec<_>>()
+        .join(",")
+}
+
+fn build_export_content(cards: &[DataCard], folder_names_by_id: &HashMap<String, String>) -> String {
+    let mut lines: Vec<String> = Vec::with_capacity(cards.len() + 1);
+    lines.push(serialize_csv_line(&[
+        "Title",
+        "URL",
+        "Email",
+        "Recovery email",
+        "Username",
+        "Password",
+        "Mobile phone",
+        "Note",
+        "Tags",
+        "Folder",
+    ]));
+
+    for card in cards {
+        let tags = stringify_tags(&card.tags);
+        let folder_name = card
+            .folder_id
+            .as_ref()
+            .and_then(|folder_id| folder_names_by_id.get(folder_id))
+            .cloned()
+            .unwrap_or_default();
+
+        lines.push(serialize_csv_line(&[
+            card.title.as_str(),
+            card.url.as_deref().unwrap_or_default(),
+            card.email.as_deref().unwrap_or_default(),
+            card.recovery_email.as_deref().unwrap_or_default(),
+            card.username.as_deref().unwrap_or_default(),
+            card.password.as_deref().unwrap_or_default(),
+            card.mobile_phone.as_deref().unwrap_or_default(),
+            card.note.as_deref().unwrap_or_default(),
+            tags.as_str(),
+            folder_name.as_str(),
+        ]));
+    }
+
+    format!("\u{feff}{}\r\n", lines.join("\r\n"))
+}
+
+pub fn export_csv_file(path: &Path, state: &Arc<AppState>) -> Result<String> {
+    let cards = datacards_service::list_datacards(state)?;
+    let profile_id = security_service::require_unlocked_active_profile(state)?.profile_id;
+    let folder_names_by_id = build_folder_name_lookup(state, &profile_id)?;
+    let content = build_export_content(&cards, &folder_names_by_id);
+
+    fs::write(path, content).map_err(|_| ErrorCodeString::new("LEGACY_EXPORT_FILE_WRITE_FAILED"))?;
+
+    Ok(path.to_string_lossy().to_string())
 }
 
 pub fn import_csv_file(path: &Path, state: &Arc<AppState>) -> Result<LegacyImportResult> {
@@ -338,9 +427,13 @@ mod tests {
 
     use tempfile::tempdir;
 
-    use super::{import_csv_file, normalized_title, parse_csv_rows, split_tags, LegacyCsvRow};
+    use super::{
+        export_csv_file, import_csv_file, normalized_title, parse_csv_rows, split_tags,
+        LegacyCsvRow,
+    };
     use crate::data::sqlite::repo_impl;
     use crate::services::test_support::ServiceTestHarness;
+    use crate::types::CreateDataCardInput;
 
     #[test]
     fn parse_csv_rows_handles_quotes_and_headers() {
@@ -428,5 +521,57 @@ mod tests {
         assert_eq!(cards[0].title, "");
         assert_eq!(cards[0].url.as_deref(), Some("https://example.com"));
         assert_eq!(cards[0].username.as_deref(), Some("user1"));
+    }
+
+    #[test]
+    fn export_csv_file_writes_import_compatible_rows() {
+        let harness = ServiceTestHarness::new();
+        let folder = harness.create_folder("Work", None);
+        let _bank_card = harness.create_bank_card("Visa", None);
+        let temp = tempdir().unwrap();
+        let csv_path = temp.path().join("legacy-export.csv");
+
+        let _card = repo_impl::create_datacard(
+            &harness.state,
+            &harness.profile_id,
+            &CreateDataCardInput {
+                title: "Mail, personal".to_string(),
+                url: Some("https://example.com".to_string()),
+                email: Some("mail@example.com".to_string()),
+                recovery_email: Some("recovery@example.com".to_string()),
+                username: Some("user1".to_string()),
+                mobile_phone: Some("+123".to_string()),
+                note: Some("Line 1\nLine \"2\"".to_string()),
+                tags: vec!["work".to_string(), "personal".to_string()],
+                password: Some("p@ss,word".to_string()),
+                totp_uri: Some("otpauth://totp/test".to_string()),
+                seed_phrase: Some(
+                    "alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu"
+                        .to_string(),
+                ),
+                seed_phrase_word_count: Some(12),
+                custom_fields: Vec::new(),
+                folder_id: Some(folder.id.clone()),
+            },
+        )
+        .unwrap();
+
+        let exported_path = export_csv_file(&csv_path, &harness.state).unwrap();
+        assert_eq!(exported_path, csv_path.to_string_lossy().to_string());
+
+        let content = fs::read_to_string(&csv_path).unwrap();
+        let rows = parse_csv_rows(&content).unwrap();
+
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].title, "Mail, personal");
+        assert_eq!(rows[0].url, "https://example.com");
+        assert_eq!(rows[0].email, "mail@example.com");
+        assert_eq!(rows[0].recovery_email, "recovery@example.com");
+        assert_eq!(rows[0].username, "user1");
+        assert_eq!(rows[0].password, "p@ss,word");
+        assert_eq!(rows[0].mobile_phone, "+123");
+        assert_eq!(rows[0].note, "Line 1\nLine \"2\"");
+        assert_eq!(rows[0].tags, "work, personal");
+        assert_eq!(rows[0].folder, "Work");
     }
 }

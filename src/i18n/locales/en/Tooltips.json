@@ -1,6 +1,7 @@
 {
   "backup.export": "Export backup",
   "backup.import": "Import backup",
+  "legacyExport.csv": "Export CSV",
   "legacyImport.csv": "Import CSV",
   "vault.settings": "Settings",
   "vault.lock": "Lock",

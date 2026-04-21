@@ -183,6 +183,7 @@ fn main() {
             backup_pick_file,
             backup_discard_pick,
             backup_restore_workflow_from_pick,
+            legacy_export_csv_via_dialog,
             legacy_import_pick_csv,
             legacy_import_discard_pick,
             legacy_import_from_pick,

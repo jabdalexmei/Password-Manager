@@ -10,6 +10,9 @@ const LazyImportBackupModal = React.lazy(() =>
 const LazyImportLegacyDataModal = React.lazy(() =>
   import('../components/modals/ImportLegacyDataModal').then((m) => ({ default: m.ImportLegacyDataModal }))
 );
+const LazyExportLegacyDataModal = React.lazy(() =>
+  import('../components/modals/ExportLegacyDataModal').then((m) => ({ default: m.ExportLegacyDataModal }))
+);
 const LazyImportLegacyDataResultModal = React.lazy(() =>
   import('../components/modals/ImportLegacyDataResultModal').then((m) => ({ default: m.ImportLegacyDataResultModal }))
 );
@@ -30,6 +33,8 @@ type VaultOverlaysProps = {
   closeDeleteModal: () => void;
   handleDeleteFolderOnly: () => Promise<void>;
   handleDeleteFolderAndCards: () => Promise<void>;
+  legacyExportModalOpen: boolean;
+  closeLegacyExportModal: () => void;
   backupFlows: any;
   legacyImportFlows: any;
   settingsFlows: any;
@@ -46,6 +51,8 @@ export function VaultOverlays({
   closeDeleteModal,
   handleDeleteFolderOnly,
   handleDeleteFolderAndCards,
+  legacyExportModalOpen,
+  closeLegacyExportModal,
   backupFlows,
   legacyImportFlows,
   settingsFlows,
@@ -97,6 +104,16 @@ export function VaultOverlays({
             isSubmitting={legacyImportFlows.isImporting}
             onCancel={legacyImportFlows.handleCloseImport}
             onConfirm={legacyImportFlows.handleConfirmImport}
+          />
+        </Suspense>
+      )}
+
+      {legacyExportModalOpen && (
+        <Suspense fallback={null}>
+          <LazyExportLegacyDataModal
+            open={legacyExportModalOpen}
+            profileId={profileId}
+            onClose={closeLegacyExportModal}
           />
         </Suspense>
       )}
