@@ -6,7 +6,7 @@ export {
 
   // Down arrow = Import (download into the app)
   Download as IconImport,
-  FileSpreadsheet as IconImportCsv,
+  FileDown as IconImportCsv,
   // Up arrow = Export (upload / send out of the app)
   Upload as IconExport,
   FileUp as IconExportCsv,
