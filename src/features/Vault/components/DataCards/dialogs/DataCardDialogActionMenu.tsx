@@ -63,17 +63,17 @@ export function DataCardDialogActionMenu({
           <button type="button" className="dialog-actionmenu-item" onClick={onAddCustomField}>
             {t('customFields.add')}
           </button>
+          {hasCustomFields && (
+            <button type="button" className="dialog-actionmenu-item" onClick={onToggleEditFields}>
+              {t('customFields.editFields')}
+            </button>
+          )}
           <button type="button" className="dialog-actionmenu-item" onClick={onOpenTwoFactor}>
             {hasTotp ? t('twoFactor.editAction') : t('twoFactor.addAction')}
           </button>
           <button type="button" className="dialog-actionmenu-item" onClick={onOpenSeedPhrase}>
             {seedPhraseWordCount > 0 ? t('seedPhrase.editAction') : t('seedPhrase.addAction')}
           </button>
-          {hasCustomFields && (
-            <button type="button" className="dialog-actionmenu-item" onClick={onToggleEditFields}>
-              {t('customFields.editFields')}
-            </button>
-          )}
         </div>
       )}
     </>
