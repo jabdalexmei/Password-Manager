@@ -522,3 +522,29 @@ pub fn set_datacard_preview_fields_for_card(
         Ok(true)
     })
 }
+
+pub fn repair_datacard_custom_fields_and_preview_fields(
+    state: &Arc<AppState>,
+    profile_id: &str,
+    id: &str,
+    custom_fields: &[CustomField],
+    preview_fields: &[String],
+) -> Result<bool> {
+    with_connection_in_active_vault(state, profile_id, |conn, active_vault_id| {
+        let custom_fields_json = serialize_json(custom_fields)?;
+        let preview_fields_json = serialize_json(preview_fields)?;
+
+        let rows = conn
+            .execute(
+                "UPDATE datacards SET custom_fields_json = ?1, preview_fields_json = ?2 WHERE id = ?3 AND vault_id = ?4",
+                params![custom_fields_json, preview_fields_json, id, active_vault_id],
+            )
+            .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
+
+        if rows == 0 {
+            return Err(ErrorCodeString::new("DATACARD_NOT_FOUND"));
+        }
+
+        Ok(true)
+    })
+}

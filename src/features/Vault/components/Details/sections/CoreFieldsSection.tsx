@@ -1,9 +1,11 @@
 import React from 'react';
 import { IconCopy, IconHistory, IconPreview, IconPreviewOff } from '@/shared/icons/lucide/icons';
 import { useTranslation } from '../../../../../shared/lib/i18n';
+import { CONTENT_MASK, type DataCardDetailContentField } from '../../../lib/datacardDetailContentFields';
 import type { DataCard } from '../../../types/ui';
 import type { DataCardCoreField } from '../../../lib/datacardCoreHiddenFields';
 import type { UseDetailsResult } from '../useDetails';
+import { DetailContentVisibilityButton } from '../components/DetailContentVisibilityButton';
 import type { DataCardCardPreviewField } from '../lib/previewTokens';
 
 type TranslateFn = (key: string, params?: Record<string, string | number>) => string;
@@ -14,10 +16,11 @@ type CoreFieldsSectionProps = {
   onOpenCoreMenu: (field: DataCardCoreField, event: React.MouseEvent) => void;
   onOpenPreviewMenu: (field: DataCardCardPreviewField, event: React.MouseEvent, allowGlobal: boolean) => void;
   onOpenHistory: () => void;
+  isContentConcealed: (field: DataCardDetailContentField) => boolean;
+  isContentRevealed: (field: DataCardDetailContentField) => boolean;
+  onToggleContentReveal: (field: DataCardDetailContentField) => void;
   t: TranslateFn;
 };
-
-const SECRET_MASK = '\u2022'.repeat(12);
 
 export function CoreFieldsSection({
   card,
@@ -25,6 +28,9 @@ export function CoreFieldsSection({
   onOpenCoreMenu,
   onOpenPreviewMenu,
   onOpenHistory,
+  isContentConcealed,
+  isContentRevealed,
+  onToggleContentReveal,
   t,
 }: CoreFieldsSectionProps) {
   const { t: tTip } = useTranslation('Tooltips');
@@ -36,7 +42,16 @@ export function CoreFieldsSection({
   const hasUsername = hasValue(card.username);
   const hasMobilePhone = hasValue(card.mobilePhone);
   const hasPassword = hasValue(card.password);
-  const passwordDisplay = hasPassword ? (detailActions.showPassword ? card.password : SECRET_MASK) : '';
+  const titleDisplay = isContentConcealed('title') && !isContentRevealed('title') ? CONTENT_MASK : card.title;
+  const urlDisplay = isContentConcealed('url') && !isContentRevealed('url') ? CONTENT_MASK : card.url ?? '';
+  const emailDisplay = isContentConcealed('email') && !isContentRevealed('email') ? CONTENT_MASK : card.email ?? '';
+  const recoveryEmailDisplay =
+    isContentConcealed('recovery_email') && !isContentRevealed('recovery_email') ? CONTENT_MASK : card.recoveryEmail ?? '';
+  const usernameDisplay =
+    isContentConcealed('username') && !isContentRevealed('username') ? CONTENT_MASK : card.username ?? '';
+  const mobilePhoneDisplay =
+    isContentConcealed('mobile_phone') && !isContentRevealed('mobile_phone') ? CONTENT_MASK : card.mobilePhone ?? '';
+  const passwordDisplay = hasPassword ? (detailActions.showPassword ? card.password : CONTENT_MASK) : '';
 
   return (
     <>
@@ -44,7 +59,16 @@ export function CoreFieldsSection({
         <div className="detail-field">
           <div className="detail-label">{t('label.title')}</div>
           <div className="detail-value-box" onContextMenu={(event) => onOpenCoreMenu('title', event)}>
-            <div className="detail-value-text">{card.title}</div>
+            <div className="detail-value-text">{titleDisplay}</div>
+            {isContentConcealed('title') && (
+              <div className="detail-value-actions">
+                <DetailContentVisibilityButton
+                  isRevealed={isContentRevealed('title')}
+                  onToggle={() => onToggleContentReveal('title')}
+                  t={t}
+                />
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -53,7 +77,7 @@ export function CoreFieldsSection({
         <div className="detail-field">
           <div className="detail-label">{t('label.url')}</div>
           <div className="detail-value-box" onContextMenu={(event) => onOpenCoreMenu('url', event)}>
-            <div className="detail-value-text">{card.url ?? ''}</div>
+            <div className="detail-value-text">{urlDisplay}</div>
             <div className="detail-value-actions">
               <button
                 className="icon-button"
@@ -64,6 +88,13 @@ export function CoreFieldsSection({
               >
                 <IconCopy />
               </button>
+              {isContentConcealed('url') && (
+                <DetailContentVisibilityButton
+                  isRevealed={isContentRevealed('url')}
+                  onToggle={() => onToggleContentReveal('url')}
+                  t={t}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -73,7 +104,7 @@ export function CoreFieldsSection({
         <div className="detail-field">
           <div className="detail-label">{t('label.email')}</div>
           <div className="detail-value-box" onContextMenu={(event) => onOpenCoreMenu('email', event)}>
-            <div className="detail-value-text">{card.email ?? ''}</div>
+            <div className="detail-value-text">{emailDisplay}</div>
             <div className="detail-value-actions">
               <button
                 className="icon-button"
@@ -84,6 +115,13 @@ export function CoreFieldsSection({
               >
                 <IconCopy />
               </button>
+              {isContentConcealed('email') && (
+                <DetailContentVisibilityButton
+                  isRevealed={isContentRevealed('email')}
+                  onToggle={() => onToggleContentReveal('email')}
+                  t={t}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -93,7 +131,7 @@ export function CoreFieldsSection({
         <div className="detail-field">
           <div className="detail-label">{t('label.recoveryEmail')}</div>
           <div className="detail-value-box" onContextMenu={(event) => onOpenPreviewMenu('recovery_email', event, true)}>
-            <div className="detail-value-text">{card.recoveryEmail ?? ''}</div>
+            <div className="detail-value-text">{recoveryEmailDisplay}</div>
             <div className="detail-value-actions">
               <button
                 className="icon-button"
@@ -104,6 +142,13 @@ export function CoreFieldsSection({
               >
                 <IconCopy />
               </button>
+              {isContentConcealed('recovery_email') && (
+                <DetailContentVisibilityButton
+                  isRevealed={isContentRevealed('recovery_email')}
+                  onToggle={() => onToggleContentReveal('recovery_email')}
+                  t={t}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -113,7 +158,7 @@ export function CoreFieldsSection({
         <div className="detail-field">
           <div className="detail-label">{t('label.username')}</div>
           <div className="detail-value-box" onContextMenu={(event) => onOpenPreviewMenu('username', event, true)}>
-            <div className="detail-value-text">{card.username ?? ''}</div>
+            <div className="detail-value-text">{usernameDisplay}</div>
             <div className="detail-value-actions">
               <button
                 className="icon-button"
@@ -124,6 +169,13 @@ export function CoreFieldsSection({
               >
                 <IconCopy />
               </button>
+              {isContentConcealed('username') && (
+                <DetailContentVisibilityButton
+                  isRevealed={isContentRevealed('username')}
+                  onToggle={() => onToggleContentReveal('username')}
+                  t={t}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -133,7 +185,7 @@ export function CoreFieldsSection({
         <div className="detail-field">
           <div className="detail-label">{t('label.mobile')}</div>
           <div className="detail-value-box" onContextMenu={(event) => onOpenPreviewMenu('mobile_phone', event, true)}>
-            <div className="detail-value-text">{card.mobilePhone ?? ''}</div>
+            <div className="detail-value-text">{mobilePhoneDisplay}</div>
             <div className="detail-value-actions">
               <button
                 className="icon-button"
@@ -144,6 +196,13 @@ export function CoreFieldsSection({
               >
                 <IconCopy />
               </button>
+              {isContentConcealed('mobile_phone') && (
+                <DetailContentVisibilityButton
+                  isRevealed={isContentRevealed('mobile_phone')}
+                  onToggle={() => onToggleContentReveal('mobile_phone')}
+                  t={t}
+                />
+              )}
             </div>
           </div>
         </div>

@@ -1,4 +1,5 @@
 ﻿import React, { Suspense, useEffect, useMemo, useState } from 'react';
+import { useCallback } from 'react';
 import { Attachment, DataCard, Folder } from '../../types/ui';
 import { useI18n, useTranslation } from '../../../../shared/lib/i18n';
 import { useDetails } from './useDetails';
@@ -9,7 +10,18 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { useAttachmentsDrop } from './hooks/useAttachmentsDrop';
 import { useTotpTicker } from './hooks/useTotpTicker';
 import { usePreviewAndCoreMenus } from './hooks/usePreviewAndCoreMenus';
+import {
+  CONTENT_MASK,
+  toCustomDetailContentField,
+  type DataCardDetailContentField,
+} from '../../lib/datacardDetailContentFields';
+import {
+  loadHiddenContentByCard,
+  onHiddenContentByCardChanged,
+  saveHiddenContentByCard,
+} from '../../lib/datacardHiddenContentByCard';
 import { FieldContextMenu } from './components/FieldContextMenu';
+import { DetailContentVisibilityButton } from './components/DetailContentVisibilityButton';
 import { MetaSection } from './sections/MetaSection';
 import { CoreFieldsSection } from './sections/CoreFieldsSection';
 import { SeedPhraseSection } from './sections/SeedPhraseSection';
@@ -18,6 +30,7 @@ import { CustomFieldsSection } from './sections/CustomFieldsSection';
 import { AttachmentsSection } from './sections/AttachmentsSection';
 import { formatVaultDateTime } from '../../utils/dateTime';
 import type { BackendDateTimeFormat } from '../../types/backend';
+import { CUSTOM_PREVIEW_PREFIX, isCustomPreviewField } from './lib/previewTokens';
 
 const LazyAttachmentPreviewModal = React.lazy(() =>
   import('../modals/AttachmentPreviewModal').then((m) => ({ default: m.default })),
@@ -105,6 +118,8 @@ export function Details({
   const [historyOpen, setHistoryOpen] = useState(false);
   const [seedPhraseViewOpen, setSeedPhraseViewOpen] = useState(false);
   const [revealedCustomFields, setRevealedCustomFields] = useState<Record<string, boolean>>({});
+  const [hiddenContentByCard, setHiddenContentByCard] = useState<Record<string, DataCardDetailContentField[]>>({});
+  const [revealedConcealedContentFields, setRevealedConcealedContentFields] = useState<Record<string, boolean>>({});
 
   const totpData = useTotpTicker(card?.totpUri);
 
@@ -127,11 +142,26 @@ export function Details({
   } = usePreviewAndCoreMenus({ card, activeFolderId, onReloadCard });
 
   useEffect(() => {
+    let isMounted = true;
+    loadHiddenContentByCard().then((fieldsByCard) => {
+      if (isMounted) {
+        setHiddenContentByCard(fieldsByCard);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => onHiddenContentByCardChanged(setHiddenContentByCard), []);
+
+  useEffect(() => {
     setHistoryOpen(false);
   }, [card?.id]);
 
   useEffect(() => {
     setRevealedCustomFields({});
+    setRevealedConcealedContentFields({});
   }, [card?.id]);
 
   const toggleCustomFieldVisibility = (fieldId: string) => {
@@ -140,6 +170,90 @@ export function Details({
       [fieldId]: !prev[fieldId],
     }));
   };
+
+  const concealedFieldsForCurrentCard = useMemo(() => {
+    if (!card?.id) return new Set<DataCardDetailContentField>();
+    return new Set(hiddenContentByCard[card.id] ?? []);
+  }, [card?.id, hiddenContentByCard]);
+
+  const isContentConcealed = useCallback(
+    (field: DataCardDetailContentField) => concealedFieldsForCurrentCard.has(field),
+    [concealedFieldsForCurrentCard],
+  );
+
+  const isContentRevealed = useCallback(
+    (field: DataCardDetailContentField) => Boolean(revealedConcealedContentFields[field]),
+    [revealedConcealedContentFields],
+  );
+
+  const toggleContentReveal = useCallback((field: DataCardDetailContentField) => {
+    setRevealedConcealedContentFields((prev) => ({
+      ...prev,
+      [field]: !prev[field],
+    }));
+  }, []);
+
+  const toggleContentFieldConcealed = useCallback(
+    async (field: DataCardDetailContentField) => {
+      if (!card?.id) return;
+
+      const currentFields = hiddenContentByCard[card.id] ?? [];
+      const nextFields = currentFields.includes(field)
+        ? currentFields.filter((item) => item !== field)
+        : [...currentFields, field];
+      const nextHiddenContentByCard = { ...hiddenContentByCard };
+
+      if (nextFields.length === 0) {
+        delete nextHiddenContentByCard[card.id];
+      } else {
+        nextHiddenContentByCard[card.id] = nextFields;
+      }
+
+      setHiddenContentByCard(nextHiddenContentByCard);
+      setRevealedConcealedContentFields((prev) => {
+        if (!prev[field]) return prev;
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+
+      await saveHiddenContentByCard(nextHiddenContentByCard);
+    },
+    [card?.id, hiddenContentByCard],
+  );
+
+  const resolveCoreContentField = useCallback(
+    (field: 'title' | 'url' | 'email'): DataCardDetailContentField => field,
+    [],
+  );
+
+  const resolvePreviewContentField = useCallback(
+    (field: string): DataCardDetailContentField | null => {
+      if (
+        field === 'recovery_email' ||
+        field === 'username' ||
+        field === 'mobile_phone' ||
+        field === 'note' ||
+        field === 'folder' ||
+        field === 'tags'
+      ) {
+        return field;
+      }
+
+      if (!isCustomPreviewField(field)) {
+        return null;
+      }
+
+      const customFieldId = field.slice(CUSTOM_PREVIEW_PREFIX.length);
+      const customField = (card?.customFields ?? []).find((item) => item.id === customFieldId);
+      if (!customField || customField.type === 'secret') {
+        return null;
+      }
+
+      return toCustomDetailContentField(customField.id);
+    },
+    [card?.customFields],
+  );
 
   const informationTitle = (
     <div className="datacards-header">
@@ -170,6 +284,12 @@ export function Details({
   const hasNote = hasValue(card.note);
   const hasTags = Array.isArray(card.tags) && card.tags.length > 0;
   const hasFolderName = hasValue(folderName);
+  const isFolderConcealed = isContentConcealed('folder');
+  const isFolderRevealed = isContentRevealed('folder');
+  const folderDisplay = isFolderConcealed && !isFolderRevealed ? CONTENT_MASK : folderName;
+  const isTagsConcealed = isContentConcealed('tags');
+  const areTagsRevealed = isContentRevealed('tags');
+  const tagsDisplay = isTagsConcealed && !areTagsRevealed ? CONTENT_MASK : card.tags?.join(', ');
   const seedPhraseRaw = hasValue(card.seedPhrase) ? (card.seedPhrase as string) : null;
   const seedPhraseWordCount =
     typeof card.seedPhraseWordCount === 'number' && card.seedPhraseWordCount > 0
@@ -321,6 +441,9 @@ export function Details({
             onOpenCoreMenu={openCoreMenu}
             onOpenPreviewMenu={openPreviewMenu}
             onOpenHistory={() => setHistoryOpen(true)}
+            isContentConcealed={isContentConcealed}
+            isContentRevealed={isContentRevealed}
+            onToggleContentReveal={toggleContentReveal}
             t={t}
           />
 
@@ -334,21 +457,32 @@ export function Details({
             onToggleCustomFieldVisibility={toggleCustomFieldVisibility}
             detailActions={detailActions}
             onOpenPreviewMenu={openPreviewMenu}
+            isContentConcealed={isContentConcealed}
+            isContentRevealed={isContentRevealed}
+            onToggleContentReveal={toggleContentReveal}
             t={t}
           />
 
           {hasNote && (() => {
             const noteText = card.note ?? '';
             const isNoteMultiline = noteText.includes('\n');
+            const isNoteConcealed = isContentConcealed('note');
+            const isNoteRevealed = isContentRevealed('note');
+            const noteDisplay = isNoteConcealed && !isNoteRevealed ? CONTENT_MASK : noteText;
+            const isDisplayedNoteMultiline = !isNoteConcealed || isNoteRevealed ? isNoteMultiline : false;
 
             return (
-              <div className={`detail-field detail-field-notes${isNoteMultiline ? ' detail-field-notes--multiline' : ''}`}>
+              <div
+                className={`detail-field detail-field-notes${isDisplayedNoteMultiline ? ' detail-field-notes--multiline' : ''}`}
+              >
                 <div className="detail-label">{t('label.note')}</div>
                 <div
-                  className={`detail-value-box${isNoteMultiline ? ' detail-value-multiline' : ''}`}
+                  className={`detail-value-box${isDisplayedNoteMultiline ? ' detail-value-multiline' : ''}`}
                   onContextMenu={(event) => openPreviewMenu('note', event, true)}
                 >
-                  <div className={`detail-value-text${isNoteMultiline ? ' detail-value-text-multiline' : ''}`}>{noteText}</div>
+                  <div className={`detail-value-text${isDisplayedNoteMultiline ? ' detail-value-text-multiline' : ''}`}>
+                    {noteDisplay}
+                  </div>
                   <div className="detail-value-actions">
                     <button
                       className="icon-button"
@@ -359,6 +493,13 @@ export function Details({
                     >
                       <IconCopy />
                     </button>
+                    {isNoteConcealed && (
+                      <DetailContentVisibilityButton
+                        isRevealed={isNoteRevealed}
+                        onToggle={() => toggleContentReveal('note')}
+                        t={t}
+                      />
+                    )}
                   </div>
                 </div>
               </div>
@@ -369,7 +510,16 @@ export function Details({
             <div className="detail-field">
               <div className="detail-label">{t('label.folder')}</div>
               <div className="detail-value-box" onContextMenu={(event) => openPreviewMenu('folder', event, true)}>
-                <div className="detail-value-text">{folderName}</div>
+                <div className="detail-value-text">{folderDisplay}</div>
+                {isFolderConcealed && (
+                  <div className="detail-value-actions">
+                    <DetailContentVisibilityButton
+                      isRevealed={isFolderRevealed}
+                      onToggle={() => toggleContentReveal('folder')}
+                      t={t}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -378,7 +528,16 @@ export function Details({
             <div className="detail-field">
               <div className="detail-label">{t('label.tags')}</div>
               <div className="detail-value-box" onContextMenu={(event) => openPreviewMenu('tags', event, true)}>
-                <div className="detail-value-text">{card.tags?.join(', ')}</div>
+                <div className="detail-value-text">{tagsDisplay}</div>
+                {isTagsConcealed && (
+                  <div className="detail-value-actions">
+                    <DetailContentVisibilityButton
+                      isRevealed={areTagsRevealed}
+                      onToggle={() => toggleContentReveal('tags')}
+                      t={t}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -416,6 +575,10 @@ export function Details({
         isFieldInGlobalPreview={isFieldInGlobalPreview}
         isFieldInFolderOnlyPreviewForCurrentFolder={isFieldInFolderOnlyPreviewForCurrentFolder}
         canTogglePreviewFieldFolderOnly={canTogglePreviewFieldFolderOnly}
+        resolveCoreContentField={resolveCoreContentField}
+        resolvePreviewContentField={resolvePreviewContentField}
+        isContentFieldConcealed={isContentConcealed}
+        toggleContentFieldConcealed={toggleContentFieldConcealed}
         t={t}
       />
 

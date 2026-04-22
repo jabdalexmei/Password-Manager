@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from '../../../../shared/lib/i18n';
 import { useToaster } from '../../../../shared/components/Toaster';
 import { addAttachmentsFromPick, attachmentsDiscardPick, attachmentsPickFiles, listAttachments } from '../../api/vaultApi';
+import { generateCustomFieldId } from '../../lib/customFieldId';
 import { mapAttachmentFromBackend } from '../../types/mappers';
 import {
   Attachment,
@@ -143,9 +144,6 @@ const normalizeTags = (value: string) => {
   return Array.from(tagSet);
 };
 
-const makeRowId = () =>
-  globalThis.crypto?.randomUUID?.() ?? `cf_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-
 const moveCustomFieldRow = (
   rows: CustomFieldFormRow[],
   sourceRowId: string,
@@ -180,6 +178,7 @@ const buildCreateInput = (form: DataCardFormState): CreateDataCardInput => ({
   seedPhrase: normalizeOptional(form.seedPhrase),
   seedPhraseWordCount: form.seedPhraseWordCount > 0 ? form.seedPhraseWordCount : null,
   customFields: form.customFields.map((row) => ({
+    id: row.id,
     key: row.key,
     value: row.value,
     type: row.type,
@@ -347,7 +346,7 @@ export function useDataCards({
       note: card.note || '',
       tagsText: (card.tags || []).join(', '),
       customFields: (card.customFields ?? []).map((field: CustomField) => ({
-        id: makeRowId(),
+        id: field.id,
         key: field.key,
         value: field.value,
         type: field.type,
@@ -410,7 +409,7 @@ export function useDataCards({
 
       setCreateForm((prev) => ({
         ...prev,
-        customFields: [...prev.customFields, { id: makeRowId(), key: trimmed, value: '', type: 'text' }],
+        customFields: [...prev.customFields, { id: generateCustomFieldId(), key: trimmed, value: '', type: 'text' }],
       }));
 
       return { ok: true as const };
@@ -466,7 +465,7 @@ export function useDataCards({
         if (!prev) return prev;
         return {
           ...prev,
-          customFields: [...prev.customFields, { id: makeRowId(), key: trimmed, value: '', type: 'text' }],
+          customFields: [...prev.customFields, { id: generateCustomFieldId(), key: trimmed, value: '', type: 'text' }],
         };
       });
 

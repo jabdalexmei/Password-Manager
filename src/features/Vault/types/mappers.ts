@@ -72,6 +72,7 @@ export function mapCardFromBackend(card: BackendDataCard): DataCard {
     seedPhrase: card.seed_phrase,
     seedPhraseWordCount: card.seed_phrase_word_count,
     customFields: (card.custom_fields || []).map((field) => ({
+      id: field.id,
       key: field.key,
       value: field.value,
       type: field.type,
@@ -111,6 +112,7 @@ export function mapCardSummaryFromBackend(
     seedPhrase: null,
     seedPhraseWordCount: null,
     customFields: (card.custom_fields || []).map((field) => ({
+      id: field.id,
       key: field.key,
       value: field.value,
       type: field.type,
@@ -187,6 +189,7 @@ export function mapCreateCardToBackend(input: CreateDataCardInput): BackendCreat
     seed_phrase: input.seedPhrase ?? null,
     seed_phrase_word_count: input.seedPhraseWordCount ?? null,
     custom_fields: (input.customFields ?? []).map((field) => ({
+      id: field.id,
       key: field.key,
       value: field.value,
       type: field.type,

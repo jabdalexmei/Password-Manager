@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::services::backup_service::BackupInspectResult;
 
@@ -108,7 +109,11 @@ pub struct Vault {
     pub updated_at: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+pub fn new_custom_field_id() -> String {
+    format!("cf_{}", Uuid::new_v4())
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum CustomFieldType {
     Text,
@@ -118,8 +123,10 @@ pub enum CustomFieldType {
     Date,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct CustomField {
+    #[serde(default = "new_custom_field_id")]
+    pub id: String,
     pub key: String,
     pub value: String,
     #[serde(rename = "type")]

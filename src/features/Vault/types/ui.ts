@@ -21,6 +21,7 @@ export type VaultItem = {
 export type CustomFieldType = "text" | "secret" | "url" | "number" | "date";
 
 export type CustomField = {
+  id: string;
   key: string;
   value: string;
   type: CustomFieldType;

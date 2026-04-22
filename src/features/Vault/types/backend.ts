@@ -19,6 +19,7 @@ export type BackendVault = {
 export type BackendCustomFieldType = "text" | "secret" | "url" | "number" | "date";
 
 export type BackendCustomField = {
+  id: string;
   key: string;
   value: string;
   type: BackendCustomFieldType;

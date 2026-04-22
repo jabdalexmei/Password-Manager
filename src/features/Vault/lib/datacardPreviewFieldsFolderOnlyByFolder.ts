@@ -3,6 +3,7 @@ import {
   setDataCardPreviewFieldsFolderOnlyByFolder,
   type DataCardPreviewFieldsFolderOnlyByFolderDto,
 } from '@/shared/lib/tauri';
+import { isCustomFieldId } from './customFieldId';
 import type { DataCardPreviewField } from './datacardPreviewFields';
 
 export type DataCardCustomPreviewField = `custom:${string}`;
@@ -14,7 +15,8 @@ const EVENT_NAME = 'datacard-preview-fields-folder-only-by-folder-changed';
 const CUSTOM_PREVIEW_PREFIX = 'custom:' as const;
 
 const isCustomPreviewField = (value: string): value is DataCardCustomPreviewField =>
-  value.startsWith(CUSTOM_PREVIEW_PREFIX) && value.length > CUSTOM_PREVIEW_PREFIX.length;
+  value.startsWith(CUSTOM_PREVIEW_PREFIX) &&
+  isCustomFieldId(value.slice(CUSTOM_PREVIEW_PREFIX.length));
 
 const isAllowedPreviewField = (value: string): value is DataCardPreviewField =>
   value === 'username' ||

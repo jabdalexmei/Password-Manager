@@ -1,6 +1,7 @@
 use chrono::Utc;
 use std::collections::BTreeMap;
 use std::sync::Arc;
+use uuid::Uuid;
 
 use crate::app_state::AppState;
 use crate::data::sqlite::repo_impl;
@@ -14,7 +15,10 @@ const PREF_KEY_DATACARD_PREVIEW_FIELDS_FOLDER_ONLY_BY_FOLDER: &str =
 const PREF_KEY_BANKCARD_PREVIEW_FIELDS: &str = "bankcard.preview_fields";
 const PREF_KEY_DATACARD_CORE_HIDDEN_FIELDS: &str = "datacard.core_hidden_fields";
 const PREF_KEY_BANKCARD_CORE_HIDDEN_FIELDS: &str = "bankcard.core_hidden_fields";
+const PREF_KEY_DATACARD_HIDDEN_CONTENT_BY_CARD: &str = "datacard.hidden_content_by_card";
 const MAX_CORE_HIDDEN_FIELDS: usize = 3;
+const CUSTOM_FIELD_ID_PREFIX: &str = "cf_";
+const CUSTOM_TOKEN_PREFIX: &str = "custom:";
 
 fn is_allowed_preview_field(value: &str) -> bool {
     matches!(
@@ -27,10 +31,27 @@ fn is_allowed_preview_field_or_custom(value: &str) -> bool {
     if is_allowed_preview_field(value) {
         return true;
     }
-    match value.strip_prefix("custom:") {
-        Some(rest) => !rest.trim().is_empty(),
+    match value.strip_prefix(CUSTOM_TOKEN_PREFIX) {
+        Some(rest) => is_valid_custom_field_id(rest.trim()),
         None => false,
     }
+}
+
+fn is_valid_custom_field_id(value: &str) -> bool {
+    if !value.starts_with(CUSTOM_FIELD_ID_PREFIX) {
+        return false;
+    }
+
+    let raw_uuid = &value[CUSTOM_FIELD_ID_PREFIX.len()..];
+    if raw_uuid.is_empty() || raw_uuid != raw_uuid.to_ascii_lowercase() {
+        return false;
+    }
+
+    let Ok(uuid) = Uuid::try_parse(raw_uuid) else {
+        return false;
+    };
+
+    uuid.get_version_num() == 4 && uuid.to_string() == raw_uuid
 }
 
 fn is_allowed_bankcard_preview_field(value: &str) -> bool {
@@ -146,6 +167,60 @@ fn normalize_core_hidden_fields(input: Vec<String>) -> Vec<String> {
             break;
         }
     }
+    out
+}
+
+fn is_allowed_hidden_content_field(value: &str) -> bool {
+    matches!(
+        value,
+        "title"
+            | "url"
+            | "email"
+            | "recovery_email"
+            | "username"
+            | "mobile_phone"
+            | "note"
+            | "folder"
+            | "tags"
+    ) || value
+        .strip_prefix(CUSTOM_TOKEN_PREFIX)
+        .map(is_valid_custom_field_id)
+        .unwrap_or(false)
+}
+
+fn normalize_hidden_content_by_card(
+    input: BTreeMap<String, Vec<String>>,
+) -> BTreeMap<String, Vec<String>> {
+    let mut out: BTreeMap<String, Vec<String>> = BTreeMap::new();
+
+    for (raw_card_id, raw_fields) in input {
+        let card_id = raw_card_id.trim();
+        if card_id.is_empty() {
+            continue;
+        }
+
+        let mut fields: Vec<String> = Vec::new();
+        for raw_field in raw_fields {
+            let trimmed = raw_field.trim();
+            if trimmed.is_empty() {
+                continue;
+            }
+            if !is_allowed_hidden_content_field(trimmed) {
+                continue;
+            }
+            if fields.iter().any(|existing| existing == trimmed) {
+                continue;
+            }
+            fields.push(trimmed.to_string());
+        }
+
+        if fields.is_empty() {
+            continue;
+        }
+
+        out.insert(card_id.to_string(), fields);
+    }
+
     out
 }
 
@@ -367,6 +442,49 @@ pub fn set_bankcard_core_hidden_fields(fields: Vec<String>, state: &Arc<AppState
         state,
         &profile_id,
         PREF_KEY_BANKCARD_CORE_HIDDEN_FIELDS,
+        &value_json,
+        &now_utc,
+    )?;
+    security_service::request_persist_active_vault(state.clone());
+    Ok(updated)
+}
+
+pub fn get_datacard_hidden_content_by_card(
+    state: &Arc<AppState>,
+) -> Result<BTreeMap<String, Vec<String>>> {
+    let profile_id = security_service::require_unlocked_active_profile(state)?.profile_id;
+
+    let raw = repo_impl::get_ui_preference_value_json(
+        state,
+        &profile_id,
+        PREF_KEY_DATACARD_HIDDEN_CONTENT_BY_CARD,
+    )?;
+    if let Some(value_json) = raw {
+        let parsed: Result<BTreeMap<String, Vec<String>>> =
+            serde_json::from_str(&value_json).map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"));
+        if let Ok(v) = parsed {
+            return Ok(normalize_hidden_content_by_card(v));
+        }
+    }
+
+    Ok(BTreeMap::new())
+}
+
+pub fn set_datacard_hidden_content_by_card(
+    fields_by_card: BTreeMap<String, Vec<String>>,
+    state: &Arc<AppState>,
+) -> Result<bool> {
+    let profile_id = security_service::require_unlocked_active_profile(state)?.profile_id;
+
+    let cleaned = normalize_hidden_content_by_card(fields_by_card);
+    let value_json =
+        serde_json::to_string(&cleaned).map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
+
+    let now_utc = Utc::now().to_rfc3339();
+    let updated = repo_impl::set_ui_preference_value_json(
+        state,
+        &profile_id,
+        PREF_KEY_DATACARD_HIDDEN_CONTENT_BY_CARD,
         &value_json,
         &now_utc,
     )?;

@@ -125,6 +125,6 @@ pub(super) fn deserialize_json<T: serde::de::DeserializeOwned>(value: String) ->
         .map_err(|err| rusqlite::Error::FromSqlConversionFailure(0, Type::Text, Box::new(err)))
 }
 
-pub(super) fn serialize_json<T: serde::Serialize>(value: &T) -> Result<String> {
+pub(super) fn serialize_json<T: serde::Serialize + ?Sized>(value: &T) -> Result<String> {
     serde_json::to_string(value).map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))
 }

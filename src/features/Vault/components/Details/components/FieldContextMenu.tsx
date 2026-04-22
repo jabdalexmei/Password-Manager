@@ -1,6 +1,7 @@
 import React from 'react';
 import type { DataCardCoreField } from '../../../lib/datacardCoreHiddenFields';
 import type { DataCardPreviewField } from '../../../lib/datacardPreviewFields';
+import type { DataCardDetailContentField } from '../../../lib/datacardDetailContentFields';
 import { isCustomPreviewField, type DataCardCardPreviewField } from '../lib/previewTokens';
 
 type TranslateFn = (key: string, params?: Record<string, string | number>) => string;
@@ -19,6 +20,10 @@ type FieldContextMenuProps = {
   isFieldInGlobalPreview: (field: DataCardPreviewField) => boolean;
   isFieldInFolderOnlyPreviewForCurrentFolder: (field: DataCardCardPreviewField) => boolean;
   canTogglePreviewFieldFolderOnly: boolean;
+  resolveCoreContentField: (field: DataCardCoreField) => DataCardDetailContentField | null;
+  resolvePreviewContentField: (field: DataCardCardPreviewField) => DataCardDetailContentField | null;
+  isContentFieldConcealed: (field: DataCardDetailContentField) => boolean;
+  toggleContentFieldConcealed: (field: DataCardDetailContentField) => Promise<void>;
   t: TranslateFn;
 };
 
@@ -36,8 +41,15 @@ export function FieldContextMenu({
   isFieldInGlobalPreview,
   isFieldInFolderOnlyPreviewForCurrentFolder,
   canTogglePreviewFieldFolderOnly,
+  resolveCoreContentField,
+  resolvePreviewContentField,
+  isContentFieldConcealed,
+  toggleContentFieldConcealed,
   t,
 }: FieldContextMenuProps) {
+  const coreContentField = coreMenu ? resolveCoreContentField(coreMenu.field) : null;
+  const previewContentField = previewMenu ? resolvePreviewContentField(previewMenu.field) : null;
+
   return (
     <>
       {coreMenu && (
@@ -56,6 +68,21 @@ export function FieldContextMenu({
             <button className="vault-actionmenu-item" type="button" onClick={() => toggleCoreFieldHidden(coreMenu.field)}>
               {isCoreFieldHidden(coreMenu.field) ? t('coreMenu.showInList') : t('coreMenu.hideInList')}
             </button>
+
+            {coreContentField && (
+              <>
+                <div className="vault-actionmenu-separator" />
+                <button
+                  className="vault-actionmenu-item"
+                  type="button"
+                  onClick={() => {
+                    void toggleContentFieldConcealed(coreContentField);
+                  }}
+                >
+                  {isContentFieldConcealed(coreContentField) ? t('contentMenu.revealContent') : t('contentMenu.hideContent')}
+                </button>
+              </>
+            )}
           </div>
         </>
       )}
@@ -105,6 +132,23 @@ export function FieldContextMenu({
                   {isFieldInFolderOnlyPreviewForCurrentFolder(previewMenu.field)
                     ? t('previewMenu.hideFolderOnlyAll')
                     : t('previewMenu.showFolderOnly')}
+                </button>
+              </>
+            )}
+
+            {previewContentField && (
+              <>
+                <div className="vault-actionmenu-separator" />
+                <button
+                  className="vault-actionmenu-item"
+                  type="button"
+                  onClick={() => {
+                    void toggleContentFieldConcealed(previewContentField);
+                  }}
+                >
+                  {isContentFieldConcealed(previewContentField)
+                    ? t('contentMenu.revealContent')
+                    : t('contentMenu.hideContent')}
                 </button>
               </>
             )}

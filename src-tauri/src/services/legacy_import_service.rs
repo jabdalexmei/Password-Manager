@@ -12,7 +12,7 @@ use crate::error::{ErrorCodeString, Result};
 use crate::services::datacards_service;
 use crate::services::security_service;
 use crate::types::{
-    CreateDataCardInput, CustomField, CustomFieldType, DataCard, LegacyImportErrorRow,
+    new_custom_field_id, CreateDataCardInput, CustomField, CustomFieldType, DataCard, LegacyImportErrorRow,
     LegacyImportInspectResult, LegacyImportResult,
 };
 
@@ -128,6 +128,7 @@ fn build_custom_fields(row: &[String], custom_columns: &[LegacyCustomColumn]) ->
             continue;
         }
         out.push(CustomField {
+            id: new_custom_field_id(),
             key,
             value,
             field_type: CustomFieldType::Text,
@@ -868,11 +869,13 @@ mod tests {
                 seed_phrase_word_count: Some(12),
                 custom_fields: vec![
                     CustomField {
+                        id: new_custom_field_id(),
                         key: "API Key".to_string(),
                         value: "secret, value".to_string(),
                         field_type: CustomFieldType::Secret,
                     },
                     CustomField {
+                        id: new_custom_field_id(),
                         key: "Comment".to_string(),
                         value: "Line A\nLine B".to_string(),
                         field_type: CustomFieldType::Text,
@@ -934,6 +937,7 @@ mod tests {
                 seed_phrase: None,
                 seed_phrase_word_count: None,
                 custom_fields: vec![CustomField {
+                    id: new_custom_field_id(),
                     key: "API Key".to_string(),
                     value: "alpha".to_string(),
                     field_type: CustomFieldType::Secret,
@@ -960,6 +964,7 @@ mod tests {
                 seed_phrase: None,
                 seed_phrase_word_count: None,
                 custom_fields: vec![CustomField {
+                    id: new_custom_field_id(),
                     key: "Server".to_string(),
                     value: "prod".to_string(),
                     field_type: CustomFieldType::Text,
@@ -1015,11 +1020,13 @@ mod tests {
                 seed_phrase_word_count: None,
                 custom_fields: vec![
                     CustomField {
+                        id: new_custom_field_id(),
                         key: "API Key".to_string(),
                         value: "alpha".to_string(),
                         field_type: CustomFieldType::Secret,
                     },
                     CustomField {
+                        id: new_custom_field_id(),
                         key: "Server".to_string(),
                         value: "prod".to_string(),
                         field_type: CustomFieldType::Url,

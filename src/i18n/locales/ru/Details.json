@@ -75,6 +75,8 @@
   "previewMenu.showFolderOnly": "Показывать в превью только в папке",
   "previewMenu.hideFolderOnlyAll": "Скрыть режим \"только в папке\" для всех",
   "previewMenu.maxAll": "Максимум {{count}} полей (все карточки)",
+  "contentMenu.hideContent": "Скрыть содержимое",
+  "contentMenu.revealContent": "Показать содержимое",
   "attachments.rename": "Переименовать",
   "attachments.renameTitle": "Переименовать вложение",
   "attachments.renameLabel": "Имя файла",

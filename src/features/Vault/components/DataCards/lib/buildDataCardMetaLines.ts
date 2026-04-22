@@ -148,14 +148,14 @@ export const buildDataCardMetaLines = ({
     filteredPreviewFieldTokens
       .filter(isCustomPreviewField)
       .map((token) => token.slice(CUSTOM_PREVIEW_PREFIX.length))
-      .filter((key) => key.trim().length > 0)
+      .filter((fieldId) => fieldId.trim().length > 0)
   );
 
   const customLines: string[] = [];
   for (const customField of Array.isArray(card.customFields) ? card.customFields : []) {
     const key = (customField.key ?? '').trim();
     if (!key) continue;
-    if (!perCardCustomKeys.has(key)) continue;
+    if (!perCardCustomKeys.has(customField.id)) continue;
     const value = (customField.value ?? '').split(/\r?\n/)[0]?.trim() ?? '';
     if (!value) continue;
     customLines.push(`${key}:${value}`);

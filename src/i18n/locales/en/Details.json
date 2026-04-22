@@ -77,6 +77,8 @@
   "previewMenu.showFolderOnly": "Show in preview folder only",
   "previewMenu.hideFolderOnlyAll": "Hide in preview folder only all",
   "previewMenu.maxAll": "Max {{count}} fields (all cards)",
+  "contentMenu.hideContent": "Hide content",
+  "contentMenu.revealContent": "Reveal content",
   "attachments.rename": "Rename",
   "attachments.renameTitle": "Rename attachment",
   "attachments.renameLabel": "File name",

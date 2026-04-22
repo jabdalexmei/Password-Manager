@@ -129,6 +129,12 @@
   color: var(--cmp-nav-menu-item-danger-text);
 }
 
+.vault-actionmenu-separator {
+  height: 1px;
+  margin: 6px 0;
+  background: var(--cmp-nav-menu-border);
+}
+
 .vault-contextmenu-panel {
   position: fixed;
   left: var(--menu-x, 0px);
