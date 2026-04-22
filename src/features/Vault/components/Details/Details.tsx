@@ -1,5 +1,5 @@
 ﻿import React, { Suspense, useEffect, useMemo, useState } from 'react';
-import { useCallback } from 'react';
+import { useCallback, useLayoutEffect } from 'react';
 import { Attachment, DataCard, Folder } from '../../types/ui';
 import { useI18n, useTranslation } from '../../../../shared/lib/i18n';
 import { useDetails } from './useDetails';
@@ -41,6 +41,19 @@ const LazyPasswordHistoryDialog = React.lazy(() =>
 const LazySeedPhraseViewModal = React.lazy(() =>
   import('../modals/SeedPhraseViewModal').then((m) => ({ default: m.SeedPhraseViewModal })),
 );
+
+const DEFAULT_CONCEALED_FIELDS: Exclude<DataCardDetailContentField, `custom:${string}`>[] = [
+  'title',
+  'url',
+  'email',
+  'recovery_email',
+  'username',
+  'mobile_phone',
+  'totp',
+  'note',
+  'folder',
+  'tags',
+];
 
 export type DetailsProps = {
   card: DataCard | null;
@@ -119,6 +132,7 @@ export function Details({
   const [seedPhraseViewOpen, setSeedPhraseViewOpen] = useState(false);
   const [revealedCustomFields, setRevealedCustomFields] = useState<Record<string, boolean>>({});
   const [hiddenContentByCard, setHiddenContentByCard] = useState<Record<string, DataCardDetailContentField[]>>({});
+  const [hiddenContentLoaded, setHiddenContentLoaded] = useState(false);
   const [revealedConcealedContentFields, setRevealedConcealedContentFields] = useState<Record<string, boolean>>({});
   const [contentMenu, setContentMenu] = useState<{ x: number; y: number; field: DataCardDetailContentField } | null>(null);
 
@@ -147,6 +161,7 @@ export function Details({
     loadHiddenContentByCard().then((fieldsByCard) => {
       if (isMounted) {
         setHiddenContentByCard(fieldsByCard);
+        setHiddenContentLoaded(true);
       }
     });
     return () => {
@@ -154,13 +169,20 @@ export function Details({
     };
   }, []);
 
-  useEffect(() => onHiddenContentByCardChanged(setHiddenContentByCard), []);
+  useEffect(
+    () =>
+      onHiddenContentByCardChanged((fieldsByCard) => {
+        setHiddenContentByCard(fieldsByCard);
+        setHiddenContentLoaded(true);
+      }),
+    [],
+  );
 
   useEffect(() => {
     setHistoryOpen(false);
   }, [card?.id]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     setRevealedCustomFields({});
     setRevealedConcealedContentFields({});
     setContentMenu(null);
@@ -192,8 +214,17 @@ export function Details({
 
   const concealedFieldsForCurrentCard = useMemo(() => {
     if (!card?.id) return new Set<DataCardDetailContentField>();
+    if (!hiddenContentLoaded) {
+      const fields: DataCardDetailContentField[] = [...DEFAULT_CONCEALED_FIELDS];
+      for (const customField of card.customFields ?? []) {
+        if (customField.type !== 'secret') {
+          fields.push(toCustomDetailContentField(customField.id));
+        }
+      }
+      return new Set(fields);
+    }
     return new Set(hiddenContentByCard[card.id] ?? []);
-  }, [card?.id, hiddenContentByCard]);
+  }, [card?.customFields, card?.id, hiddenContentByCard, hiddenContentLoaded]);
 
   const isContentConcealed = useCallback(
     (field: DataCardDetailContentField) => concealedFieldsForCurrentCard.has(field),

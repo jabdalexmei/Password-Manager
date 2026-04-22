@@ -53,7 +53,6 @@ export function VaultDetailsPane({
     return (
       <Suspense fallback={<p aria-busy="true">{tCommon('label.loading')}</p>}>
         <LazyDetails
-          key={vault.selectedCard.id}
           card={vault.selectedCard}
           folders={foldersForCards}
           activeFolderId={vault.selectedFolderId}
