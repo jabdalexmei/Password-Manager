@@ -185,6 +185,14 @@ export function DataCardFormDialog({
   );
 
   const visibleCustomFields = form?.customFields ?? [];
+  const customFieldOrderSignature = React.useMemo(
+    () => visibleCustomFields.map((row) => row.id).join('|'),
+    [visibleCustomFields]
+  );
+  const visibleCustomFieldIds = React.useMemo(
+    () => visibleCustomFields.map((row) => row.id),
+    [customFieldOrderSignature]
+  );
 
   const setCustomFieldRowRef = React.useCallback((rowId: string, node: HTMLDivElement | null) => {
     if (node) {
@@ -275,17 +283,17 @@ export function DataCardFormDialog({
     const nextTopMap = new Map<string, number>();
     const activeRowId = dragSourceRowIdRef.current;
 
-    visibleCustomFields.forEach((row) => {
-      const element = rowElementsRef.current.get(row.id);
+    visibleCustomFieldIds.forEach((rowId) => {
+      const element = rowElementsRef.current.get(rowId);
       if (!element) return;
 
       const rect = element.getBoundingClientRect();
-      const nextTop = row.id === activeRowId ? rect.top - dragTranslateYRef.current : rect.top;
-      nextTopMap.set(row.id, nextTop);
+      const nextTop = rowId === activeRowId ? rect.top - dragTranslateYRef.current : rect.top;
+      nextTopMap.set(rowId, nextTop);
 
-      if (row.id === activeRowId) return;
+      if (rowId === activeRowId) return;
 
-      const previousTop = previousRowTopMapRef.current.get(row.id);
+      const previousTop = previousRowTopMapRef.current.get(rowId);
       if (previousTop === undefined) return;
 
       const deltaY = previousTop - nextTop;
@@ -312,7 +320,7 @@ export function DataCardFormDialog({
     if (activeRowId) {
       applyDraggedRowTransform();
     }
-  }, [applyDraggedRowTransform, visibleCustomFields]);
+  }, [applyDraggedRowTransform, visibleCustomFieldIds]);
 
   React.useEffect(() => {
     if (!customFieldDragState.activeRowId) return undefined;
