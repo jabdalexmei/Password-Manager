@@ -75,7 +75,7 @@ export const CustomFieldRenameModal: React.FC<CustomFieldRenameModalProps> = ({
           </div>
           <div className="dialog-footer-right">
             <button className="btn btn-primary" type="button" onClick={onOk}>
-              {t('action.ok')}
+              {t('action.save')}
             </button>
           </div>
         </div>

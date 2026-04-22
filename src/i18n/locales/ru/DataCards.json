@@ -80,6 +80,7 @@
   "customFields.editFields": "Изменить поля",
   "customFields.stopEditFields": "Закончить редактирование полей",
   "customFields.modalTitle": "Добавить пользовательское поле",
+  "customFields.addAction": "Добавить",
   "customFields.nameLabel": "Название поля",
   "customFields.rename": "Переименовать поле",
   "customFields.delete": "Удалить поле",

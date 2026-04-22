@@ -70,7 +70,7 @@ export const CustomFieldModal: React.FC<CustomFieldModalProps> = ({
           </div>
           <div className="dialog-footer-right">
             <button className="btn btn-primary" type="button" onClick={onOk}>
-              {t('action.ok')}
+              {t('customFields.addAction')}
             </button>
           </div>
         </div>

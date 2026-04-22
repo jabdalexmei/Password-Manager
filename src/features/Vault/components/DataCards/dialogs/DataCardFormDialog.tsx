@@ -282,6 +282,7 @@ export function DataCardFormDialog({
   React.useLayoutEffect(() => {
     const nextTopMap = new Map<string, number>();
     const activeRowId = dragSourceRowIdRef.current;
+    const shouldAnimateRowReorder = Boolean(activeRowId);
 
     visibleCustomFieldIds.forEach((rowId) => {
       const element = rowElementsRef.current.get(rowId);
@@ -291,7 +292,7 @@ export function DataCardFormDialog({
       const nextTop = rowId === activeRowId ? rect.top - dragTranslateYRef.current : rect.top;
       nextTopMap.set(rowId, nextTop);
 
-      if (rowId === activeRowId) return;
+      if (!shouldAnimateRowReorder || rowId === activeRowId) return;
 
       const previousTop = previousRowTopMapRef.current.get(rowId);
       if (previousTop === undefined) return;

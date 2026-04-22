@@ -80,6 +80,7 @@
   "customFields.editFields": "Edit fields",
   "customFields.stopEditFields": "Stop edit fields",
   "customFields.modalTitle": "Add custom field",
+  "customFields.addAction": "Add",
   "customFields.nameLabel": "Field name",
   "customFields.rename": "Rename field",
   "customFields.delete": "Delete field",
