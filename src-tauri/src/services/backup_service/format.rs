@@ -1,4 +1,4 @@
-﻿use super::*;
+use super::*;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BackupListItem {
@@ -101,7 +101,9 @@ pub(super) fn now_utc_string() -> String {
     Utc::now().to_rfc3339_opts(SecondsFormat::Secs, true)
 }
 
-pub(super) fn read_backup_manifest_and_name(backup_path: &Path) -> Result<(BackupManifest, String)> {
+pub(super) fn read_backup_manifest_and_name(
+    backup_path: &Path,
+) -> Result<(BackupManifest, String)> {
     if !backup_path.exists() {
         return Err(ErrorCodeString::new("BACKUP_ARCHIVE_INVALID"));
     }

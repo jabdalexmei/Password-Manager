@@ -125,10 +125,12 @@ fn recover_pending_profile_renames(
 
 fn prune_missing_profile_dirs(sp: &StoragePaths, registry: &mut ProfileRegistry) -> bool {
     let original_len = registry.profiles.len();
-    registry.profiles.retain(|record| match profile_dir(sp, &record.id) {
-        Ok(dir) => dir.exists(),
-        Err(_) => false,
-    });
+    registry
+        .profiles
+        .retain(|record| match profile_dir(sp, &record.id) {
+            Ok(dir) => dir.exists(),
+            Err(_) => false,
+        });
     registry.profiles.len() != original_len
 }
 
@@ -181,15 +183,13 @@ fn remove_profile_dir_retry(path: &std::path::Path) -> std::io::Result<()> {
                 last_err = Some(e);
                 std::thread::sleep(Duration::from_millis(SLEEP_MS));
             }
-            Err(e) => {
-                match e.raw_os_error() {
-                    Some(5) | Some(32) | Some(33) => {
-                        last_err = Some(e);
-                        std::thread::sleep(Duration::from_millis(SLEEP_MS));
-                    }
-                    _ => return Err(e),
+            Err(e) => match e.raw_os_error() {
+                Some(5) | Some(32) | Some(33) => {
+                    last_err = Some(e);
+                    std::thread::sleep(Duration::from_millis(SLEEP_MS));
                 }
-            }
+                _ => return Err(e),
+            },
         }
     }
 
@@ -501,7 +501,8 @@ mod tests {
 
     fn configured_storage_paths(workspace_root: &std::path::Path) -> StoragePaths {
         let mut sp = StoragePaths::new_unconfigured().unwrap();
-        sp.configure_workspace(workspace_root.to_path_buf()).unwrap();
+        sp.configure_workspace(workspace_root.to_path_buf())
+            .unwrap();
         sp
     }
 

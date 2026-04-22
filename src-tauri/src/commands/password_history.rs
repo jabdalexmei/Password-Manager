@@ -53,7 +53,6 @@ pub async fn clear_datacard_password_history(
     Ok(())
 }
 
-
 #[tauri::command]
 pub async fn delete_datacard_password_history_entry(
     app: tauri::AppHandle,

@@ -1,4 +1,5 @@
 import React from 'react';
+import { SETTINGS_LIMITS } from '../lib/settingsLimits';
 
 type TranslateFn = (key: string, params?: Record<string, string | number>) => string;
 
@@ -72,8 +73,8 @@ export function FeaturesSection({
           <input
             id="trash-retention-days"
             type="number"
-            min={1}
-            max={3650}
+            min={SETTINGS_LIMITS.trashRetentionDays.min}
+            max={SETTINGS_LIMITS.trashRetentionDays.max}
             value={trashRetentionDays}
             disabled={busy || !trashAutoCleanupEnabled || !softDeleteEnabled}
             inputMode="numeric"

@@ -20,6 +20,10 @@ pub const DEFAULT_APP_THEME: &str = BLUE_THEME;
 
 const APP_SETTINGS_FILE_NAME: &str = "app_settings.json";
 const APP_SETTINGS_VERSION: u8 = 1;
+const AUTO_BACKUP_INTERVAL_MINUTES_MIN: i64 = 5;
+const AUTO_BACKUP_INTERVAL_MINUTES_MAX: i64 = 525_600;
+const BACKUP_MAX_COPIES_MIN: i64 = 1;
+const BACKUP_MAX_COPIES_MAX: i64 = 500;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct AppSettings {
@@ -66,7 +70,8 @@ fn write_app_settings(app_config_dir: &Path, settings: AppSettings) -> Result<()
     let path = app_settings_path(app_config_dir);
     let serialized = serde_json::to_string_pretty(&settings)
         .map_err(|_| ErrorCodeString::new("APP_SETTINGS_WRITE"))?;
-    write_atomic(&path, serialized.as_bytes()).map_err(|_| ErrorCodeString::new("APP_SETTINGS_WRITE"))
+    write_atomic(&path, serialized.as_bytes())
+        .map_err(|_| ErrorCodeString::new("APP_SETTINGS_WRITE"))
 }
 
 pub fn normalize_active_vault_id(raw: &str) -> String {
@@ -120,10 +125,19 @@ fn validate_settings(settings: &UserSettings) -> Result<()> {
         true
     };
     let valid_auto_backup_interval = if settings.backups_enabled {
-        in_range(settings.auto_backup_interval_minutes, 5, 525_600)
+        in_range(
+            settings.auto_backup_interval_minutes,
+            AUTO_BACKUP_INTERVAL_MINUTES_MIN,
+            AUTO_BACKUP_INTERVAL_MINUTES_MAX,
+        )
     } else {
         true
     };
+    let valid_backup_max_copies = in_range(
+        settings.backup_max_copies,
+        BACKUP_MAX_COPIES_MIN,
+        BACKUP_MAX_COPIES_MAX,
+    );
 
     let valid_frequency =
         ["daily", "weekly", "monthly"].contains(&settings.backup_frequency.as_str());
@@ -135,6 +149,7 @@ fn validate_settings(settings: &UserSettings) -> Result<()> {
     if valid_values
         && valid_trash_retention_days
         && valid_auto_backup_interval
+        && valid_backup_max_copies
         && valid_frequency
         && valid_sort_field
         && valid_sort_direction
@@ -169,6 +184,11 @@ fn repair_settings(mut settings: UserSettings) -> (UserSettings, bool) {
         .unwrap_or(defaults.date_time_format.as_str());
     if settings.date_time_format != normalized_date_time_format {
         settings.date_time_format = normalized_date_time_format.to_string();
+        changed = true;
+    }
+
+    if !(BACKUP_MAX_COPIES_MIN..=BACKUP_MAX_COPIES_MAX).contains(&settings.backup_max_copies) {
+        settings.backup_max_copies = defaults.backup_max_copies;
         changed = true;
     }
 
@@ -382,5 +402,27 @@ mod tests {
 
         assert!(changed);
         assert_eq!(repaired.date_time_format, "mmddyyyy_12h_ampm");
+    }
+
+    #[test]
+    fn repair_settings_resets_invalid_backup_max_copies_to_default() {
+        let mut settings = UserSettings::default();
+        settings.backup_max_copies = 50_000;
+
+        let (repaired, changed) = repair_settings(settings);
+
+        assert!(changed);
+        assert_eq!(
+            repaired.backup_max_copies,
+            UserSettings::default().backup_max_copies
+        );
+    }
+
+    #[test]
+    fn validate_settings_rejects_invalid_backup_max_copies() {
+        let mut settings = UserSettings::default();
+        settings.backup_max_copies = 0;
+
+        assert!(validate_settings(&settings).is_err());
     }
 }

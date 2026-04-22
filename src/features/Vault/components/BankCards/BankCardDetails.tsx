@@ -38,12 +38,14 @@ const maskCardNumber = (value?: string | null) => {
   const trimmed = value?.replace(/\s+/g, '') ?? '';
   if (!trimmed) return '';
   if (trimmed.length <= 4) return trimmed;
+  return `${'\u2022'.repeat(4)} ${trimmed.slice(-4)}`;
   return `•••• ${trimmed.slice(-4)}`;
 };
 
 const maskHolder = (value?: string | null) => {
   const trimmed = value?.trim() ?? '';
   if (!trimmed) return '';
+  return '\u2022'.repeat(6);
   // Intentionally avoid leaking length; keep the UI consistently “sealed” by default.
   return '••••••';
 };
@@ -227,7 +229,8 @@ export function BankCardDetails({
       : maskCardNumber(card.number)
     : '';
   const maskedCvc = card.cvc ? (card.cvc.length >= 4 ? '••••' : '•••') : '';
-  const cvcDisplay = hasCvc ? (showCvc ? card.cvc : maskedCvc) : '';
+  const safeMaskedCvc = card.cvc ? '\u2022'.repeat(card.cvc.length >= 4 ? 4 : 3) : '';
+  const cvcDisplay = hasCvc ? (showCvc ? card.cvc : safeMaskedCvc || maskedCvc) : '';
 
   const tagsText = card.tags?.join(', ') ?? '';
 

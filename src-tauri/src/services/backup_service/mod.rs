@@ -1,4 +1,4 @@
-﻿use std::fs;
+use std::fs;
 use std::io::{BufReader, BufWriter, Read, Write};
 use std::path::{Component, Path, PathBuf};
 use std::sync::Arc;
@@ -18,8 +18,8 @@ const MAX_RESTORE_FILES: usize = 4096;
 const MAX_RESTORE_ENTRY_BYTES: i64 = 64 * 1024 * 1024;
 const MAX_RESTORE_TOTAL_BYTES: i64 = 512 * 1024 * 1024;
 
-use crate::data::fs::output_guard::ensure_output_path_allowed;
 use crate::data::fs::atomic_write::write_atomic;
+use crate::data::fs::output_guard::ensure_output_path_allowed;
 use crate::data::profiles::paths::{
     backup_registry_path, backups_dir, ensure_profile_dirs, kdf_salt_path, key_check_path,
     profile_config_path, profile_dir, user_settings_path, vault_db_path, vault_key_path,
@@ -50,7 +50,8 @@ use backup_fs::{
 };
 use format::{
     load_registry, now_timestamp, now_utc_string, read_backup_manifest_and_name, save_registry,
-    update_registry, BackupManifest, BackupManifestFile, BackupRegistry, BackupResult, BackupSource,
+    update_registry, BackupManifest, BackupManifestFile, BackupRegistry, BackupResult,
+    BackupSource,
 };
 
 fn validate_zip_entry_rel_path_windows(rel: &Path) -> bool {
@@ -694,7 +695,10 @@ fn restore_tx_originals_root(tx_root: &Path) -> PathBuf {
 }
 
 fn restore_original_backup_rel(target_rel: &str) -> String {
-    format!("{RESTORE_TX_ORIGINALS_DIR}/{}", target_rel.replace('\\', "/"))
+    format!(
+        "{RESTORE_TX_ORIGINALS_DIR}/{}",
+        target_rel.replace('\\', "/")
+    )
 }
 
 fn restore_tx_path(tx_root: &Path, rel: &str) -> PathBuf {
@@ -923,7 +927,11 @@ fn apply_restore_tx(
     Ok(())
 }
 
-fn rollback_restore_tx(profile_root: &Path, tx_root: &Path, manifest: &RestoreTxManifest) -> Result<()> {
+fn rollback_restore_tx(
+    profile_root: &Path,
+    tx_root: &Path,
+    manifest: &RestoreTxManifest,
+) -> Result<()> {
     for entry in manifest.entries.iter().rev() {
         let target_path = restore_target_path(profile_root, &entry.target_rel);
 
@@ -1006,7 +1014,12 @@ fn rollback_restore_tx(profile_root: &Path, tx_root: &Path, manifest: &RestoreTx
 
 fn cleanup_restore_dir_best_effort(path: &Path, step: &'static str) {
     if let Err(e) = remove_dir_all_if_exists(path) {
-        log::warn!("[BACKUP][restore] cleanup_failed step={} path={:?} err={}", step, path, e);
+        log::warn!(
+            "[BACKUP][restore] cleanup_failed step={} path={:?} err={}",
+            step,
+            path,
+            e
+        );
     }
 }
 
@@ -1282,8 +1295,12 @@ fn restore_archive_to_profile(
         }
     }
 
-    let (tx_manifest, actions) =
-        build_restore_tx_manifest_and_actions(&profile_root, &staging_root, &manifest, profile_name)?;
+    let (tx_manifest, actions) = build_restore_tx_manifest_and_actions(
+        &profile_root,
+        &staging_root,
+        &manifest,
+        profile_name,
+    )?;
     let tx_root = write_restore_tx_manifest(&profile_root, &tx_manifest)?;
 
     let restore_result = apply_restore_tx(&profile_root, &tx_root, &actions);
@@ -1326,7 +1343,8 @@ mod tests {
 
     fn configured_storage_paths(workspace_root: &Path) -> StoragePaths {
         let mut sp = StoragePaths::new_unconfigured().unwrap();
-        sp.configure_workspace(workspace_root.to_path_buf()).unwrap();
+        sp.configure_workspace(workspace_root.to_path_buf())
+            .unwrap();
         sp
     }
 
@@ -1535,7 +1553,11 @@ mod tests {
 
         let profile_root = profile_dir(&sp, profile_id).unwrap();
         let files = [
-            ("config.json", b"new-config".as_slice(), b"old-config".as_slice()),
+            (
+                "config.json",
+                b"new-config".as_slice(),
+                b"old-config".as_slice(),
+            ),
             (
                 "user_settings.json",
                 b"new-settings".as_slice(),
@@ -1546,7 +1568,11 @@ mod tests {
                 b"new-vault-key".as_slice(),
                 b"old-vault-key".as_slice(),
             ),
-            ("kdf_salt.bin", b"new-salt".as_slice(), b"old-salt".as_slice()),
+            (
+                "kdf_salt.bin",
+                b"new-salt".as_slice(),
+                b"old-salt".as_slice(),
+            ),
             (
                 "key_check.bin",
                 b"new-key-check".as_slice(),
@@ -1740,7 +1766,10 @@ mod tests {
 
         let target_profile_root = profile_dir(&target_sp, profile_id).unwrap();
         let original_files = [
-            ("vault.db", read_bytes(&vault_db_path(&target_sp, profile_id).unwrap())),
+            (
+                "vault.db",
+                read_bytes(&vault_db_path(&target_sp, profile_id).unwrap()),
+            ),
             (
                 "config.json",
                 read_bytes(&profile_config_path(&target_sp, profile_id).unwrap()),
@@ -1775,8 +1804,9 @@ mod tests {
         .unwrap();
 
         set_restore_apply_failpoint(4);
-        let err = restore_archive_to_profile(&state, &target_sp, profile_id, "Restored", &backup_path)
-            .unwrap_err();
+        let err =
+            restore_archive_to_profile(&state, &target_sp, profile_id, "Restored", &backup_path)
+                .unwrap_err();
         assert_eq!(err.code, "BACKUP_RESTORE_TEST_FAILPOINT");
 
         for (name, expected) in original_files {

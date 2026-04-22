@@ -10,10 +10,11 @@ use crate::app_state::AppState;
 use crate::data::sqlite::repo_impl;
 use crate::error::{ErrorCodeString, Result};
 use crate::services::datacards_service;
+use crate::services::folders_service;
 use crate::services::security_service;
 use crate::types::{
-    new_custom_field_id, CreateDataCardInput, CustomField, CustomFieldType, DataCard, LegacyImportErrorRow,
-    LegacyImportInspectResult, LegacyImportResult,
+    new_custom_field_id, CreateDataCardInput, CreateFolderInput, CustomField, CustomFieldType,
+    DataCard, LegacyImportErrorRow, LegacyImportInspectResult, LegacyImportResult,
 };
 
 #[derive(Debug, Clone)]
@@ -88,7 +89,10 @@ fn split_tags(value: &str) -> Vec<String> {
         if trimmed.is_empty() {
             continue;
         }
-        if out.iter().any(|existing| existing.eq_ignore_ascii_case(trimmed)) {
+        if out
+            .iter()
+            .any(|existing| existing.eq_ignore_ascii_case(trimmed))
+        {
             continue;
         }
         out.push(trimmed.to_string());
@@ -273,10 +277,7 @@ fn normalize_folder_key(value: &str) -> Option<String> {
     }
 }
 
-fn build_folder_lookup(
-    state: &Arc<AppState>,
-    profile_id: &str,
-) -> Result<HashMap<String, String>> {
+fn build_folder_lookup(state: &Arc<AppState>, profile_id: &str) -> Result<HashMap<String, String>> {
     let folders = repo_impl::list_folders(state, profile_id)?;
     let mut out = HashMap::new();
     for folder in folders {
@@ -446,7 +447,10 @@ fn build_export_custom_field_value_lookup(fields: &[CustomField]) -> HashMap<Str
     values_by_key
 }
 
-fn build_export_content(cards: &[DataCard], folder_names_by_id: &HashMap<String, String>) -> String {
+fn build_export_content(
+    cards: &[DataCard],
+    folder_names_by_id: &HashMap<String, String>,
+) -> String {
     let custom_keys = collect_export_custom_field_keys(cards);
     let mut lines: Vec<String> = Vec::with_capacity(cards.len() + 1);
     let mut header_fields: Vec<String> = vec![
@@ -507,7 +511,8 @@ pub fn export_csv_file(path: &Path, state: &Arc<AppState>) -> Result<String> {
     let folder_names_by_id = build_folder_name_lookup(state, &profile_id)?;
     let content = build_export_content(&cards, &folder_names_by_id);
 
-    fs::write(path, content).map_err(|_| ErrorCodeString::new("LEGACY_EXPORT_FILE_WRITE_FAILED"))?;
+    fs::write(path, content)
+        .map_err(|_| ErrorCodeString::new("LEGACY_EXPORT_FILE_WRITE_FAILED"))?;
 
     Ok(path.to_string_lossy().to_string())
 }
@@ -521,7 +526,13 @@ pub fn import_csv_file(path: &Path, state: &Arc<AppState>) -> Result<LegacyImpor
     let mut created_folder_count = 0_i64;
 
     for (folder_key, folder_name) in folders_to_create {
-        match repo_impl::create_folder(state, &profile_id, &folder_name, &None) {
+        match folders_service::create_folder(
+            CreateFolderInput {
+                name: folder_name.clone(),
+                parent_id: None,
+            },
+            state,
+        ) {
             Ok(folder) => {
                 folder_lookup.insert(folder_key, folder.id);
                 created_folder_count += 1;
@@ -580,7 +591,7 @@ pub fn import_csv_file(path: &Path, state: &Arc<AppState>) -> Result<LegacyImpor
             folder_id,
         };
 
-        match repo_impl::create_datacard(state, &profile_id, &input) {
+        match datacards_service::create_datacard(input, state) {
             Ok(_) => imported_count += 1,
             Err(err) => errors.push(make_error(
                 row,
@@ -616,7 +627,7 @@ mod tests {
     };
     use crate::data::sqlite::repo_impl;
     use crate::services::test_support::ServiceTestHarness;
-    use crate::types::{CreateDataCardInput, CustomField, CustomFieldType};
+    use crate::types::{new_custom_field_id, CreateDataCardInput, CustomField, CustomFieldType};
 
     #[test]
     fn parse_csv_rows_handles_quotes_and_headers() {
@@ -691,7 +702,10 @@ mod tests {
 
     #[test]
     fn split_tags_trims_and_deduplicates() {
-        assert_eq!(split_tags(" work, personal, work ,, "), vec!["work", "personal"]);
+        assert_eq!(
+            split_tags(" work, personal, work ,, "),
+            vec!["work", "personal"]
+        );
     }
 
     #[test]
@@ -711,9 +725,13 @@ mod tests {
         assert_eq!(result.imported_count, 120);
         assert_eq!(result.error_count, 0);
 
-        let rows =
-            repo_impl::list_datacards_summary(&harness.state, &harness.profile_id, "updated_at", "DESC")
-                .unwrap();
+        let rows = repo_impl::list_datacards_summary(
+            &harness.state,
+            &harness.profile_id,
+            "updated_at",
+            "DESC",
+        )
+        .unwrap();
         assert_eq!(rows.len(), 120);
     }
 
@@ -723,16 +741,25 @@ mod tests {
         let temp = tempdir().unwrap();
         let csv_path = temp.path().join("legacy-import-empty-title.csv");
 
-        fs::write(&csv_path, "Title,URL,Username\n,https://example.com,user1\n").unwrap();
+        fs::write(
+            &csv_path,
+            "Title,URL,Username\n,https://example.com,user1\n",
+        )
+        .unwrap();
 
         let result = import_csv_file(&csv_path, &harness.state).unwrap();
 
         assert_eq!(result.imported_count, 1);
         assert_eq!(result.error_count, 0);
 
-        let cards =
-            repo_impl::list_datacards(&harness.state, &harness.profile_id, false, "updated_at", "DESC")
-                .unwrap();
+        let cards = repo_impl::list_datacards(
+            &harness.state,
+            &harness.profile_id,
+            false,
+            "updated_at",
+            "DESC",
+        )
+        .unwrap();
         assert_eq!(cards.len(), 1);
         assert_eq!(cards[0].title, "");
         assert_eq!(cards[0].url.as_deref(), Some("https://example.com"));
@@ -756,9 +783,14 @@ mod tests {
         assert_eq!(result.imported_count, 1);
         assert_eq!(result.error_count, 0);
 
-        let cards =
-            repo_impl::list_datacards(&harness.state, &harness.profile_id, false, "updated_at", "DESC")
-                .unwrap();
+        let cards = repo_impl::list_datacards(
+            &harness.state,
+            &harness.profile_id,
+            false,
+            "updated_at",
+            "DESC",
+        )
+        .unwrap();
         assert_eq!(cards.len(), 1);
         assert_eq!(cards[0].custom_fields.len(), 2);
         assert_eq!(cards[0].custom_fields[0].key, "API Key");
@@ -987,11 +1019,17 @@ mod tests {
         assert_eq!(records[0][10], "Custom field:API Key");
         assert_eq!(records[0][11], "Custom field:Server");
 
-        let mail_row = records.iter().find(|row| row.first().map(|v| v.as_str()) == Some("Mail")).unwrap();
+        let mail_row = records
+            .iter()
+            .find(|row| row.first().map(|v| v.as_str()) == Some("Mail"))
+            .unwrap();
         assert_eq!(mail_row[10], "alpha");
         assert_eq!(mail_row[11], "");
 
-        let infra_row = records.iter().find(|row| row.first().map(|v| v.as_str()) == Some("Infra")).unwrap();
+        let infra_row = records
+            .iter()
+            .find(|row| row.first().map(|v| v.as_str()) == Some("Infra"))
+            .unwrap();
         assert_eq!(infra_row[10], "");
         assert_eq!(infra_row[11], "prod");
     }

@@ -1,4 +1,4 @@
-﻿use super::*;
+use super::*;
 
 fn get_vault_by_id_conn(conn: &Connection, id: &str) -> Result<Vault> {
     let sql = "SELECT id, name, is_default, created_at, updated_at FROM vaults WHERE id = ?1";
@@ -158,4 +158,3 @@ pub fn delete_vault(state: &Arc<AppState>, profile_id: &str, id: &str) -> Result
         Ok(true)
     })
 }
-

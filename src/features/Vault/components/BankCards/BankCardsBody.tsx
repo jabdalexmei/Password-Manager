@@ -135,6 +135,7 @@ export function BankCardsBody({
       <section className="vault-details">
         <BankCardDetails
           card={bankCards.selectedCard}
+          dateTimeFormat={bankCards.settings?.date_time_format ?? 'auto'}
           onEdit={(card) => viewModel.openEditModal(card)}
           onReloadCard={(id) => bankCards.loadCard(id)}
           onDelete={bankCards.deleteCard}

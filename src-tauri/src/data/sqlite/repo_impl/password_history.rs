@@ -42,7 +42,6 @@ pub fn clear_password_history(
     })
 }
 
-
 pub fn delete_password_history_entry(
     state: &Arc<AppState>,
     profile_id: &str,

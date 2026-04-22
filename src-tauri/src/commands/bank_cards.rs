@@ -29,9 +29,7 @@ pub async fn list_bank_cards_summary_command(
 }
 
 #[tauri::command]
-pub async fn list_deleted_bank_cards(
-    state: State<'_, Arc<AppState>>,
-) -> Result<Vec<BankCardItem>> {
+pub async fn list_deleted_bank_cards(state: State<'_, Arc<AppState>>) -> Result<Vec<BankCardItem>> {
     let app = state.inner().clone();
     tauri::async_runtime::spawn_blocking(move || bank_cards_service::list_deleted_bank_cards(&app))
         .await

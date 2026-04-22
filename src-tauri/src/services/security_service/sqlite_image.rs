@@ -1,4 +1,4 @@
-﻿use super::*;
+use super::*;
 
 pub(super) fn owned_data_from_bytes(mut bytes: Vec<u8>) -> Result<OwnedData> {
     if bytes.is_empty() {
@@ -19,7 +19,11 @@ pub(super) fn owned_data_from_bytes(mut bytes: Vec<u8>) -> Result<OwnedData> {
     Ok(owned)
 }
 
-pub(super) fn apply_in_memory_pragmas(conn: &rusqlite::Connection, profile_id: &str, ctx: &str) -> Result<()> {
+pub(super) fn apply_in_memory_pragmas(
+    conn: &rusqlite::Connection,
+    profile_id: &str,
+    ctx: &str,
+) -> Result<()> {
     // Keep this minimal and non-invasive. Setting journal_mode can itself trigger SQLITE_CANTOPEN
     // if the deserialized image is marked as WAL and SQLite attempts to open sidecars.
     conn.execute_batch(
@@ -38,7 +42,11 @@ PRAGMA synchronous=OFF;
     })
 }
 
-pub(super) fn best_effort_force_journal_mode_memory(conn: &rusqlite::Connection, profile_id: &str, ctx: &str) {
+pub(super) fn best_effort_force_journal_mode_memory(
+    conn: &rusqlite::Connection,
+    profile_id: &str,
+    ctx: &str,
+) {
     // Best-effort: we do not fail the whole flow if this pragma fails.
     // The goal is to ensure serialized in-memory images are not WAL-marked.
     let res: rusqlite::Result<String> =
@@ -120,4 +128,3 @@ pub(super) fn ensure_ciphertext_vault_on_disk(vault_path: &Path, profile_id: &st
 
     Ok(())
 }
-

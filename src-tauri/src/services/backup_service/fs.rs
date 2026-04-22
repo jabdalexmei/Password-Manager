@@ -1,4 +1,4 @@
-﻿use super::*;
+use super::*;
 
 pub(super) fn replace_file_windows(src: &Path, dst: &Path) -> std::io::Result<()> {
     use std::iter;
@@ -142,9 +142,8 @@ pub(super) fn remove_file_if_exists(path: &Path) -> std::io::Result<()> {
         }
     }
 
-    Err(last_err.unwrap_or_else(|| {
-        std::io::Error::new(std::io::ErrorKind::Other, "remove file failed")
-    }))
+    Err(last_err
+        .unwrap_or_else(|| std::io::Error::new(std::io::ErrorKind::Other, "remove file failed")))
 }
 
 pub(super) fn remove_dir_all_if_exists(path: &Path) -> std::io::Result<()> {

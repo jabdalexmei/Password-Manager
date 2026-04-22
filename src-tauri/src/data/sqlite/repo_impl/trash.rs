@@ -1,4 +1,4 @@
-﻿use super::*;
+use super::*;
 
 fn list_attachment_ids_by_datacard_conn(
     conn: &Connection,
@@ -12,7 +12,9 @@ fn list_attachment_ids_by_datacard_conn(
         .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
 
     let rows = stmt
-        .query_map(params![datacard_id, active_vault_id], |row| row.get::<_, String>(0))
+        .query_map(params![datacard_id, active_vault_id], |row| {
+            row.get::<_, String>(0)
+        })
         .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?
         .collect::<rusqlite::Result<Vec<_>>>()
         .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
@@ -37,7 +39,6 @@ pub fn list_deleted_datacards(state: &Arc<AppState>, profile_id: &str) -> Result
         Ok(cards)
     })
 }
-
 
 pub fn list_deleted_datacards_summary(
     state: &Arc<AppState>,

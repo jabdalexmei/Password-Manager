@@ -85,7 +85,8 @@ fn save_attachment_to_output_path_by_profile(
     target_path: &Path,
 ) -> Result<()> {
     let stored_path = attachment_file_path(storage_paths, profile_id, attachment_id)?;
-    let bytes = fs::read(&stored_path).map_err(|_| ErrorCodeString::new("ATTACHMENT_READ_FAILED"))?;
+    let bytes =
+        fs::read(&stored_path).map_err(|_| ErrorCodeString::new("ATTACHMENT_READ_FAILED"))?;
     let output_bytes = if bytes.starts_with(&cipher::PM_ENC_MAGIC) {
         cipher::decrypt_attachment_blob(profile_id, attachment_id, vault_key, &bytes)?
     } else {
@@ -223,11 +224,7 @@ pub(crate) fn purge_attachment_by_profile(
     attachment_id: &str,
 ) -> Result<()> {
     let meta = repo_impl::purge_attachment_and_get_meta(state, profile_id, attachment_id)?;
-    remove_attachment_files_best_effort(
-        storage_paths,
-        profile_id,
-        std::slice::from_ref(&meta.id),
-    );
+    remove_attachment_files_best_effort(storage_paths, profile_id, std::slice::from_ref(&meta.id));
     Ok(())
 }
 
@@ -389,8 +386,8 @@ mod tests {
             .join("large.bin");
         fs::create_dir_all(save_target.parent().unwrap()).unwrap();
 
-        let looked_up = get_attachment_meta_by_profile(&harness.state, &harness.profile_id, &meta.id)
-            .unwrap();
+        let looked_up =
+            get_attachment_meta_by_profile(&harness.state, &harness.profile_id, &meta.id).unwrap();
         assert_eq!(looked_up.file_name, "large.bin");
         assert!(looked_up.byte_size as usize > MAX_PREVIEW_BYTES);
 

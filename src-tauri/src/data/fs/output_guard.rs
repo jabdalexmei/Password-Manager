@@ -91,7 +91,8 @@ mod tests {
 
     fn configured_storage_paths(workspace_root: &Path) -> StoragePaths {
         let mut sp = StoragePaths::new_unconfigured().unwrap();
-        sp.configure_workspace(workspace_root.to_path_buf()).unwrap();
+        sp.configure_workspace(workspace_root.to_path_buf())
+            .unwrap();
         sp
     }
 
@@ -198,7 +199,12 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(normalized, std::fs::canonicalize(&export_root).unwrap().join("backup.pmbackup.zip"));
+        assert_eq!(
+            normalized,
+            std::fs::canonicalize(&export_root)
+                .unwrap()
+                .join("backup.pmbackup.zip")
+        );
     }
 
     #[test]

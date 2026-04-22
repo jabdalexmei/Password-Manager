@@ -48,6 +48,7 @@ export function useVaultState({ profileId }: UseVaultStateParams): VaultState & 
 
   useEffect(() => {
     setVaults([]);
+    setSettings(null);
     setActiveVaultId(DEFAULT_ACTIVE_VAULT_ID);
   }, [profileId]);
 

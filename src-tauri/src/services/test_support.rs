@@ -93,13 +93,7 @@ impl ServiceTestHarness {
     }
 
     pub(crate) fn create_folder(&self, name: &str, parent_id: Option<String>) -> Folder {
-        repo_impl::create_folder(
-            &self.state,
-            &self.profile_id,
-            name,
-            &parent_id,
-        )
-        .unwrap()
+        repo_impl::create_folder(&self.state, &self.profile_id, name, &parent_id).unwrap()
     }
 
     pub(crate) fn create_datacard(
@@ -157,11 +151,7 @@ impl ServiceTestHarness {
         assert!(updated);
     }
 
-    pub(crate) fn create_bank_card(
-        &self,
-        title: &str,
-        folder_id: Option<String>,
-    ) -> BankCardItem {
+    pub(crate) fn create_bank_card(&self, title: &str, folder_id: Option<String>) -> BankCardItem {
         repo_impl::create_bank_card(
             &self.state,
             &self.profile_id,
@@ -204,6 +194,7 @@ impl ServiceTestHarness {
     pub(crate) fn set_soft_delete_enabled(&self, enabled: bool) {
         let mut settings = UserSettings::default();
         settings.soft_delete_enabled = enabled;
-        settings_service::update_settings(&self.storage_paths(), settings, &self.profile_id).unwrap();
+        settings_service::update_settings(&self.storage_paths(), settings, &self.profile_id)
+            .unwrap();
     }
 }

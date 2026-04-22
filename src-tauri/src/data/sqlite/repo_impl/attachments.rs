@@ -1,4 +1,4 @@
-﻿use super::*;
+use super::*;
 
 fn get_attachment_by_id_conn(
     conn: &Connection,
@@ -13,7 +13,9 @@ fn get_attachment_by_id_conn(
 
     match stmt.query_row(params![attachment_id, active_vault_id], map_attachment) {
         Ok(meta) => Ok(meta),
-        Err(rusqlite::Error::QueryReturnedNoRows) => Err(ErrorCodeString::new("ATTACHMENT_NOT_FOUND")),
+        Err(rusqlite::Error::QueryReturnedNoRows) => {
+            Err(ErrorCodeString::new("ATTACHMENT_NOT_FOUND"))
+        }
         Err(err) => {
             log_sqlite_err(
                 "get_attachment_by_id_conn.query_row",
@@ -150,7 +152,6 @@ pub fn rename_attachment(
         Ok(())
     })
 }
-
 
 pub fn purge_attachment_and_get_meta(
     state: &Arc<AppState>,

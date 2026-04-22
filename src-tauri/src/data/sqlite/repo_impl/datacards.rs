@@ -1,4 +1,4 @@
-﻿use super::*;
+use super::*;
 
 pub fn search_datacard_ids(
     state: &Arc<AppState>,
@@ -301,7 +301,6 @@ pub fn list_datacards_summary(
         Ok(cards)
     })
 }
-
 
 pub fn set_datacard_archived(
     state: &Arc<AppState>,

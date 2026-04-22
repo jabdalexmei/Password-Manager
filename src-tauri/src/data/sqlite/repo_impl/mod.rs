@@ -1,4 +1,4 @@
-﻿use chrono::Utc;
+use chrono::Utc;
 use rusqlite::params;
 use rusqlite::params_from_iter;
 use rusqlite::types::{Type, Value};
@@ -19,16 +19,16 @@ use crate::types::{
 use std::collections::HashMap;
 use std::sync::Arc;
 
+mod attachments;
+mod bank_cards;
 mod connection;
 mod datacards;
-mod bank_cards;
 mod folders;
-mod attachments;
-mod vaults;
-mod settings;
-mod ui_prefs;
-mod trash;
 mod password_history;
+mod settings;
+mod trash;
+mod ui_prefs;
+mod vaults;
 
 use connection::{
     deserialize_json, get_default_vault_id_conn, serialize_json, with_connection,
@@ -195,7 +195,6 @@ fn parse_datacard_search_terms(query: &str) -> Vec<DataCardSearchTerm> {
         })
         .collect()
 }
-
 
 fn map_folder(row: &rusqlite::Row) -> rusqlite::Result<Folder> {
     Ok(Folder {
@@ -402,7 +401,8 @@ fn hydrate_datacards_attachments_conn(
     active_vault_id: &str,
 ) -> Result<()> {
     let datacard_ids = cards.iter().map(|card| card.id.clone()).collect::<Vec<_>>();
-    let attachments = list_active_attachments_for_datacards_conn(conn, active_vault_id, &datacard_ids)?;
+    let attachments =
+        list_active_attachments_for_datacards_conn(conn, active_vault_id, &datacard_ids)?;
     let mut attachments_by_datacard: HashMap<String, Vec<AttachmentMeta>> = HashMap::new();
 
     for attachment in attachments {
@@ -478,7 +478,6 @@ fn map_vault_default_constraint_error(err: rusqlite::Error) -> ErrorCodeString {
     ErrorCodeString::new("DB_QUERY_FAILED")
 }
 
-
 fn get_folder_by_id_conn(conn: &Connection, id: &str, vault_id: &str) -> Result<Folder> {
     let mut stmt = conn
         .prepare("SELECT * FROM folders WHERE id = ?1 AND vault_id = ?2")
@@ -544,9 +543,15 @@ mod tests {
     #[test]
     fn safe_order_clause_supports_all_valid_sort_pairs() {
         for (input, expected) in [
-            (("updated_at", "DESC"), "ORDER BY updated_at DESC, title ASC"),
+            (
+                ("updated_at", "DESC"),
+                "ORDER BY updated_at DESC, title ASC",
+            ),
             (("updated_at", "ASC"), "ORDER BY updated_at ASC, title ASC"),
-            (("created_at", "DESC"), "ORDER BY created_at DESC, title ASC"),
+            (
+                ("created_at", "DESC"),
+                "ORDER BY created_at DESC, title ASC",
+            ),
             (("created_at", "ASC"), "ORDER BY created_at ASC, title ASC"),
             (("title", "ASC"), "ORDER BY title ASC, updated_at DESC"),
             (("title", "DESC"), "ORDER BY title DESC, updated_at DESC"),

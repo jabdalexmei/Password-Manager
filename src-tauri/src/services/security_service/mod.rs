@@ -1,4 +1,4 @@
-﻿use std::io::{self, Read};
+use std::io::{self, Read};
 use std::path::Path;
 use std::ptr::NonNull;
 use std::sync::atomic::Ordering;
@@ -19,9 +19,9 @@ use crate::data::profiles::paths::{
     ensure_profile_dirs, kdf_salt_path, key_check_path, profile_dir, vault_db_path, vault_key_path,
 };
 use crate::data::profiles::registry;
+use crate::data::sqlite::repo_impl;
 use crate::data::sqlite::schema_migration;
 use crate::data::sqlite::schema_validation;
-use crate::data::sqlite::repo_impl;
 use crate::error::{ErrorCodeString, Result};
 use crate::services::attachments_service;
 use crate::services::settings_service;
@@ -41,8 +41,8 @@ pub use session::*;
 
 use errors::{classify_db_error, format_rusqlite_error, map_vault_decrypt_error};
 use sqlite_image::{
-    apply_in_memory_pragmas, best_effort_force_journal_mode_memory, ensure_ciphertext_vault_on_disk,
-    normalize_sqlite_header_disable_wal, owned_data_from_bytes,
+    apply_in_memory_pragmas, best_effort_force_journal_mode_memory,
+    ensure_ciphertext_vault_on_disk, normalize_sqlite_header_disable_wal, owned_data_from_bytes,
 };
 
 fn open_vault_session_with_master_key(
@@ -97,7 +97,8 @@ fn open_vault_session_with_master_key(
         );
         return Err(e);
     }
-    schema_validation::schema_validate(&conn).map_err(|_| ErrorCodeString::new("VAULT_CORRUPTED"))?;
+    schema_validation::schema_validate(&conn)
+        .map_err(|_| ErrorCodeString::new("VAULT_CORRUPTED"))?;
 
     best_effort_force_journal_mode_memory(&conn, profile_id, "unlock_after_deserialize");
 
@@ -807,7 +808,6 @@ fn prepare_empty_dir(path: &Path) -> Result<()> {
     std::fs::create_dir_all(path).map_err(|_| ErrorCodeString::new("PROFILE_STORAGE_WRITE"))?;
     Ok(())
 }
-
 
 #[cfg(test)]
 mod tests {

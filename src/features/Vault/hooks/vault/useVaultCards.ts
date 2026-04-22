@@ -189,6 +189,17 @@ export function useVaultCards({
 
         if (softDeleteEnabled) {
           const deletedAt = new Date().toISOString();
+          setCardDetailsById((prev) =>
+            prev[id]
+              ? {
+                  ...prev,
+                  [id]: {
+                    ...prev[id],
+                    deletedAt,
+                  },
+                }
+              : prev
+          );
           if (trashLoaded && cachedSummary) {
             setDeletedCards((prev) => {
               const filtered = prev.filter((card) => card.id !== id);
@@ -235,13 +246,24 @@ export function useVaultCards({
           const updated = { ...restored, deletedAt: null };
           return sortCardsWithSettings([...prev.filter((card) => card.id !== id), updated]);
         });
+        setCardDetailsById((prev) =>
+          prev[id]
+            ? {
+                ...prev,
+                [id]: {
+                  ...prev[id],
+                  deletedAt: null,
+                },
+              }
+            : prev
+        );
 
         setSelectedCardId((prev) => (prev === id ? null : prev));
       } catch (err) {
         handleError(err);
       }
     },
-    [deletedCards, handleError, setCards, setDeletedCards, setSelectedCardId, sortCardsWithSettings]
+    [deletedCards, handleError, setCardDetailsById, setCards, setDeletedCards, setSelectedCardId, sortCardsWithSettings]
   );
 
   const purgeCardAction = useCallback(
@@ -268,13 +290,25 @@ export function useVaultCards({
       await restoreAllDeletedDataCards();
       setDeletedCards([]);
       setCards((prev) => sortCardsWithSettings([...prev, ...deletedCards.map((card) => ({ ...card, deletedAt: null }))]));
+      setCardDetailsById((prev) => {
+        const next = { ...prev };
+        for (const card of deletedCards) {
+          if (next[card.id]) {
+            next[card.id] = {
+              ...next[card.id],
+              deletedAt: null,
+            };
+          }
+        }
+        return next;
+      });
       if (selectedNav === 'deleted') {
         setSelectedCardId(null);
       }
     } catch (err) {
       handleError(err);
     }
-  }, [deletedCards, handleError, selectedNav, setCards, setDeletedCards, setSelectedCardId, sortCardsWithSettings]);
+  }, [deletedCards, handleError, selectedNav, setCardDetailsById, setCards, setDeletedCards, setSelectedCardId, sortCardsWithSettings]);
 
   const purgeAllTrashAction = useCallback(async () => {
     if (deletedCards.length === 0) return;

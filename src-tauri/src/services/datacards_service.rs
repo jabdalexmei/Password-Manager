@@ -217,7 +217,10 @@ fn normalize_preview_fields_for_existing_card(
     fields: Vec<String>,
     custom_fields: &[CustomField],
 ) -> Vec<String> {
-    let known_field_ids: HashSet<&str> = custom_fields.iter().map(|field| field.id.as_str()).collect();
+    let known_field_ids: HashSet<&str> = custom_fields
+        .iter()
+        .map(|field| field.id.as_str())
+        .collect();
     let mut unique_key_to_id: HashMap<String, Option<String>> = HashMap::new();
     for field in custom_fields {
         let key = field.key.trim();
@@ -280,7 +283,10 @@ fn normalize_preview_fields_for_existing_card(
     out
 }
 
-fn normalize_card_fields(custom_fields: &mut Vec<CustomField>, preview_fields: &mut Vec<String>) -> bool {
+fn normalize_card_fields(
+    custom_fields: &mut Vec<CustomField>,
+    preview_fields: &mut Vec<String>,
+) -> bool {
     let original_custom_fields = custom_fields.clone();
     let original_preview_fields = preview_fields.clone();
 
@@ -466,7 +472,8 @@ fn purge_datacard_with_attachments(
     id: &str,
 ) -> Result<bool> {
     let storage_paths = state.get_storage_paths()?;
-    let attachment_ids = repo_impl::purge_datacard_and_collect_attachment_ids(state, profile_id, id)?;
+    let attachment_ids =
+        repo_impl::purge_datacard_and_collect_attachment_ids(state, profile_id, id)?;
     remove_attachment_files_best_effort(&storage_paths, profile_id, &attachment_ids);
     Ok(true)
 }
@@ -537,9 +544,12 @@ mod tests {
         let attachment = harness.create_attachment(&card.id, "card-attachment");
         let attachment_path = harness.attachment_path(&attachment.id);
 
-        let purged =
-            purge_datacard_by_profile_with_attachments(&harness.state, &harness.profile_id, &card.id)
-                .unwrap();
+        let purged = purge_datacard_by_profile_with_attachments(
+            &harness.state,
+            &harness.profile_id,
+            &card.id,
+        )
+        .unwrap();
 
         assert!(purged);
         assert_eq!(

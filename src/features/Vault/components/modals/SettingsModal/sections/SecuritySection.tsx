@@ -1,4 +1,5 @@
 import React from 'react';
+import { SETTINGS_LIMITS } from '../lib/settingsLimits';
 
 type TranslateFn = (key: string, params?: Record<string, string | number>) => string;
 
@@ -67,8 +68,8 @@ export function SecuritySection({
           <input
             id="auto-lock-timeout-seconds"
             type="number"
-            min={30}
-            max={86400}
+            min={SETTINGS_LIMITS.autoLockTimeoutSeconds.min}
+            max={SETTINGS_LIMITS.autoLockTimeoutSeconds.max}
             value={autoLockTimeoutSeconds}
             disabled={busy || !autoLockEnabled}
             inputMode="numeric"
@@ -100,8 +101,8 @@ export function SecuritySection({
           <input
             id="clipboard-clear-timeout-seconds"
             type="number"
-            min={1}
-            max={600}
+            min={SETTINGS_LIMITS.clipboardClearTimeoutSeconds.min}
+            max={SETTINGS_LIMITS.clipboardClearTimeoutSeconds.max}
             value={clipboardClearTimeoutSeconds}
             disabled={busy || !clipboardAutoClearEnabled}
             inputMode="numeric"

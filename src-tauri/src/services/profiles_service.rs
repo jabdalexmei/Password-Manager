@@ -121,7 +121,8 @@ mod tests {
 
     fn configured_storage_paths(workspace_root: &std::path::Path) -> StoragePaths {
         let mut sp = StoragePaths::new_unconfigured().unwrap();
-        sp.configure_workspace(workspace_root.to_path_buf()).unwrap();
+        sp.configure_workspace(workspace_root.to_path_buf())
+            .unwrap();
         sp
     }
 

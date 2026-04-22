@@ -116,8 +116,11 @@ pub fn delete_folder_and_cards(id: String, state: &Arc<AppState>) -> Result<bool
     if settings.soft_delete_enabled {
         repo_impl::soft_delete_folder_subtree_and_detach_cards(state, &profile_id, &subtree_ids)?;
     } else {
-        let attachment_ids =
-            repo_impl::purge_folder_subtree_and_collect_attachment_ids(state, &profile_id, &subtree_ids)?;
+        let attachment_ids = repo_impl::purge_folder_subtree_and_collect_attachment_ids(
+            state,
+            &profile_id,
+            &subtree_ids,
+        )?;
         remove_attachment_files_best_effort(&storage_paths, &profile_id, &attachment_ids);
         security_service::request_persist_active_vault(state.clone());
         return Ok(true);
@@ -131,7 +134,9 @@ mod tests {
     use super::*;
 
     use crate::data::sqlite::repo_impl;
-    use crate::services::{bank_cards_service, datacards_service, test_support::ServiceTestHarness};
+    use crate::services::{
+        bank_cards_service, datacards_service, test_support::ServiceTestHarness,
+    };
 
     #[test]
     fn delete_folder_only_moves_cards_to_root_and_removes_subtree() {
@@ -144,7 +149,8 @@ mod tests {
         let deleted = delete_folder_only(root.id.clone(), &harness.state).unwrap();
 
         assert!(deleted);
-        let moved_card = repo_impl::get_datacard(&harness.state, &harness.profile_id, &card.id).unwrap();
+        let moved_card =
+            repo_impl::get_datacard(&harness.state, &harness.profile_id, &card.id).unwrap();
         let moved_bank_card =
             repo_impl::get_bank_card(&harness.state, &harness.profile_id, &bank_card.id).unwrap();
         assert_eq!(moved_card.folder_id, None);
@@ -173,9 +179,11 @@ mod tests {
         let outside_folder = harness.create_folder("Outside", None);
 
         let subtree_card = harness.create_datacard("Subtree", Some(subtree_child.id.clone()), None);
-        let outside_card = harness.create_datacard("Outside", Some(outside_folder.id.clone()), None);
+        let outside_card =
+            harness.create_datacard("Outside", Some(outside_folder.id.clone()), None);
         let subtree_bank = harness.create_bank_card("Subtree bank", Some(subtree_root.id.clone()));
-        let outside_bank = harness.create_bank_card("Outside bank", Some(outside_folder.id.clone()));
+        let outside_bank =
+            harness.create_bank_card("Outside bank", Some(outside_folder.id.clone()));
 
         let subtree_attachment = harness.create_attachment(&subtree_card.id, "subtree-attachment");
         let outside_attachment = harness.create_attachment(&outside_card.id, "outside-attachment");
@@ -209,11 +217,13 @@ mod tests {
                 .code,
             "BANK_CARD_NOT_FOUND"
         );
-        assert!(
-            repo_impl::get_attachment(&harness.state, &harness.profile_id, &subtree_attachment.id)
-                .unwrap()
-                .is_none()
-        );
+        assert!(repo_impl::get_attachment(
+            &harness.state,
+            &harness.profile_id,
+            &subtree_attachment.id
+        )
+        .unwrap()
+        .is_none());
         assert!(!subtree_attachment_path.exists());
 
         assert_eq!(
@@ -228,11 +238,13 @@ mod tests {
                 .folder_id,
             Some(outside_folder.id.clone())
         );
-        assert!(
-            repo_impl::get_attachment(&harness.state, &harness.profile_id, &outside_attachment.id)
-                .unwrap()
-                .is_some()
-        );
+        assert!(repo_impl::get_attachment(
+            &harness.state,
+            &harness.profile_id,
+            &outside_attachment.id
+        )
+        .unwrap()
+        .is_some());
         assert!(outside_attachment_path.exists());
     }
 
@@ -300,9 +312,11 @@ mod tests {
         let outside_folder = harness.create_folder("Outside", None);
 
         let subtree_card = harness.create_datacard("Subtree", Some(subtree_child.id.clone()), None);
-        let outside_card = harness.create_datacard("Outside", Some(outside_folder.id.clone()), None);
+        let outside_card =
+            harness.create_datacard("Outside", Some(outside_folder.id.clone()), None);
         let subtree_bank = harness.create_bank_card("Subtree bank", Some(subtree_root.id.clone()));
-        let outside_bank = harness.create_bank_card("Outside bank", Some(outside_folder.id.clone()));
+        let outside_bank =
+            harness.create_bank_card("Outside bank", Some(outside_folder.id.clone()));
 
         let subtree_attachment = harness.create_attachment(&subtree_card.id, "subtree-attachment");
         let outside_attachment = harness.create_attachment(&outside_card.id, "outside-attachment");
@@ -328,14 +342,12 @@ mod tests {
         let deleted_card =
             repo_impl::get_datacard(&harness.state, &harness.profile_id, &subtree_card.id).unwrap();
         let deleted_bank =
-            repo_impl::get_bank_card(&harness.state, &harness.profile_id, &subtree_bank.id).unwrap();
-        let deleted_attachment = repo_impl::get_attachment(
-            &harness.state,
-            &harness.profile_id,
-            &subtree_attachment.id,
-        )
-        .unwrap()
-        .unwrap();
+            repo_impl::get_bank_card(&harness.state, &harness.profile_id, &subtree_bank.id)
+                .unwrap();
+        let deleted_attachment =
+            repo_impl::get_attachment(&harness.state, &harness.profile_id, &subtree_attachment.id)
+                .unwrap()
+                .unwrap();
 
         assert!(deleted_card.deleted_at.is_some());
         assert_eq!(deleted_card.folder_id, None);
@@ -400,14 +412,12 @@ mod tests {
         let restored_card =
             repo_impl::get_datacard(&harness.state, &harness.profile_id, &subtree_card.id).unwrap();
         let restored_bank =
-            repo_impl::get_bank_card(&harness.state, &harness.profile_id, &subtree_bank.id).unwrap();
-        let restored_attachment = repo_impl::get_attachment(
-            &harness.state,
-            &harness.profile_id,
-            &subtree_attachment.id,
-        )
-        .unwrap()
-        .unwrap();
+            repo_impl::get_bank_card(&harness.state, &harness.profile_id, &subtree_bank.id)
+                .unwrap();
+        let restored_attachment =
+            repo_impl::get_attachment(&harness.state, &harness.profile_id, &subtree_attachment.id)
+                .unwrap()
+                .unwrap();
 
         assert_eq!(restored_card.deleted_at, None);
         assert_eq!(restored_card.folder_id, None);

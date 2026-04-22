@@ -1,4 +1,5 @@
 import React from 'react';
+import { SETTINGS_LIMITS } from '../lib/settingsLimits';
 
 type TranslateFn = (key: string, params?: Record<string, string | number>) => string;
 
@@ -63,8 +64,8 @@ export function BackupsSection({
           <input
             id="backup-interval-minutes"
             type="number"
-            min={5}
-            max={1440}
+            min={SETTINGS_LIMITS.autoBackupIntervalMinutes.min}
+            max={SETTINGS_LIMITS.autoBackupIntervalMinutes.max}
             value={intervalMinutes}
             disabled={busy || !autoBackupEnabled}
             inputMode="numeric"
@@ -80,8 +81,8 @@ export function BackupsSection({
           <input
             id="backup-max-copies"
             type="number"
-            min={1}
-            max={500}
+            min={SETTINGS_LIMITS.backupMaxCopies.min}
+            max={SETTINGS_LIMITS.backupMaxCopies.max}
             value={maxCopies}
             disabled={busy}
             inputMode="numeric"

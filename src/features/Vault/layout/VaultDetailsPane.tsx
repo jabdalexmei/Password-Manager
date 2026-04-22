@@ -37,6 +37,7 @@ export function VaultDetailsPane({
         card={bankCards.selectedCard}
         dateTimeFormat={bankCards.settings?.date_time_format ?? 'auto'}
         onEdit={(card) => bankCardsViewModel.openEditModal(card)}
+        onReloadCard={bankCards.loadCard}
         onDelete={bankCards.deleteCard}
         onRestore={bankCards.restoreCard}
         onPurge={bankCards.purgeCard}

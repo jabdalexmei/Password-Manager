@@ -22,6 +22,7 @@ import { FeaturesSection } from './sections/FeaturesSection';
 import { VaultsSection } from './sections/VaultsSection';
 import { BackupsSection } from './sections/BackupsSection';
 import { parseTrashRetentionDays } from './lib/parseTrashRetentionDays';
+import { SETTINGS_LIMITS } from './lib/settingsLimits';
 import { validateSettings } from './lib/validateSettings';
 
 export type SettingsModalProps = {
@@ -277,10 +278,27 @@ export function SettingsModal({
     const retentionDays = parseTrashRetentionDays(trashRetentionDays);
 
     if (!Number.isFinite(lockTimeout) || !Number.isFinite(clipTimeout) || !Number.isFinite(interval) || !Number.isFinite(max)) return;
-    if (autoLockEnabled && (lockTimeout < 30 || lockTimeout > 86400)) return;
-    if (clipTimeout < 1 || clipTimeout > 600) return;
-    if (autoBackupEnabled && (interval < 5 || interval > 1440)) return;
-    if (max < 1 || max > 500) return;
+    if (
+      autoLockEnabled &&
+      (lockTimeout < SETTINGS_LIMITS.autoLockTimeoutSeconds.min ||
+        lockTimeout > SETTINGS_LIMITS.autoLockTimeoutSeconds.max)
+    ) {
+      return;
+    }
+    if (
+      clipTimeout < SETTINGS_LIMITS.clipboardClearTimeoutSeconds.min ||
+      clipTimeout > SETTINGS_LIMITS.clipboardClearTimeoutSeconds.max
+    ) {
+      return;
+    }
+    if (
+      autoBackupEnabled &&
+      (interval < SETTINGS_LIMITS.autoBackupIntervalMinutes.min ||
+        interval > SETTINGS_LIMITS.autoBackupIntervalMinutes.max)
+    ) {
+      return;
+    }
+    if (max < SETTINGS_LIMITS.backupMaxCopies.min || max > SETTINGS_LIMITS.backupMaxCopies.max) return;
     if (trashAutoCleanupEnabled && retentionDays === null) return;
 
     const saved = await onSave({

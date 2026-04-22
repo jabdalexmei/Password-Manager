@@ -57,6 +57,7 @@ export function useVault(profileId: string, onLocked: () => void) {
 
   const isTrashMode = selectedNav === 'deleted';
   const selectedFolderId = typeof selectedNav === 'object' ? selectedNav.folderId : null;
+  const hasLoadedSettings = settings !== null;
 
   const dtf = useMemo(
     () => createVaultDateTimeFormatter(settings?.date_time_format ?? 'auto', language),
@@ -183,9 +184,7 @@ export function useVault(profileId: string, onLocked: () => void) {
     if (initOnceRef.current) return;
     initOnceRef.current = true;
 
-    refreshActive();
-    refreshTrash();
-    refreshVaults();
+    void refreshVaults();
     getSettings()
       .then((nextSettings) => {
         const normalizedActiveVaultId = nextSettings.active_vault_id || DEFAULT_ACTIVE_VAULT_ID;
@@ -193,7 +192,34 @@ export function useVault(profileId: string, onLocked: () => void) {
         setActiveVaultId(normalizedActiveVaultId);
       })
       .catch(handleError);
-  }, [handleError, initOnceRef, refreshActive, refreshTrash, refreshVaults, setActiveVaultId, setSettings]);
+  }, [handleError, initOnceRef, profileId, refreshVaults, setActiveVaultId, setSettings]);
+
+  useEffect(() => {
+    if (!hasLoadedSettings) return;
+    void refreshActive();
+    void refreshTrash();
+  }, [activeVaultId, hasLoadedSettings, profileId, refreshActive, refreshTrash]);
+
+  useEffect(() => {
+    const knownIds = new Set([...cards, ...deletedCards].map((card) => card.id));
+
+    setCardDetailsById((prev) => {
+      let changed = false;
+      const next: typeof prev = {};
+
+      for (const [id, card] of Object.entries(prev)) {
+        if (!knownIds.has(id)) {
+          changed = true;
+          continue;
+        }
+        next[id] = card;
+      }
+
+      return changed ? next : prev;
+    });
+
+    setSelectedCardId((prev) => (prev && !knownIds.has(prev) ? null : prev));
+  }, [cards, deletedCards, setCardDetailsById, setSelectedCardId]);
 
   const selectNav = useCallback(
     async (nav: SelectedNav) => {
@@ -327,8 +353,10 @@ export function useVault(profileId: string, onLocked: () => void) {
 
   const selectedCard = useMemo(() => {
     if (!selectedCardId) return null;
+    const exists = cards.some((card) => card.id === selectedCardId) || deletedCards.some((card) => card.id === selectedCardId);
+    if (!exists) return null;
     return cardDetailsById[selectedCardId] ?? null;
-  }, [cardDetailsById, selectedCardId]);
+  }, [cardDetailsById, cards, deletedCards, selectedCardId]);
 
   const currentSectionTitle = useMemo(() => {
     if (selectedFolderId) {

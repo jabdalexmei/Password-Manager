@@ -1,4 +1,4 @@
-﻿use super::*;
+use super::*;
 
 pub fn backup_restore_workflow(state: &Arc<AppState>, backup_path: String) -> Result<bool> {
     let _guard = ensure_backup_guard(state)?;
@@ -48,8 +48,13 @@ pub fn backup_restore_workflow(state: &Arc<AppState>, backup_path: String) -> Re
         registry::upsert_profile_with_id(&sp, &manifest.profile_id, &profile_name, has_password)?;
     }
 
-    let restored =
-        restore_archive_to_profile(state, &sp, &manifest.profile_id, &profile_name, &backup_path)?;
+    let restored = restore_archive_to_profile(
+        state,
+        &sp,
+        &manifest.profile_id,
+        &profile_name,
+        &backup_path,
+    )?;
 
     // Keep profiles registry in sync with restored state (name + vault mode).
     let has_password = manifest.vault_mode == "protected";

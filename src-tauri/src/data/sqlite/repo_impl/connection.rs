@@ -1,4 +1,4 @@
-﻿use super::*;
+use super::*;
 
 pub(super) fn with_connection<T>(
     state: &Arc<AppState>,
@@ -42,7 +42,10 @@ pub(super) fn get_default_vault_id_conn(conn: &Connection) -> Result<String> {
         })
 }
 
-pub(super) fn resolve_active_vault_id_conn(conn: &Connection, state: &Arc<AppState>) -> Result<String> {
+pub(super) fn resolve_active_vault_id_conn(
+    conn: &Connection,
+    state: &Arc<AppState>,
+) -> Result<String> {
     if let Some(active_vault_id) = current_active_vault_id(state) {
         let sql = "SELECT 1 FROM vaults WHERE id = ?1 LIMIT 1";
         let exists: Option<i32> = conn
@@ -120,7 +123,9 @@ pub(super) fn with_connection_in_active_vault_tx<T>(
     })
 }
 
-pub(super) fn deserialize_json<T: serde::de::DeserializeOwned>(value: String) -> rusqlite::Result<T> {
+pub(super) fn deserialize_json<T: serde::de::DeserializeOwned>(
+    value: String,
+) -> rusqlite::Result<T> {
     serde_json::from_str(&value)
         .map_err(|err| rusqlite::Error::FromSqlConversionFailure(0, Type::Text, Box::new(err)))
 }

@@ -1,4 +1,4 @@
-﻿use super::*;
+use super::*;
 
 use std::collections::HashSet;
 
@@ -14,7 +14,9 @@ fn list_attachment_ids_in_folder_conn(
         .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
 
     let rows = stmt
-        .query_map(params![folder_id, active_vault_id], |row| row.get::<_, String>(0))
+        .query_map(params![folder_id, active_vault_id], |row| {
+            row.get::<_, String>(0)
+        })
         .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?
         .collect::<rusqlite::Result<Vec<_>>>()
         .map_err(|_| ErrorCodeString::new("DB_QUERY_FAILED"))?;
@@ -46,7 +48,6 @@ pub fn list_folders(state: &Arc<AppState>, profile_id: &str) -> Result<Vec<Folde
         Ok(folders)
     })
 }
-
 
 pub fn get_folder(state: &Arc<AppState>, profile_id: &str, id: &str) -> Result<Folder> {
     with_connection_in_active_vault(state, profile_id, |conn, active_vault_id| {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   createBankCard,
   deleteBankCard,
@@ -45,7 +45,6 @@ export function useBankCards(
   const { language } = useI18n();
   const { t: tCommon } = useTranslation('Common');
   const { t: tVault } = useTranslation('Vault');
-  const initOnceRef = useRef(false);
   const [cards, setCards] = useState<BankCardSummary[]>([]);
   const [cardDetailsById, setCardDetailsById] = useState<Record<string, BankCardItem>>({});
   const [deletedCards, setDeletedCards] = useState<BankCardSummary[]>([]);
@@ -58,13 +57,13 @@ export function useBankCards(
   const [searchMatchIds, setSearchMatchIds] = useState<Set<string> | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<BankCardsError>(null);
+  const hasLoadedSettings = settings !== null;
   const dtf = useMemo(
     () => createVaultDateTimeFormatter(settings?.date_time_format ?? 'auto', language),
     [language, settings?.date_time_format]
   );
 
   useEffect(() => {
-    initOnceRef.current = false;
     setCards([]);
     setCardDetailsById({});
     setDeletedCards([]);
@@ -72,6 +71,10 @@ export function useBankCards(
     setSelectedCardId(null);
     setTrashLoaded(false);
   }, [activeVaultId, profileId]);
+
+  useEffect(() => {
+    setSettings(null);
+  }, [profileId]);
 
   useEffect(() => {
     const q = debouncedSearchQuery.trim();
@@ -276,17 +279,39 @@ export function useBankCards(
   );
 
   useEffect(() => {
-    if (initOnceRef.current) return;
-    initOnceRef.current = true;
-
-    refreshActive();
-    refreshTrash();
     getSettings()
       .then((nextSettings) => {
         setSettings(nextSettings);
       })
       .catch(handleError);
-  }, [activeVaultId, handleError, refreshActive, refreshTrash]);
+  }, [handleError, profileId]);
+
+  useEffect(() => {
+    if (!hasLoadedSettings) return;
+    void refreshActive();
+    void refreshTrash();
+  }, [activeVaultId, hasLoadedSettings, profileId, refreshActive, refreshTrash]);
+
+  useEffect(() => {
+    const knownIds = new Set([...cards, ...deletedCards].map((card) => card.id));
+
+    setCardDetailsById((prev) => {
+      let changed = false;
+      const next: typeof prev = {};
+
+      for (const [id, card] of Object.entries(prev)) {
+        if (!knownIds.has(id)) {
+          changed = true;
+          continue;
+        }
+        next[id] = card;
+      }
+
+      return changed ? next : prev;
+    });
+
+    setSelectedCardId((prev) => (prev && !knownIds.has(prev) ? null : prev));
+  }, [cards, deletedCards]);
 
   const selectNav = useCallback(
     async (nav: SelectedNav) => {
@@ -364,6 +389,17 @@ export function useBankCards(
 
         if (softDeleteEnabled) {
           const deletedAt = new Date().toISOString();
+          setCardDetailsById((prev) =>
+            prev[id]
+              ? {
+                  ...prev,
+                  [id]: {
+                    ...prev[id],
+                    deletedAt,
+                  },
+                }
+              : prev
+          );
           if (trashLoaded && cachedSummary) {
             setDeletedCards((prev) => {
               const filtered = prev.filter((card) => card.id !== id);
@@ -388,13 +424,24 @@ export function useBankCards(
     async (id: string) => {
       try {
         await restoreBankCard(id);
+        const restored = deletedCards.find((card) => card.id === id) ?? null;
         setDeletedCards((prev) => prev.filter((card) => card.id !== id));
         setCards((prev) => {
-          const restored = deletedCards.find((card) => card.id === id);
           if (!restored) return prev;
           const updated = { ...restored, deletedAt: null };
           return sortCardsWithSettings([...prev.filter((card) => card.id !== id), updated]);
         });
+        setCardDetailsById((prev) =>
+          prev[id]
+            ? {
+                ...prev,
+                [id]: {
+                  ...prev[id],
+                  deletedAt: null,
+                },
+              }
+            : prev
+        );
         setSelectedCardId((prev) => (prev === id ? null : prev));
       } catch (err) {
         handleError(err);
@@ -432,6 +479,18 @@ export function useBankCards(
           ...deletedCards.map((card) => ({ ...card, deletedAt: null })),
         ])
       );
+      setCardDetailsById((prev) => {
+        const next = { ...prev };
+        for (const card of deletedCards) {
+          if (next[card.id]) {
+            next[card.id] = {
+              ...next[card.id],
+              deletedAt: null,
+            };
+          }
+        }
+        return next;
+      });
       // Keep nav; if user is in "deleted", list becomes empty so clear selection.
       if (selectedNav === 'deleted') {
         setSelectedCardId(null);
@@ -485,8 +544,10 @@ export function useBankCards(
 
   const selectedCard = useMemo(() => {
     if (!selectedCardId) return null;
+    const exists = cards.some((card) => card.id === selectedCardId) || deletedCards.some((card) => card.id === selectedCardId);
+    if (!exists) return null;
     return cardDetailsById[selectedCardId] ?? null;
-  }, [cardDetailsById, selectedCardId]);
+  }, [cardDetailsById, cards, deletedCards, selectedCardId]);
 
   const currentSectionTitle = useMemo(() => {
     if (selectedFolderId) {
@@ -551,11 +612,18 @@ export function useBankCards(
             ? { ...prev, [current.id]: { ...prev[current.id], archivedAt: nextArchivedAt } }
             : prev
         );
+
+        if (selectedCardId === id) {
+          const isArchiveNav = selectedNav === 'archive';
+          if ((nextArchived && !isArchiveNav) || (!nextArchived && isArchiveNav)) {
+            setSelectedCardId(null);
+          }
+        }
       } catch (err) {
         handleError(err);
       }
     },
-    [cards, handleError]
+    [cards, handleError, selectedCardId, selectedNav]
   );
 
   const counts = useMemo(

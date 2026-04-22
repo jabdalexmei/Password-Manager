@@ -1,4 +1,5 @@
 import { parseTrashRetentionDays } from './parseTrashRetentionDays';
+import { SETTINGS_LIMITS } from './settingsLimits';
 
 type ValidateSettingsParams = {
   autoLockEnabled: boolean;
@@ -30,11 +31,28 @@ export const validateSettings = ({
   if (!Number.isFinite(lockTimeout) || !Number.isFinite(clipTimeout) || !Number.isFinite(interval) || !Number.isFinite(max)) {
     return false;
   }
-  if (autoLockEnabled && (lockTimeout < 30 || lockTimeout > 86400)) return false;
-  if (clipTimeout < 1 || clipTimeout > 600) return false;
-  if (autoBackupEnabled && (interval < 5 || interval > 1440)) return false;
+  if (
+    autoLockEnabled &&
+    (lockTimeout < SETTINGS_LIMITS.autoLockTimeoutSeconds.min ||
+      lockTimeout > SETTINGS_LIMITS.autoLockTimeoutSeconds.max)
+  ) {
+    return false;
+  }
+  if (
+    clipTimeout < SETTINGS_LIMITS.clipboardClearTimeoutSeconds.min ||
+    clipTimeout > SETTINGS_LIMITS.clipboardClearTimeoutSeconds.max
+  ) {
+    return false;
+  }
+  if (
+    autoBackupEnabled &&
+    (interval < SETTINGS_LIMITS.autoBackupIntervalMinutes.min ||
+      interval > SETTINGS_LIMITS.autoBackupIntervalMinutes.max)
+  ) {
+    return false;
+  }
   if (trashAutoCleanupEnabled && retentionDays === null) return false;
-  if (max < 1 || max > 500) return false;
+  if (max < SETTINGS_LIMITS.backupMaxCopies.min || max > SETTINGS_LIMITS.backupMaxCopies.max) return false;
 
   return true;
 };
