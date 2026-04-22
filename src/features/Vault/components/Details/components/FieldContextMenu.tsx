@@ -9,8 +9,10 @@ type TranslateFn = (key: string, params?: Record<string, string | number>) => st
 type FieldContextMenuProps = {
   coreMenu: { x: number; y: number; field: DataCardCoreField } | null;
   previewMenu: { x: number; y: number; field: DataCardCardPreviewField; allowGlobal: boolean } | null;
+  contentMenu: { x: number; y: number; field: DataCardDetailContentField } | null;
   closeCoreMenu: () => void;
   closePreviewMenu: () => void;
+  closeContentMenu: () => void;
   toggleCoreFieldHidden: (field: DataCardCoreField) => Promise<void>;
   isCoreFieldHidden: (field: DataCardCoreField) => boolean;
   togglePreviewFieldForCard: (field: DataCardCardPreviewField) => Promise<void>;
@@ -30,8 +32,10 @@ type FieldContextMenuProps = {
 export function FieldContextMenu({
   coreMenu,
   previewMenu,
+  contentMenu,
   closeCoreMenu,
   closePreviewMenu,
+  closeContentMenu,
   toggleCoreFieldHidden,
   isCoreFieldHidden,
   togglePreviewFieldForCard,
@@ -152,6 +156,34 @@ export function FieldContextMenu({
                 </button>
               </>
             )}
+          </div>
+        </>
+      )}
+
+      {contentMenu && (
+        <>
+          <div className="vault-actionmenu-backdrop" onClick={closeContentMenu} />
+          <div
+            className="vault-actionmenu-panel vault-contextmenu-panel"
+            role="menu"
+            style={
+              {
+                '--menu-x': `${contentMenu.x}px`,
+                '--menu-y': `${contentMenu.y}px`,
+              } as React.CSSProperties
+            }
+          >
+            <button
+              className="vault-actionmenu-item"
+              type="button"
+              onClick={() => {
+                void toggleContentFieldConcealed(contentMenu.field);
+              }}
+            >
+              {isContentFieldConcealed(contentMenu.field)
+                ? t('contentMenu.revealContent')
+                : t('contentMenu.hideContent')}
+            </button>
           </div>
         </>
       )}

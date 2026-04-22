@@ -7,6 +7,7 @@ export type DataCardDetailContentField =
   | 'recovery_email'
   | 'username'
   | 'mobile_phone'
+  | 'totp'
   | 'note'
   | 'folder'
   | 'tags'
@@ -32,6 +33,7 @@ export const isAllowedDetailContentField = (
   value === 'recovery_email' ||
   value === 'username' ||
   value === 'mobile_phone' ||
+  value === 'totp' ||
   value === 'note' ||
   value === 'folder' ||
   value === 'tags' ||

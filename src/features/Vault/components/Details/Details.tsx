@@ -120,6 +120,7 @@ export function Details({
   const [revealedCustomFields, setRevealedCustomFields] = useState<Record<string, boolean>>({});
   const [hiddenContentByCard, setHiddenContentByCard] = useState<Record<string, DataCardDetailContentField[]>>({});
   const [revealedConcealedContentFields, setRevealedConcealedContentFields] = useState<Record<string, boolean>>({});
+  const [contentMenu, setContentMenu] = useState<{ x: number; y: number; field: DataCardDetailContentField } | null>(null);
 
   const totpData = useTotpTicker(card?.totpUri);
 
@@ -162,7 +163,25 @@ export function Details({
   useEffect(() => {
     setRevealedCustomFields({});
     setRevealedConcealedContentFields({});
+    setContentMenu(null);
   }, [card?.id]);
+
+  useEffect(() => {
+    if (!contentMenu) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setContentMenu(null);
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [contentMenu]);
+
+  useEffect(() => {
+    if (!previewMenu && !coreMenu) return;
+    setContentMenu(null);
+  }, [coreMenu, previewMenu]);
 
   const toggleCustomFieldVisibility = (fieldId: string) => {
     setRevealedCustomFields((prev) => ({
@@ -216,11 +235,22 @@ export function Details({
         delete next[field];
         return next;
       });
+      setCoreMenu(null);
+      setPreviewMenu(null);
+      setContentMenu(null);
 
       await saveHiddenContentByCard(nextHiddenContentByCard);
     },
-    [card?.id, hiddenContentByCard],
+    [card?.id, hiddenContentByCard, setCoreMenu, setPreviewMenu],
   );
+
+  const openContentMenu = useCallback((field: DataCardDetailContentField, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setCoreMenu(null);
+    setPreviewMenu(null);
+    setContentMenu({ x: event.clientX, y: event.clientY, field });
+  }, [setCoreMenu, setPreviewMenu]);
 
   const resolveCoreContentField = useCallback(
     (field: 'title' | 'url' | 'email'): DataCardDetailContentField => field,
@@ -449,7 +479,16 @@ export function Details({
 
           <SeedPhraseSection seedPhraseWordCount={seedPhraseWordCount} onOpen={() => setSeedPhraseViewOpen(true)} t={t} />
 
-          <TwoFactorSection totpUri={card.totpUri} totpData={totpData} detailActions={detailActions} t={t} />
+          <TwoFactorSection
+            totpUri={card.totpUri}
+            totpData={totpData}
+            detailActions={detailActions}
+            isContentConcealed={isContentConcealed('totp')}
+            isContentRevealed={isContentRevealed('totp')}
+            onToggleContentReveal={() => toggleContentReveal('totp')}
+            onOpenContentMenu={(event) => openContentMenu('totp', event)}
+            t={t}
+          />
 
           <CustomFieldsSection
             customFields={card.customFields ?? []}
@@ -564,8 +603,10 @@ export function Details({
       <FieldContextMenu
         coreMenu={coreMenu}
         previewMenu={previewMenu}
+        contentMenu={contentMenu}
         closeCoreMenu={() => setCoreMenu(null)}
         closePreviewMenu={() => setPreviewMenu(null)}
+        closeContentMenu={() => setContentMenu(null)}
         toggleCoreFieldHidden={toggleCoreFieldHidden}
         isCoreFieldHidden={isCoreFieldHidden}
         togglePreviewFieldForCard={togglePreviewFieldForCard}

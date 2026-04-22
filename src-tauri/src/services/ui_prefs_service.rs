@@ -179,6 +179,7 @@ fn is_allowed_hidden_content_field(value: &str) -> bool {
             | "recovery_email"
             | "username"
             | "mobile_phone"
+            | "totp"
             | "note"
             | "folder"
             | "tags"
