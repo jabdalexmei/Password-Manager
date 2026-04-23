@@ -1,0 +1,166 @@
+:root[data-theme="blueTheme"] {
+  --fd-font-body: system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+  --fd-font-mono: "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+
+  --fd-radius-sm: 10px;
+  --fd-radius-md: 16px;
+  --fd-radius-lg: 24px;
+  --fd-radius-pill: 999px;
+
+  --fd-shadow-card: 0 18px 45px rgba(15, 23, 42, 0.8);
+  --fd-shadow-lg: 0 18px 45px rgba(15, 23, 42, 0.8);
+  --fd-shadow-popover: 0 12px 30px rgba(0, 0, 0, 0.45);
+
+  --fd-bg-app: linear-gradient(135deg, #0b1222 0%, #0f172a 60%, #0f172a 100%);
+  --fd-bg-screens-workspace-create-login-select: radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.12), transparent 35%),
+    radial-gradient(circle at 80% 10%, rgba(37, 99, 235, 0.08), transparent 30%),
+    linear-gradient(135deg, #0b1222 0%, #0f172a 62%, #0f172a 100%);
+
+  --fd-overlay-backdrop: rgba(0, 0, 0, 0.45);
+
+  --fd-surface-page: #0f172a;
+  --fd-surface-panel: #0f172a;
+  --fd-vault-action-button-bg: #0f172a;
+  --fd-vault-action-button-hover-bg: #0f172a;
+  --fd-screen-card-bg-auth: #0b1222;
+  --fd-screen-card-bg-login: #0b1222;
+  --fd-screen-card-bg-workspace: #0b1222;
+  --fd-dialog-panel-bg: #0f172a;
+  --fd-toast-panel-bg: #0f172a;
+  --fd-surface-elevated: #111827;
+  --fd-surface-subtle: rgba(255, 255, 255, 0.02);
+  --fd-surface-subtle-strong: rgba(255, 255, 255, 0.08);
+
+  --fd-border-default: rgba(255, 255, 255, 0.08);
+
+  --fd-text-primary: #e5e7eb;
+  --fd-text-muted: #9ca3c7;
+  --fd-text-on-accent: #ffffff;
+
+  --fd-accent-primary: #2563eb;
+  --fd-accent-primary-strong: #1d4ed8;
+  --fd-accent-success: #22c55e;
+  --fd-switch-on-bg: #34c759;
+  --fd-switch-on-border: #34c759;
+  --fd-accent-danger: #ef4444;
+  --fd-accent-danger-strong: #dc2626;
+
+  --fd-state-primary-soft: rgba(37, 99, 235, 0.08);
+  --fd-state-success-soft: rgba(34, 197, 94, 0.12);
+  --fd-state-danger-soft: rgba(239, 68, 68, 0.12);
+  --fd-toast-success-bg: rgba(34, 197, 94, 0.12);
+  --fd-toast-success-border: #22c55e;
+  --fd-toast-error-bg: rgba(239, 68, 68, 0.12);
+  --fd-toast-error-border: #ef4444;
+  --fd-state-danger-border-weak: rgba(239, 68, 68, 0.4);
+  --fd-state-danger-hover-bg: rgba(239, 68, 68, 0.08);
+
+  --fd-focus-border: rgba(59, 130, 246, 0.45);
+  --fd-focus-border-strong: rgba(59, 130, 246, 0.55);
+  --fd-focus-ring-color: #2563eb;
+
+  --fd-scrollbar-size: 10px;
+  --fd-scrollbar-track: #0f172a;
+  --fd-scrollbar-thumb: rgba(255, 255, 255, 0.08);
+  --fd-scrollbar-thumb-hover: rgba(255, 255, 255, 0.03);
+
+  --fd-vault-columns-bg: #0f172a;
+  --fd-vault-detail-value-box-bg: #0c1324da;
+  --fd-nav-sidebar-border: rgba(255, 255, 255, 0.08);
+  --fd-nav-control-bg: #1f2937;
+  --fd-nav-control-border: #374151;
+  --fd-nav-control-text: #e5e7eb;
+  --fd-nav-control-hover-border: rgba(59, 130, 246, 0.45);
+
+  --fd-category-navigation-folders-buttons-bg: rgba(37, 46, 63, 0.5);
+  --fd-category-navigation-folders-buttons-border: rgba(255, 255, 255, 0.08);
+  --fd-category-navigation-folders-buttons-text: #e5e7eb;
+  --fd-category-navigation-folders-buttons-hover-bg: rgb(37, 46, 63);
+  --fd-category-navigation-folders-buttons-hover-border: rgba(59, 130, 246, 0.45);
+  --fd-category-navigation-folders-buttons-active-bg: rgba(37, 46, 63, 0.5);
+  --fd-category-navigation-folders-buttons-active-border: #2563eb;
+  --fd-category-navigation-folders-buttons-active-text: #e5e7eb;
+  --fd-category-navigation-folders-buttons-count: #9ca3c7;
+
+  --fd-nav-toggle-bg: transparent;
+  --fd-nav-toggle-border: rgba(255, 255, 255, 0.08);
+  --fd-nav-toggle-text: #9ca3c7;
+  --fd-nav-toggle-hover-bg: #0f172a;
+  --fd-nav-toggle-hover-border: rgba(59, 130, 246, 0.45);
+  --fd-nav-toggle-hover-text: #e5e7eb;
+
+  --fd-nav-menu-bg: #1f2937;
+  --fd-nav-menu-border: #374151;
+  --fd-nav-menu-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+  --fd-nav-menu-item-text: #e5e7eb;
+  --fd-nav-menu-item-hover-bg: rgba(229, 231, 235, 0.08);
+  --fd-nav-menu-item-hover-border: rgba(229, 231, 235, 0.22);
+  --fd-nav-menu-item-danger-text: #ef4444;
+
+  --fd-create-primary-bg: #2563eb;
+  --fd-create-primary-border: #2563eb;
+  --fd-create-primary-text: #ffffff;
+  --fd-create-primary-hover-bg: #1d4ed8;
+  --fd-create-primary-hover-border: #1d4ed8;
+  --fd-create-primary-active-bg: #1d4ed8;
+  --fd-create-primary-active-border: #1d4ed8;
+  --fd-create-primary-disabled-bg: #2563eb;
+  --fd-create-primary-disabled-border: #2563eb;
+  --fd-create-primary-disabled-text: #ffffff;
+
+  --fd-create-secondary-bg: #1f2937;
+  --fd-create-secondary-border: #374151;
+  --fd-create-secondary-text: #e5e7eb;
+  --fd-create-secondary-hover-bg: #1f2937;
+  --fd-create-secondary-hover-border: #2563eb;
+  --fd-create-secondary-active-bg: #273346;
+  --fd-create-secondary-active-border: #2563eb;
+  --fd-create-secondary-disabled-bg: #1f2937;
+  --fd-create-secondary-disabled-border: #374151;
+  --fd-create-secondary-disabled-text: #e5e7eb;
+  --fd-create-focus-ring-color: #2563eb;
+
+  --fd-button-ghost-bg: #0f172a;
+  --fd-button-ghost-border: rgba(255, 255, 255, 0.08);
+  --fd-button-ghost-text: #e5e7eb;
+  --fd-button-ghost-hover-bg: rgba(255, 255, 255, 0.02);
+  --fd-button-ghost-hover-border: #2563eb;
+  --fd-button-ghost-hover-text: #e5e7eb;
+  --fd-button-ghost-active-bg: rgba(255, 255, 255, 0.08);
+  --fd-button-ghost-active-border: #2563eb;
+  --fd-button-ghost-active-text: #e5e7eb;
+  --fd-button-ghost-disabled-bg: #0f172a;
+  --fd-button-ghost-disabled-border: rgba(255, 255, 255, 0.08);
+  --fd-button-ghost-disabled-text: #9ca3c7;
+  --fd-button-ghost-focus-ring-color: #2563eb;
+  --fd-button-ghost-focus-ring-offset: 2px;
+
+  --fd-input-bg: rgba(255, 255, 255, 0.02);
+  --fd-input-border: rgba(255, 255, 255, 0.08);
+  --fd-input-text: #e5e7eb;
+  --fd-input-placeholder: #9ca3c7;
+  --fd-input-hover-bg: rgba(255, 255, 255, 0.03);
+  --fd-input-hover-border: rgba(59, 130, 246, 0.45);
+  --fd-input-focus-bg: rgba(255, 255, 255, 0.02);
+  --fd-input-focus-border: rgba(59, 130, 246, 0.45);
+  --fd-input-focus-ring-color: #2563eb;
+  --fd-input-focus-ring-offset: 2px;
+  --fd-input-disabled-bg: rgba(255, 255, 255, 0.02);
+  --fd-input-disabled-border: rgba(255, 255, 255, 0.08);
+  --fd-input-disabled-text: #9ca3c7;
+  --fd-input-disabled-placeholder: #9ca3c7;
+
+   --fd-card-bg: #0b1222b4;
+  --fd-card-border: rgba(255, 255, 255, 0.08);
+  --fd-card-text: #e5e7eb;
+  --fd-card-muted: #9ca3c7;
+  --fd-card-hover-bg: #0f172a;
+  --fd-card-hover-border: rgba(59, 130, 246, 0.45);
+  --fd-card-active-bg: #111827; /* vault-datacard active */
+  --fd-card-active-border: #2563eb;
+  --fd-card-pill-bg: #111827;  /* pill */
+  --fd-card-pill-border: rgba(255, 255, 255, 0.08);
+  --fd-card-pill-text: #e5e7eb;
+  --fd-card-focus-ring-color: #2563eb;
+  --fd-card-focus-ring-offset: 2px;
+}
