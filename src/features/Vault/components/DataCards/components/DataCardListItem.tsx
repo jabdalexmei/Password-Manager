@@ -21,6 +21,7 @@ type DataCardListItemProps = {
   previewFieldsFolderOnlyByFolder: DataCardPreviewFieldsFolderOnlyByFolder;
   allFolderOnlyFields: Set<string>;
   folderOnlyFieldsHiddenInActiveFolder: Set<string>;
+  disabled?: boolean;
   t: TranslateFn;
 };
 
@@ -36,6 +37,7 @@ export function DataCardListItem({
   previewFieldsFolderOnlyByFolder,
   allFolderOnlyFields,
   folderOnlyFieldsHiddenInActiveFolder,
+  disabled = false,
   t,
 }: DataCardListItemProps) {
   const isActive = selectedCardId === card.id;
@@ -56,8 +58,11 @@ export function DataCardListItem({
       key={card.id}
       className={`vault-datacard ${isActive ? 'active' : ''}`}
       type="button"
+      disabled={disabled}
+      aria-disabled={disabled}
       onClick={() => viewModel.selectCard(card.id)}
       onContextMenu={(event) => {
+        if (disabled) return;
         if (viewModel.isTrashMode) return;
         event.preventDefault();
         viewModel.selectCard(card.id);

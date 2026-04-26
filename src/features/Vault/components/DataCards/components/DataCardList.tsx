@@ -20,6 +20,8 @@ type DataCardListProps = {
   previewFieldsFolderOnlyByFolder: DataCardPreviewFieldsFolderOnlyByFolder;
   allFolderOnlyFields: Set<string>;
   folderOnlyFieldsHiddenInActiveFolder: Set<string>;
+  disabled?: boolean;
+  isRefreshing?: boolean;
   t: TranslateFn;
 };
 
@@ -35,10 +37,12 @@ export function DataCardList({
   previewFieldsFolderOnlyByFolder,
   allFolderOnlyFields,
   folderOnlyFieldsHiddenInActiveFolder,
+  disabled = false,
+  isRefreshing = false,
   t,
 }: DataCardListProps) {
   return (
-    <div className="vault-datacard-list">
+    <div className={`vault-datacard-list ${isRefreshing ? 'vault-datacard-list--refreshing' : ''}`.trim()}>
       {cards.map((card) => (
         <DataCardListItem
           key={card.id}
@@ -53,6 +57,7 @@ export function DataCardList({
           previewFieldsFolderOnlyByFolder={previewFieldsFolderOnlyByFolder}
           allFolderOnlyFields={allFolderOnlyFields}
           folderOnlyFieldsHiddenInActiveFolder={folderOnlyFieldsHiddenInActiveFolder}
+          disabled={disabled}
           t={t}
         />
       ))}

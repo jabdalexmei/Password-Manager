@@ -37,10 +37,6 @@ export function useVaultState({ profileId }: UseVaultStateParams): VaultState & 
   useEffect(() => {
     initOnceRef.current = false;
     setLoading(true);
-    setFolders([]);
-    setCards([]);
-    setCardDetailsById({});
-    setDeletedCards([]);
     setSelectedNav((prev) => (typeof prev === 'object' ? 'all' : prev));
     setSelectedCardId(null);
     setTrashLoaded(false);
@@ -48,6 +44,14 @@ export function useVaultState({ profileId }: UseVaultStateParams): VaultState & 
   }, [activeVaultId, profileId]);
 
   useEffect(() => {
+    setFolders([]);
+    setCards([]);
+    setCardDetailsById({});
+    setDeletedCards([]);
+    setSelectedNav('all');
+    setSelectedCardId(null);
+    setTrashLoaded(false);
+    setFilters(INITIAL_FILTERS);
     setVaults([]);
     setSettings(null);
     setActiveVaultId(DEFAULT_ACTIVE_VAULT_ID);

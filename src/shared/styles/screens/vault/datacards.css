@@ -74,12 +74,25 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 180ms ease;
+  will-change: opacity;
 }
 
 .vault-datacard-list--empty {
   /* Empty should be shown under the section header, not vertically centered */
   justify-content: flex-start;
 }
+
+.vault-datacard-list--refreshing {
+  opacity: 0.58;
+}
+
+.vault-datacard-list--refreshing .vault-datacard {
+  pointer-events: none;
+}
+
 .vault-datacard {
   width: 100%;
   max-width: 100%;
@@ -95,13 +108,18 @@
   flex-direction: column;
   gap: 4px;
   cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease, opacity 0.14s ease;
 }
 
 .vault-datacard:hover {
   border-color: var(--cmp-card-hover-border);
   background: var(--cmp-card-hover-bg);
   transform: translateY(-1px);
-  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+}
+
+.vault-datacard:disabled {
+  cursor: default;
+  opacity: 1;
 }
 
 .vault-datacard:not(.active):focus-visible {

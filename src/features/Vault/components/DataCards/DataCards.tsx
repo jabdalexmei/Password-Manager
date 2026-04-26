@@ -224,6 +224,7 @@ export function DataCards({
   }, [activeFolderId, allFolderOnlyFields, folderOnlyFieldsForActiveFolder]);
 
   const cards = useMemo(() => sortDataCardSummaries(rawCards, sortMode), [rawCards, sortMode]);
+  const [displayCards, setDisplayCards] = useState(cards);
 
   const [totpNow, setTotpNow] = useState(() => Date.now());
 
@@ -461,6 +462,19 @@ export function DataCards({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isActionMenuOpen]);
 
+  useEffect(() => {
+    if (cards.length > 0 || !viewModel.loading) {
+      setDisplayCards(cards);
+    }
+  }, [cards, viewModel.loading]);
+
+  const isRefreshing = viewModel.loading && displayCards.length > 0;
+
+  useEffect(() => {
+    if (!isRefreshing) return;
+    setCardMenu(null);
+  }, [isRefreshing]);
+
   const emptyLabel = (() => {
     const v = t('label.empty');
     return v === 'label.empty' ? tCommon('label.empty') : v;
@@ -478,7 +492,8 @@ export function DataCards({
     isSeedPhraseModalOpen ||
     isCloseCreateConfirmOpen ||
     isCloseEditConfirmOpen;
-  const isEmpty = cards.length === 0;
+  const cardsForRender = isRefreshing ? displayCards : cards;
+  const isEmpty = cardsForRender.length === 0;
   const shouldShowEmptyState = isEmpty && !viewModel.loading;
 
   if (suppressEmptyState && isEmpty && !hasAnyOverlayOpen) {
@@ -520,8 +535,8 @@ export function DataCards({
         )
       ) : (
         <DataCardList
-          cards={cards}
-          selectedCardId={selectedCardId}
+          cards={cardsForRender}
+          selectedCardId={isRefreshing ? null : selectedCardId}
           viewModel={viewModel}
           setCardMenu={setCardMenu}
           folders={viewModel.folders}
@@ -531,6 +546,8 @@ export function DataCards({
           previewFieldsFolderOnlyByFolder={previewFieldsFolderOnlyByFolder}
           allFolderOnlyFields={allFolderOnlyFields}
           folderOnlyFieldsHiddenInActiveFolder={folderOnlyFieldsHiddenInActiveFolder}
+          disabled={isRefreshing}
+          isRefreshing={isRefreshing}
           t={t}
         />
       )}

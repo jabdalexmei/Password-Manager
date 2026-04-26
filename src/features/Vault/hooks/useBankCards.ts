@@ -65,15 +65,18 @@ export function useBankCards(
 
   useEffect(() => {
     setLoading(true);
-    setCards([]);
-    setCardDetailsById({});
-    setDeletedCards([]);
     setSelectedNav('all');
     setSelectedCardId(null);
     setTrashLoaded(false);
   }, [activeVaultId, profileId]);
 
   useEffect(() => {
+    setCards([]);
+    setCardDetailsById({});
+    setDeletedCards([]);
+    setSelectedNav('all');
+    setSelectedCardId(null);
+    setTrashLoaded(false);
     setSettings(null);
   }, [profileId]);
 

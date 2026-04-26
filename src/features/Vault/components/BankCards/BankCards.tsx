@@ -122,6 +122,7 @@ export function BankCards({
   }, [profileId, sortMode]);
 
   const cards = useMemo(() => sortBankCardSummaries(rawCards, sortMode), [rawCards, sortMode]);
+  const [displayCards, setDisplayCards] = useState(cards);
   const [isTrashActionsOpen, setIsTrashActionsOpen] = useState(false);
   const [cardMenu, setCardMenu] = useState<null | { id: string; x: number; y: number }>(null);
   const [deleteConfirmTargetId, setDeleteConfirmTargetId] = useState<string | null>(null);
@@ -151,6 +152,19 @@ export function BankCards({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [closeCreateModal, isCreateOpen, isEditOpen, viewModel.closeEditModal]);
+
+  useEffect(() => {
+    if (cards.length > 0 || !viewModel.loading) {
+      setDisplayCards(cards);
+    }
+  }, [cards, viewModel.loading]);
+
+  const isRefreshing = viewModel.loading && displayCards.length > 0;
+
+  useEffect(() => {
+    if (!isRefreshing) return;
+    setCardMenu(null);
+  }, [isRefreshing]);
 
   const renderDialog = (
     title: string,
@@ -355,7 +369,8 @@ export function BankCards({
   })();
 
   const hasAnyOverlayOpen = isCreateOpen || isEditOpen;
-  const isEmpty = cards.length === 0;
+  const cardsForRender = isRefreshing ? displayCards : cards;
+  const isEmpty = cardsForRender.length === 0;
   const shouldShowEmptyState = isEmpty && !viewModel.loading;
 
   if (suppressEmptyState && isEmpty && !hasAnyOverlayOpen) {
@@ -364,7 +379,7 @@ export function BankCards({
 
   return (
     <div className={`vault-panel-wrapper ${fillHeight ? 'vault-panel-wrapper--fill' : ''}`.trim()}>
-      {cardMenu && !viewModel.isTrashMode && (
+      {cardMenu && !viewModel.isTrashMode && !isRefreshing && (
         <>
           <div
             className="vault-actionmenu-backdrop"
@@ -385,7 +400,7 @@ export function BankCards({
             }
           >
             {(() => {
-              const target = cards.find((card) => card.id === cardMenu.id) ?? null;
+              const target = cardsForRender.find((card) => card.id === cardMenu.id) ?? null;
               const isArchived = Boolean(target?.archivedAt);
               const isFavorite = Boolean(target?.isFavorite);
 
@@ -517,9 +532,9 @@ export function BankCards({
           )
         )
       ) : (
-        <div className="vault-datacard-list">
-          {cards.map((card) => {
-            const isActive = selectedCardId === card.id;
+        <div className={`vault-datacard-list ${isRefreshing ? 'vault-datacard-list--refreshing' : ''}`.trim()}>
+          {cardsForRender.map((card) => {
+            const isActive = !isRefreshing && selectedCardId === card.id;
             const isFavorite = card.isFavorite;
             const rawTitle = (card.title ?? '').trim();
             const rawBankName = (card.bankName ?? '').trim();
@@ -615,8 +630,11 @@ export function BankCards({
                 key={card.id}
                 className={`vault-datacard ${isActive ? 'active' : ''}`}
                 type="button"
+                disabled={isRefreshing}
+                aria-disabled={isRefreshing}
                 onClick={() => viewModel.selectCard(card.id)}
                 onContextMenu={(event) => {
+                  if (isRefreshing) return;
                   event.preventDefault();
                   viewModel.selectCard(card.id);
                   setCardMenu({ id: card.id, x: event.clientX, y: event.clientY });
