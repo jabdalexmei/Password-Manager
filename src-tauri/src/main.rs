@@ -42,6 +42,7 @@ mod services {
     pub mod attachments_service;
     pub mod backup_service;
     pub mod bank_cards_service;
+    pub mod bulk_vault_items_service;
     pub mod clipboard_service;
     pub mod datacards_service;
     pub mod folders_service;
@@ -61,8 +62,8 @@ use std::sync::Arc;
 
 use app_state::AppState;
 use commands::{
-    attachments::*, backup::*, bank_cards::*, clipboard::*, datacards::*, folders::*,
-    legacy_import::*, password_history::*, profiles::*, security::*, settings::*,
+    attachments::*, backup::*, bank_cards::*, bulk_vault_items::*, clipboard::*, datacards::*,
+    folders::*, legacy_import::*, password_history::*, profiles::*, security::*, settings::*,
     trash_auto_cleanup::*, ui_prefs::*, vaults::*, workspace::*,
 };
 use data::storage_paths::StoragePaths;
@@ -232,6 +233,8 @@ fn main() {
             purge_datacard,
             restore_all_deleted_datacards,
             purge_all_deleted_datacards,
+            bulk_apply_vault_items,
+            export_selected_vault_items_json_via_dialog,
             get_datacard_password_history,
             delete_datacard_password_history_entry,
             clear_datacard_password_history,

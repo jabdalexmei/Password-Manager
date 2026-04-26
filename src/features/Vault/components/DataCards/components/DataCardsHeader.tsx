@@ -17,6 +17,7 @@ type DataCardsHeaderProps = {
   cardsCount: number;
   onRestoreAll: () => Promise<void> | void;
   onPurgeAll: () => Promise<void> | void;
+  actionSlot?: React.ReactNode;
   t: TranslateFn;
 };
 
@@ -31,6 +32,7 @@ export function DataCardsHeader({
   cardsCount,
   onRestoreAll,
   onPurgeAll,
+  actionSlot,
   t,
 }: DataCardsHeaderProps) {
   const { t: tCommon } = useTranslation('Common');
@@ -43,7 +45,7 @@ export function DataCardsHeader({
       <div className="datacards-header__right">
         <VaultSortControl value={sortMode} onChange={setSortMode} disabled={cardsCount < 2} />
 
-        {shouldShowTrashActions ? (
+        {actionSlot ?? (shouldShowTrashActions ? (
           <div className="datacards-actions">
             <button
               className="btn btn-icon vault-actionbar"
@@ -88,7 +90,7 @@ export function DataCardsHeader({
               </>
             )}
           </div>
-        ) : null}
+        ) : null)}
       </div>
     </div>
   );

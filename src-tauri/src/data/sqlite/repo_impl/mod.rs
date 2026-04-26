@@ -13,7 +13,8 @@ use crate::types::{
     AttachmentMeta, BankCardItem, BankCardSummary, CreateBankCardInput, CreateDataCardInput,
     CustomField, DataCard, DataCardSummary, Folder, PasswordHistoryRow, SetBankCardArchivedInput,
     SetBankCardFavoriteInput, SetDataCardArchivedInput, SetDataCardFavoriteInput,
-    UpdateBankCardInput, UpdateDataCardInput, Vault,
+    UpdateBankCardInput, UpdateDataCardInput, Vault, BulkVaultAction, BulkVaultItemRef,
+    BulkVaultItemType, BulkVaultItemsInput,
 };
 
 use std::collections::HashMap;
@@ -21,6 +22,7 @@ use std::sync::Arc;
 
 mod attachments;
 mod bank_cards;
+mod bulk;
 mod connection;
 mod datacards;
 mod folders;
@@ -37,6 +39,7 @@ use connection::{
 
 pub use attachments::*;
 pub use bank_cards::*;
+pub use bulk::*;
 pub use datacards::*;
 pub use folders::*;
 pub use password_history::*;

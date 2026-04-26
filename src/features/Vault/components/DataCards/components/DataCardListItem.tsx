@@ -22,6 +22,9 @@ type DataCardListItemProps = {
   allFolderOnlyFields: Set<string>;
   folderOnlyFieldsHiddenInActiveFolder: Set<string>;
   disabled?: boolean;
+  isSelectionMode?: boolean;
+  isBulkSelected?: boolean;
+  onToggleSelection?: (id: string) => void;
   t: TranslateFn;
 };
 
@@ -38,6 +41,9 @@ export function DataCardListItem({
   allFolderOnlyFields,
   folderOnlyFieldsHiddenInActiveFolder,
   disabled = false,
+  isSelectionMode = false,
+  isBulkSelected = false,
+  onToggleSelection,
   t,
 }: DataCardListItemProps) {
   const isActive = selectedCardId === card.id;
@@ -56,13 +62,25 @@ export function DataCardListItem({
   return (
     <button
       key={card.id}
-      className={`vault-datacard ${isActive ? 'active' : ''}`}
+      className={`vault-datacard ${isActive ? 'active' : ''} ${isSelectionMode ? 'vault-datacard--selectable' : ''} ${isBulkSelected ? 'vault-datacard--selected' : ''}`.trim()}
       type="button"
       disabled={disabled}
       aria-disabled={disabled}
-      onClick={() => viewModel.selectCard(card.id)}
+      aria-pressed={isSelectionMode ? isBulkSelected : undefined}
+      onClick={() => {
+        if (isSelectionMode) {
+          onToggleSelection?.(card.id);
+          return;
+        }
+        viewModel.selectCard(card.id);
+      }}
       onContextMenu={(event) => {
         if (disabled) return;
+        if (isSelectionMode) {
+          event.preventDefault();
+          onToggleSelection?.(card.id);
+          return;
+        }
         if (viewModel.isTrashMode) return;
         event.preventDefault();
         viewModel.selectCard(card.id);
@@ -70,6 +88,9 @@ export function DataCardListItem({
       }}
     >
       <div className="datacard-top">
+        {isSelectionMode && (
+          <span className="vault-card-check" aria-hidden="true" />
+        )}
         <div className="datacard-title">{displayTitleText}</div>
         <DataCardBadges
           isFavorite={Boolean(card.isFavorite)}

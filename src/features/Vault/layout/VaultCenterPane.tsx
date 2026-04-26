@@ -21,6 +21,13 @@ type VaultCenterPaneProps = {
   tDataCards: TranslateFn;
   tFolders: TranslateFn;
   tCommon: TranslateFn;
+  bulkActionSlot?: React.ReactNode;
+  dataSelectionMode?: boolean;
+  dataSelectedIds?: Set<string>;
+  onToggleDataSelection?: (id: string) => void;
+  bankSelectionMode?: boolean;
+  bankSelectedIds?: Set<string>;
+  onToggleBankSelection?: (id: string) => void;
 };
 
 export function VaultCenterPane({
@@ -37,6 +44,13 @@ export function VaultCenterPane({
   tDataCards,
   tFolders,
   tCommon,
+  bulkActionSlot,
+  dataSelectionMode = false,
+  dataSelectedIds,
+  onToggleDataSelection,
+  bankSelectionMode = false,
+  bankSelectedIds,
+  onToggleBankSelection,
 }: VaultCenterPaneProps) {
   const { t: tTip } = useTranslation('Tooltips');
   const [isGlobalTrashActionsOpen, setIsGlobalTrashActionsOpen] = useState(false);
@@ -60,7 +74,7 @@ export function VaultCenterPane({
           <div className="vault-section-header">{currentSectionTitle}</div>
 
           <div className="datacards-header__right">
-            {isGlobalTrashMode ? (
+            {bulkActionSlot ?? (isGlobalTrashMode ? (
               <div className="datacards-actions">
                 <button
                   className="btn btn-icon vault-actionbar"
@@ -114,7 +128,7 @@ export function VaultCenterPane({
               </div>
             ) : (
               <div className="datacards-header__spacer" aria-hidden="true" />
-            )}
+            ))}
           </div>
         </div>
 
@@ -134,6 +148,9 @@ export function VaultCenterPane({
           fillHeight={false}
           showTrashActions={!isGlobalTrashMode}
           suppressEmptyState
+          selectionMode={dataSelectionMode}
+          selectedIds={dataSelectedIds}
+          onToggleSelection={onToggleDataSelection}
         />
 
         <BankCards
@@ -144,6 +161,9 @@ export function VaultCenterPane({
           fillHeight={false}
           showTrashActions={!isGlobalTrashMode}
           suppressEmptyState
+          selectionMode={bankSelectionMode}
+          selectedIds={bankSelectedIds}
+          onToggleSelection={onToggleBankSelection}
         />
       </>
     );
@@ -158,6 +178,10 @@ export function VaultCenterPane({
         activeFolderId={selectedFolderId}
         clipboardAutoClearEnabled={settings?.clipboard_auto_clear_enabled}
         clipboardClearTimeoutSeconds={settings?.clipboard_clear_timeout_seconds}
+        selectionMode={dataSelectionMode}
+        selectedIds={dataSelectedIds}
+        onToggleSelection={onToggleDataSelection}
+        actionSlot={bulkActionSlot}
       />
     );
   }
@@ -167,7 +191,11 @@ export function VaultCenterPane({
       profileId={profileId}
       viewModel={bankCardsViewModel}
       sectionTitle={tFolders('category.bankCard')}
-      folders={folders}
-    />
+    folders={folders}
+    selectionMode={bankSelectionMode}
+    selectedIds={bankSelectedIds}
+    onToggleSelection={onToggleBankSelection}
+    actionSlot={bulkActionSlot}
+  />
   );
 }

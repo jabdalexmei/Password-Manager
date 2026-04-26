@@ -1,6 +1,7 @@
 pub mod attachments;
 pub mod backup;
 pub mod bank_cards;
+pub mod bulk_vault_items;
 pub mod clipboard;
 pub mod datacards;
 pub mod folders;

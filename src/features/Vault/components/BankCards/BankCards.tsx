@@ -49,6 +49,10 @@ export type BankCardsProps = {
    * the per-section empty placeholder while keeping dialogs functional.
    */
   suppressEmptyState?: boolean;
+  selectionMode?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelection?: (id: string) => void;
+  actionSlot?: React.ReactNode;
 };
 
 export function BankCards({
@@ -59,6 +63,10 @@ export function BankCards({
   fillHeight = true,
   showTrashActions = true,
   suppressEmptyState = false,
+  selectionMode = false,
+  selectedIds,
+  onToggleSelection,
+  actionSlot,
 }: BankCardsProps) {
   const { t } = useTranslation('BankCards');
   const { t: tCommon } = useTranslation('Common');
@@ -471,7 +479,7 @@ export function BankCards({
         <div className="datacards-header__right">
           <VaultSortControl value={sortMode} onChange={setSortMode} disabled={cards.length < 2} />
 
-          {shouldShowTrashActions ? (
+          {actionSlot ?? (shouldShowTrashActions ? (
             <div className="datacards-actions">
               <button
                 className="btn btn-icon vault-actionbar"
@@ -519,7 +527,7 @@ export function BankCards({
                 </>
               )}
             </div>
-          ) : null}
+          ) : null)}
         </div>
       </div>
 
@@ -535,6 +543,7 @@ export function BankCards({
         <div className={`vault-datacard-list ${isRefreshing ? 'vault-datacard-list--refreshing' : ''}`.trim()}>
           {cardsForRender.map((card) => {
             const isActive = !isRefreshing && selectedCardId === card.id;
+            const isBulkSelected = selectedIds?.has(card.id) ?? false;
             const isFavorite = card.isFavorite;
             const rawTitle = (card.title ?? '').trim();
             const rawBankName = (card.bankName ?? '').trim();
@@ -628,19 +637,32 @@ export function BankCards({
             return (
               <button
                 key={card.id}
-                className={`vault-datacard ${isActive ? 'active' : ''}`}
+                className={`vault-datacard ${isActive ? 'active' : ''} ${selectionMode ? 'vault-datacard--selectable' : ''} ${isBulkSelected ? 'vault-datacard--selected' : ''}`.trim()}
                 type="button"
                 disabled={isRefreshing}
                 aria-disabled={isRefreshing}
-                onClick={() => viewModel.selectCard(card.id)}
+                aria-pressed={selectionMode ? isBulkSelected : undefined}
+                onClick={() => {
+                  if (selectionMode) {
+                    onToggleSelection?.(card.id);
+                    return;
+                  }
+                  viewModel.selectCard(card.id);
+                }}
                 onContextMenu={(event) => {
                   if (isRefreshing) return;
+                  if (selectionMode) {
+                    event.preventDefault();
+                    onToggleSelection?.(card.id);
+                    return;
+                  }
                   event.preventDefault();
                   viewModel.selectCard(card.id);
                   setCardMenu({ id: card.id, x: event.clientX, y: event.clientY });
                 }}
               >
                 <div className="datacard-top">
+                  {selectionMode && <span className="vault-card-check" aria-hidden="true" />}
                   <div className="datacard-title">{displayTitleText}</div>
                   {isFavorite && (
                     <div className="datacard-badges">

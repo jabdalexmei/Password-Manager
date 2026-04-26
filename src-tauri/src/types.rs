@@ -358,6 +358,41 @@ pub struct SetBankCardFavoriteInput {
     pub is_favorite: bool,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
+#[serde(rename_all = "snake_case")]
+pub enum BulkVaultItemType {
+    DataCard,
+    BankCard,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
+pub struct BulkVaultItemRef {
+    pub item_type: BulkVaultItemType,
+    pub id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum BulkVaultAction {
+    MoveToFolder { folder_id: Option<String> },
+    Delete,
+    SetArchived { is_archived: bool },
+    SetFavorite { is_favorite: bool },
+    Restore,
+    Purge,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct BulkVaultItemsInput {
+    pub items: Vec<BulkVaultItemRef>,
+    pub action: BulkVaultAction,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct BulkVaultItemsResult {
+    pub processed_count: usize,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserSettings {
     pub auto_hide_secret_timeout_seconds: i64,

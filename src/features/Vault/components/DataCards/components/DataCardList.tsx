@@ -22,6 +22,9 @@ type DataCardListProps = {
   folderOnlyFieldsHiddenInActiveFolder: Set<string>;
   disabled?: boolean;
   isRefreshing?: boolean;
+  isSelectionMode?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelection?: (id: string) => void;
   t: TranslateFn;
 };
 
@@ -39,6 +42,9 @@ export function DataCardList({
   folderOnlyFieldsHiddenInActiveFolder,
   disabled = false,
   isRefreshing = false,
+  isSelectionMode = false,
+  selectedIds,
+  onToggleSelection,
   t,
 }: DataCardListProps) {
   return (
@@ -58,6 +64,9 @@ export function DataCardList({
           allFolderOnlyFields={allFolderOnlyFields}
           folderOnlyFieldsHiddenInActiveFolder={folderOnlyFieldsHiddenInActiveFolder}
           disabled={disabled}
+          isSelectionMode={isSelectionMode}
+          isBulkSelected={selectedIds?.has(card.id) ?? false}
+          onToggleSelection={onToggleSelection}
           t={t}
         />
       ))}

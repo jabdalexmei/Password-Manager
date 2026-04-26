@@ -1,5 +1,6 @@
 ﻿import React, { useCallback, useMemo, useState } from 'react';
 import { useVault, type SelectedNav } from './hooks/useVault';
+import { useEffect } from 'react';
 import { VaultHeader } from './components/Header/VaultHeader';
 import { useDataCards } from './components/DataCards/useDataCards';
 import { useFolders } from './components/Folders/useFolders';
@@ -8,7 +9,12 @@ import { useBankCardsViewModel } from './components/BankCards/useBankCardsViewMo
 import { useTranslation } from '../../shared/lib/i18n';
 import type { ProfileMeta } from '../../shared/lib/tauri';
 import { useToaster } from '../../shared/components/Toaster';
-import { runTrashAutoCleanupIfEnabled } from './api/vaultApi';
+import {
+  bulkApplyVaultItems,
+  exportSelectedVaultItemsJsonViaDialog,
+  runTrashAutoCleanupIfEnabled,
+  type BulkVaultAction,
+} from './api/vaultApi';
 import type { VaultCategory } from './components/Sidebar/sidebarTypes';
 import { useBackupFlows } from './flows/useBackupFlows';
 import { useLegacyImportFlows } from './flows/useLegacyImportFlows';
@@ -20,6 +26,10 @@ import { VaultDetailsPane } from './layout/VaultDetailsPane';
 import { VaultSidebarPane } from './layout/VaultSidebarPane';
 import { VaultOverlays } from './layout/VaultOverlays';
 import { collectFolderSubtreeIds } from './hooks/vault/lib/collectFolderSubtreeIds';
+import { BulkActionBar, type BulkMenuAction } from './components/BulkActions/BulkActionBar';
+import { MoveSelectedModal } from './components/BulkActions/MoveSelectedModal';
+import { useBulkSelection, type BulkSelectionItem } from './hooks/useBulkSelection';
+import ConfirmDialog from '../../shared/components/ConfirmDialog';
 
 type VaultProps = {
   profileId: string;
@@ -52,6 +62,15 @@ export default function Vault({
   const [activeDetailsKind, setActiveDetailsKind] = useState<'data' | 'bank'>('data');
   const [isAddCardMenuOpen, setIsAddCardMenuOpen] = useState(false);
   const [legacyExportModalOpen, setLegacyExportModalOpen] = useState(false);
+  const bulkSelection = useBulkSelection();
+  const [bulkMoveOpen, setBulkMoveOpen] = useState(false);
+  const [bulkSubmitting, setBulkSubmitting] = useState(false);
+  const [bulkConfirm, setBulkConfirm] = useState<{
+    action: 'delete' | 'purge' | 'restore' | 'export';
+    title: string;
+    description: string;
+    confirmLabel: string;
+  } | null>(null);
   const [pendingFolderDelete, setPendingFolderDelete] = useState<{
     id: string;
     name: string;
@@ -296,6 +315,176 @@ export default function Vault({
   const isFolderView = typeof vault.selectedNav === 'object';
   const showBothLists = isFolderView || selectedCategory === 'all_items';
   const foldersForCards = useMemo(() => vault.folders, [vault.folders]);
+  const isBulkTrashMode = vault.selectedNav === 'deleted';
+  const visibleBulkItems = useMemo<BulkSelectionItem[]>(() => {
+    const dataItems = dataCardsViewModel.cards.map((card) => ({ item_type: 'data_card' as const, id: card.id }));
+    const bankItems = bankCardsViewModel.cards.map((card) => ({ item_type: 'bank_card' as const, id: card.id }));
+    if (showBothLists) return [...dataItems, ...bankItems];
+    return selectedCategory === 'bank_cards' ? bankItems : dataItems;
+  }, [bankCardsViewModel.cards, dataCardsViewModel.cards, selectedCategory, showBothLists]);
+  const selectedDataIds = useMemo(
+    () => new Set(bulkSelection.selectedItems.filter((item) => item.item_type === 'data_card').map((item) => item.id)),
+    [bulkSelection.selectedItems]
+  );
+  const selectedBankIds = useMemo(
+    () => new Set(bulkSelection.selectedItems.filter((item) => item.item_type === 'bank_card').map((item) => item.id)),
+    [bulkSelection.selectedItems]
+  );
+  const navSelectionKey = useMemo(
+    () => `${vault.activeVaultId}:${selectedCategory}:${typeof vault.selectedNav === 'object' ? `folder:${vault.selectedNav.folderId}` : vault.selectedNav}:${vault.searchQuery}`,
+    [selectedCategory, vault.activeVaultId, vault.searchQuery, vault.selectedNav]
+  );
+
+  useEffect(() => {
+    bulkSelection.cancelSelection();
+  }, [bulkSelection.cancelSelection, navSelectionKey]);
+
+  const refreshAllVaultItems = useCallback(async () => {
+    await Promise.all([vault.refreshActive(), bankCards.refreshActive(), vault.refreshTrash(), bankCards.refreshTrash()]);
+  }, [bankCards.refreshActive, bankCards.refreshTrash, vault.refreshActive, vault.refreshTrash]);
+
+  const finishBulkSuccess = useCallback(
+    async (toastKey: string, count: number, refresh = true) => {
+      if (refresh) await refreshAllVaultItems();
+      bulkSelection.cancelSelection();
+      vault.selectCard(null);
+      bankCards.selectCard(null);
+      showToast(tVault(toastKey, { count }), 'success');
+    },
+    [bankCards.selectCard, bulkSelection.cancelSelection, refreshAllVaultItems, showToast, tVault, vault.selectCard]
+  );
+
+  const applyBulkAction = useCallback(
+    async (action: BulkVaultAction, toastKey: string) => {
+      if (bulkSelection.selectedItems.length === 0 || bulkSubmitting) return false;
+      setBulkSubmitting(true);
+      try {
+        const result = await bulkApplyVaultItems({ items: bulkSelection.selectedItems, action });
+        await finishBulkSuccess(toastKey, result.processed_count);
+        return true;
+      } catch (err) {
+        const code = (err as any)?.code ?? (err as any)?.error ?? 'UNKNOWN';
+        showToast(`${tCommon('error.operationFailed')} (${code})`, 'error');
+        return false;
+      } finally {
+        setBulkSubmitting(false);
+      }
+    },
+    [bulkSelection.selectedItems, bulkSubmitting, finishBulkSuccess, showToast, tCommon]
+  );
+
+  const handleBulkMove = useCallback(
+    async (folderId: string | null) => {
+      const ok = await applyBulkAction({ kind: 'move_to_folder', folder_id: folderId }, 'bulk.toast.moved');
+      if (ok) setBulkMoveOpen(false);
+    },
+    [applyBulkAction]
+  );
+
+  const handleBulkExport = useCallback(async () => {
+    if (bulkSelection.selectedItems.length === 0 || bulkSubmitting) return;
+    setBulkSubmitting(true);
+    try {
+      const path = await exportSelectedVaultItemsJsonViaDialog(
+        { items: bulkSelection.selectedItems },
+        `vault-selected-${new Date().toISOString().slice(0, 10)}.json`
+      );
+      if (path) {
+        await finishBulkSuccess('bulk.toast.exported', bulkSelection.selectedItems.length, false);
+      }
+    } catch (err) {
+      const code = (err as any)?.code ?? (err as any)?.error ?? 'UNKNOWN';
+      showToast(`${tCommon('error.operationFailed')} (${code})`, 'error');
+    } finally {
+      setBulkSubmitting(false);
+    }
+  }, [bulkSelection.selectedItems, bulkSubmitting, finishBulkSuccess, showToast, tCommon]);
+
+  const openBulkConfirm = useCallback(
+    (action: 'delete' | 'purge' | 'restore' | 'export') => {
+      const count = bulkSelection.selectedCount;
+      if (action === 'delete') {
+        const hardDelete = vault.settings?.soft_delete_enabled === false;
+        setBulkConfirm({
+          action,
+          title: tVault(hardDelete ? 'bulk.confirm.deletePermanentTitle' : 'bulk.confirm.deleteTitle', { count }),
+          description: tVault(hardDelete ? 'bulk.confirm.deletePermanentBody' : 'bulk.confirm.deleteBody'),
+          confirmLabel: tVault(hardDelete ? 'bulk.action.purge' : 'bulk.action.delete'),
+        });
+        return;
+      }
+      if (action === 'purge') {
+        setBulkConfirm({
+          action,
+          title: tVault('bulk.confirm.purgeTitle', { count }),
+          description: tVault('bulk.confirm.purgeBody'),
+          confirmLabel: tVault('bulk.action.purge'),
+        });
+        return;
+      }
+      if (action === 'restore') {
+        setBulkConfirm({
+          action,
+          title: tVault('bulk.confirm.restoreTitle', { count }),
+          description: '',
+          confirmLabel: tVault('bulk.action.restore'),
+        });
+        return;
+      }
+      setBulkConfirm({
+        action,
+        title: tVault('bulk.confirm.exportTitle', { count }),
+        description: tVault('bulk.confirm.exportBody'),
+        confirmLabel: tVault('bulk.action.export'),
+      });
+    },
+    [bulkSelection.selectedCount, tVault, vault.settings?.soft_delete_enabled]
+  );
+
+  const confirmBulkAction = useCallback(async () => {
+    if (!bulkConfirm) return;
+    const action = bulkConfirm.action;
+    setBulkConfirm(null);
+    if (action === 'delete') {
+      await applyBulkAction({ kind: 'delete' }, 'bulk.toast.deleted');
+    } else if (action === 'purge') {
+      await applyBulkAction({ kind: 'purge' }, 'bulk.toast.purged');
+    } else if (action === 'restore') {
+      await applyBulkAction({ kind: 'restore' }, 'bulk.toast.restored');
+    } else {
+      await handleBulkExport();
+    }
+  }, [applyBulkAction, bulkConfirm, handleBulkExport]);
+
+  const handleBulkMenuAction = useCallback(
+    (action: BulkMenuAction) => {
+      if (action === 'move') setBulkMoveOpen(true);
+      if (action === 'export') openBulkConfirm('export');
+      if (action === 'favorite_on') void applyBulkAction({ kind: 'set_favorite', is_favorite: true }, 'bulk.toast.favoriteOn');
+      if (action === 'favorite_off') void applyBulkAction({ kind: 'set_favorite', is_favorite: false }, 'bulk.toast.favoriteOff');
+      if (action === 'archive_on') void applyBulkAction({ kind: 'set_archived', is_archived: true }, 'bulk.toast.archived');
+      if (action === 'archive_off') void applyBulkAction({ kind: 'set_archived', is_archived: false }, 'bulk.toast.unarchived');
+      if (action === 'delete') openBulkConfirm('delete');
+      if (action === 'restore') openBulkConfirm('restore');
+      if (action === 'purge') openBulkConfirm('purge');
+    },
+    [applyBulkAction, openBulkConfirm]
+  );
+
+  const bulkActionSlot = (
+    <BulkActionBar
+      selectedCount={bulkSelection.selectedCount}
+      isSelectionMode={bulkSelection.isSelectionMode}
+      isTrashMode={isBulkTrashMode}
+      visibleCount={visibleBulkItems.length}
+      disabled={bulkSubmitting || vault.loading || bankCards.loading}
+      onEnterSelectionMode={bulkSelection.enterSelectionMode}
+      onSelectAllVisible={() => bulkSelection.selectVisible(visibleBulkItems)}
+      onCancelSelection={bulkSelection.cancelSelection}
+      onClearSelection={bulkSelection.clearSelection}
+      onAction={handleBulkMenuAction}
+    />
+  );
 
   return (
     <VaultLayout
@@ -359,6 +548,13 @@ export default function Vault({
           tDataCards={tDataCards}
           tFolders={tFolders}
           tCommon={tCommon}
+          bulkActionSlot={bulkActionSlot}
+          dataSelectionMode={bulkSelection.isSelectionMode}
+          dataSelectedIds={selectedDataIds}
+          onToggleDataSelection={(id) => bulkSelection.toggleItem({ item_type: 'data_card', id })}
+          bankSelectionMode={bulkSelection.isSelectionMode}
+          bankSelectedIds={selectedBankIds}
+          onToggleBankSelection={(id) => bulkSelection.toggleItem({ item_type: 'bank_card', id })}
         />
       }
       detailsPane={
@@ -375,24 +571,45 @@ export default function Vault({
         />
       }
       overlays={
-        <VaultOverlays
-          profileId={profileId}
-          profileName={profileName}
-          activeVaultName={activeVaultName}
-          isPasswordless={isPasswordless}
-          onProfileRenamed={onProfileRenamed}
-          onProfileUpdated={onProfileUpdated}
-          pendingFolderDelete={pendingFolderDelete}
-          closeDeleteModal={closeDeleteModal}
-          handleDeleteFolderOnly={handleDeleteFolderOnly}
-          handleDeleteFolderAndCards={handleDeleteFolderAndCards}
-          legacyExportModalOpen={legacyExportModalOpen}
-          closeLegacyExportModal={() => setLegacyExportModalOpen(false)}
-          backupFlows={backupFlows}
-          legacyImportFlows={legacyImportFlows}
-          settingsFlows={settingsFlows}
-          vaultSettings={vault.settings}
-        />
+        <>
+          <VaultOverlays
+            profileId={profileId}
+            profileName={profileName}
+            activeVaultName={activeVaultName}
+            isPasswordless={isPasswordless}
+            onProfileRenamed={onProfileRenamed}
+            onProfileUpdated={onProfileUpdated}
+            pendingFolderDelete={pendingFolderDelete}
+            closeDeleteModal={closeDeleteModal}
+            handleDeleteFolderOnly={handleDeleteFolderOnly}
+            handleDeleteFolderAndCards={handleDeleteFolderAndCards}
+            legacyExportModalOpen={legacyExportModalOpen}
+            closeLegacyExportModal={() => setLegacyExportModalOpen(false)}
+            backupFlows={backupFlows}
+            legacyImportFlows={legacyImportFlows}
+            settingsFlows={settingsFlows}
+            vaultSettings={vault.settings}
+          />
+          <MoveSelectedModal
+            open={bulkMoveOpen}
+            count={bulkSelection.selectedCount}
+            folders={vault.folders}
+            onCancel={() => setBulkMoveOpen(false)}
+            onCreateFolder={(name) => vault.createFolder(name, null)}
+            onMove={handleBulkMove}
+          />
+          <ConfirmDialog
+            open={Boolean(bulkConfirm)}
+            title={bulkConfirm?.title ?? ''}
+            description={bulkConfirm?.description ?? ''}
+            confirmLabel={bulkConfirm?.confirmLabel ?? ''}
+            cancelLabel={tCommon('action.cancel')}
+            confirmDisabled={bulkSubmitting}
+            cancelDisabled={bulkSubmitting}
+            onCancel={() => setBulkConfirm(null)}
+            onConfirm={() => void confirmBulkAction()}
+          />
+        </>
       }
     />
   );

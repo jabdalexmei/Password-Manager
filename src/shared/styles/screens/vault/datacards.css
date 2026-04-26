@@ -58,6 +58,53 @@
   position: relative;
 }
 
+.vault-bulkbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.vault-bulkbar__count {
+  color: var(--sem-text-secondary);
+  font-size: 13px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.vault-bulk-folder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 240px;
+  overflow: auto;
+}
+
+.vault-bulk-folder-option {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  background: var(--cmp-card-bg);
+  border: 1px solid var(--cmp-card-border);
+  border-radius: var(--sem-radius-sm);
+  color: var(--cmp-card-text);
+  cursor: pointer;
+}
+
+.vault-bulk-folder-option:hover,
+.vault-bulk-folder-option.selected {
+  border-color: var(--cmp-card-active-border);
+  background: var(--cmp-card-hover-bg);
+}
+
+.vault-bulk-folder-create {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
 
 /* Cards list */
 .vault-datacard-list {
@@ -130,6 +177,41 @@
 .vault-datacard.active {
   border-color: var(--cmp-card-active-border);
   background: var(--cmp-card-active-bg);
+}
+
+.vault-datacard--selectable .datacard-top {
+  grid-template-columns: 20px minmax(0, 1fr) minmax(0, auto);
+}
+
+.vault-datacard--selected {
+  border-color: var(--cmp-card-active-border);
+  background: color-mix(in srgb, var(--cmp-card-active-bg) 72%, var(--cmp-card-bg));
+}
+
+.vault-card-check {
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--cmp-card-border);
+  border-radius: 4px;
+  background: var(--cmp-card-bg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.vault-datacard--selected .vault-card-check {
+  border-color: var(--cmp-card-active-border);
+  background: var(--cmp-card-active-border);
+}
+
+.vault-datacard--selected .vault-card-check::after {
+  content: "";
+  width: 8px;
+  height: 4px;
+  border-left: 2px solid var(--cmp-card-bg);
+  border-bottom: 2px solid var(--cmp-card-bg);
+  transform: rotate(-45deg) translateY(-1px);
 }
 
 .datacard-title {

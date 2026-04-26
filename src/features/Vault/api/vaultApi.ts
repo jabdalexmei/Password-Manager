@@ -213,6 +213,48 @@ export async function runTrashAutoCleanupIfEnabled(): Promise<BackendTrashCleanu
   return invoke('run_trash_auto_cleanup_if_enabled');
 }
 
+export type BulkVaultItemType = 'data_card' | 'bank_card';
+
+export type BulkVaultItemRef = {
+  item_type: BulkVaultItemType;
+  id: string;
+};
+
+export type BulkVaultAction =
+  | { kind: 'move_to_folder'; folder_id: string | null }
+  | { kind: 'delete' }
+  | { kind: 'set_archived'; is_archived: boolean }
+  | { kind: 'set_favorite'; is_favorite: boolean }
+  | { kind: 'restore' }
+  | { kind: 'purge' };
+
+export type BulkVaultItemsInput = {
+  items: BulkVaultItemRef[];
+  action: BulkVaultAction;
+};
+
+export type BulkVaultItemsResult = {
+  processed_count: number;
+};
+
+export async function bulkApplyVaultItems(input: BulkVaultItemsInput): Promise<BulkVaultItemsResult> {
+  return invoke('bulk_apply_vault_items', { input });
+}
+
+export async function exportSelectedVaultItemsJsonViaDialog(
+  input: { items: BulkVaultItemRef[] },
+  suggestedFileName?: string
+): Promise<string | null> {
+  const exportInput: BulkVaultItemsInput = {
+    items: input.items,
+    action: { kind: 'delete' },
+  };
+  return invoke('export_selected_vault_items_json_via_dialog', {
+    input: exportInput,
+    suggestedFileName: suggestedFileName ?? null,
+  });
+}
+
 export async function createBackup(
   useDefaultPath: boolean,
   suggestedFileName?: string

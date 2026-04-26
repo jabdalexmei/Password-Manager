@@ -76,6 +76,10 @@ export type DataCardsProps = {
    * the per-section empty placeholder while keeping dialogs functional.
    */
   suppressEmptyState?: boolean;
+  selectionMode?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelection?: (id: string) => void;
+  actionSlot?: React.ReactNode;
 };
 
 export function DataCards({
@@ -88,6 +92,10 @@ export function DataCards({
   fillHeight = true,
   showTrashActions = true,
   suppressEmptyState = false,
+  selectionMode = false,
+  selectedIds,
+  onToggleSelection,
+  actionSlot,
 }: DataCardsProps) {
   const { t } = useTranslation('DataCards');
   const { t: tCommon } = useTranslation('Common');
@@ -522,6 +530,7 @@ export function DataCards({
         cardsCount={viewModel.cards.length}
         onRestoreAll={viewModel.restoreAllTrash}
         onPurgeAll={viewModel.purgeAllTrash}
+        actionSlot={actionSlot}
         t={t}
       />
 
@@ -548,6 +557,9 @@ export function DataCards({
           folderOnlyFieldsHiddenInActiveFolder={folderOnlyFieldsHiddenInActiveFolder}
           disabled={isRefreshing}
           isRefreshing={isRefreshing}
+          isSelectionMode={selectionMode}
+          selectedIds={selectedIds}
+          onToggleSelection={onToggleSelection}
           t={t}
         />
       )}
