@@ -30,6 +30,13 @@ struct LegacyCsvRow {
     note: String,
     tags: String,
     folder: String,
+    totp_uri: String,
+    seed_phrase: String,
+    attachments: String,
+    favorite: String,
+    archived: String,
+    created_at: String,
+    updated_at: String,
     custom_fields: Vec<CustomField>,
 }
 
@@ -211,6 +218,13 @@ fn parse_csv_rows(content: &str) -> Result<Vec<LegacyCsvRow>> {
         "note",
         "tags",
         "folder",
+        "totpuri",
+        "seedphrase",
+        "attachments",
+        "favorite",
+        "archived",
+        "createdat",
+        "updatedat",
     ];
 
     let has_supported_header = header_map
@@ -256,6 +270,13 @@ fn parse_csv_rows(content: &str) -> Result<Vec<LegacyCsvRow>> {
             note: get(row, "note"),
             tags: get(row, "tags"),
             folder: get(row, "folder"),
+            totp_uri: get(row, "totp uri"),
+            seed_phrase: get(row, "seed phrase"),
+            attachments: get(row, "attachments"),
+            favorite: get(row, "favorite"),
+            archived: get(row, "archived"),
+            created_at: get(row, "created at"),
+            updated_at: get(row, "updated at"),
             custom_fields: build_custom_fields(row, &custom_columns),
         });
     }
@@ -388,6 +409,168 @@ fn stringify_tags(tags: &[String]) -> String {
         .join(", ")
 }
 
+fn stringify_attachments(card: &DataCard) -> String {
+    card.attachments
+        .iter()
+        .filter(|attachment| attachment.deleted_at.is_none())
+        .map(|attachment| attachment.file_name.trim())
+        .filter(|name| !name.is_empty())
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum CsvValueType {
+    Text,
+    Boolean,
+    DateTime,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum CsvColumnSource {
+    Title,
+    Url,
+    Email,
+    RecoveryEmail,
+    Username,
+    Password,
+    MobilePhone,
+    Note,
+    Tags,
+    Folder,
+    TotpUri,
+    SeedPhrase,
+    Attachments,
+    Favorite,
+    Archived,
+    CreatedAt,
+    UpdatedAt,
+}
+
+#[derive(Debug, Clone, Copy)]
+struct CsvColumnSpec {
+    name: &'static str,
+    source: CsvColumnSource,
+    value_type: CsvValueType,
+    empty_value: &'static str,
+}
+
+const CSV_PREFIX_COLUMNS: &[CsvColumnSpec] = &[
+    CsvColumnSpec {
+        name: "Title",
+        source: CsvColumnSource::Title,
+        value_type: CsvValueType::Text,
+        empty_value: "",
+    },
+    CsvColumnSpec {
+        name: "URL",
+        source: CsvColumnSource::Url,
+        value_type: CsvValueType::Text,
+        empty_value: "",
+    },
+    CsvColumnSpec {
+        name: "Email",
+        source: CsvColumnSource::Email,
+        value_type: CsvValueType::Text,
+        empty_value: "",
+    },
+    CsvColumnSpec {
+        name: "Recovery email",
+        source: CsvColumnSource::RecoveryEmail,
+        value_type: CsvValueType::Text,
+        empty_value: "",
+    },
+    CsvColumnSpec {
+        name: "Username",
+        source: CsvColumnSource::Username,
+        value_type: CsvValueType::Text,
+        empty_value: "",
+    },
+    CsvColumnSpec {
+        name: "Password",
+        source: CsvColumnSource::Password,
+        value_type: CsvValueType::Text,
+        empty_value: "",
+    },
+    CsvColumnSpec {
+        name: "Mobile phone",
+        source: CsvColumnSource::MobilePhone,
+        value_type: CsvValueType::Text,
+        empty_value: "",
+    },
+];
+
+const CSV_SUFFIX_COLUMNS: &[CsvColumnSpec] = &[
+    CsvColumnSpec {
+        name: "Note",
+        source: CsvColumnSource::Note,
+        value_type: CsvValueType::Text,
+        empty_value: "",
+    },
+    CsvColumnSpec {
+        name: "Tags",
+        source: CsvColumnSource::Tags,
+        value_type: CsvValueType::Text,
+        empty_value: "",
+    },
+    CsvColumnSpec {
+        name: "Folder",
+        source: CsvColumnSource::Folder,
+        value_type: CsvValueType::Text,
+        empty_value: "",
+    },
+    CsvColumnSpec {
+        name: "TOTP URI",
+        source: CsvColumnSource::TotpUri,
+        value_type: CsvValueType::Text,
+        empty_value: "",
+    },
+    CsvColumnSpec {
+        name: "Seed phrase",
+        source: CsvColumnSource::SeedPhrase,
+        value_type: CsvValueType::Text,
+        empty_value: "",
+    },
+    CsvColumnSpec {
+        name: "Attachments",
+        source: CsvColumnSource::Attachments,
+        value_type: CsvValueType::Text,
+        empty_value: "",
+    },
+    CsvColumnSpec {
+        name: "Favorite",
+        source: CsvColumnSource::Favorite,
+        value_type: CsvValueType::Boolean,
+        empty_value: "false",
+    },
+    CsvColumnSpec {
+        name: "Archived",
+        source: CsvColumnSource::Archived,
+        value_type: CsvValueType::Boolean,
+        empty_value: "false",
+    },
+    CsvColumnSpec {
+        name: "Created at",
+        source: CsvColumnSource::CreatedAt,
+        value_type: CsvValueType::DateTime,
+        empty_value: "",
+    },
+    CsvColumnSpec {
+        name: "Updated at",
+        source: CsvColumnSource::UpdatedAt,
+        value_type: CsvValueType::DateTime,
+        empty_value: "",
+    },
+];
+
+fn protect_formula_text(value: String) -> String {
+    if matches!(value.chars().next(), Some('=') | Some('+') | Some('-') | Some('@')) {
+        format!("'{value}")
+    } else {
+        value
+    }
+}
+
 fn csv_escape(value: &str) -> String {
     format!("\"{}\"", value.replace('"', "\"\""))
 }
@@ -447,56 +630,94 @@ fn build_export_custom_field_value_lookup(fields: &[CustomField]) -> HashMap<Str
     values_by_key
 }
 
-fn build_export_content(
+fn csv_column_value(
+    spec: CsvColumnSpec,
+    card: &DataCard,
+    folder_names_by_id: &HashMap<String, String>,
+) -> String {
+    let raw = match spec.source {
+        CsvColumnSource::Title => card.title.clone(),
+        CsvColumnSource::Url => card.url.clone().unwrap_or_default(),
+        CsvColumnSource::Email => card.email.clone().unwrap_or_default(),
+        CsvColumnSource::RecoveryEmail => card.recovery_email.clone().unwrap_or_default(),
+        CsvColumnSource::Username => card.username.clone().unwrap_or_default(),
+        CsvColumnSource::Password => card.password.clone().unwrap_or_default(),
+        CsvColumnSource::MobilePhone => card.mobile_phone.clone().unwrap_or_default(),
+        CsvColumnSource::Note => card.note.clone().unwrap_or_default(),
+        CsvColumnSource::Tags => stringify_tags(&card.tags),
+        CsvColumnSource::Folder => card
+            .folder_id
+            .as_ref()
+            .and_then(|folder_id| folder_names_by_id.get(folder_id))
+            .cloned()
+            .unwrap_or_default(),
+        CsvColumnSource::TotpUri => card.totp_uri.clone().unwrap_or_default(),
+        CsvColumnSource::SeedPhrase => card.seed_phrase.clone().unwrap_or_default(),
+        CsvColumnSource::Attachments => stringify_attachments(card),
+        CsvColumnSource::Favorite => {
+            if card.is_favorite {
+                "true".to_string()
+            } else {
+                "false".to_string()
+            }
+        }
+        CsvColumnSource::Archived => {
+            if card.archived_at.is_some() {
+                "true".to_string()
+            } else {
+                "false".to_string()
+            }
+        }
+        CsvColumnSource::CreatedAt => {
+            if card.created_at.is_empty() {
+                spec.empty_value.to_string()
+            } else {
+                card.created_at.clone()
+            }
+        }
+        CsvColumnSource::UpdatedAt => {
+            if card.updated_at.is_empty() {
+                spec.empty_value.to_string()
+            } else {
+                card.updated_at.clone()
+            }
+        }
+    };
+
+    match spec.value_type {
+        CsvValueType::Text => protect_formula_text(raw),
+        CsvValueType::Boolean | CsvValueType::DateTime => raw,
+    }
+}
+
+pub(crate) fn build_data_cards_csv_content(
     cards: &[DataCard],
     folder_names_by_id: &HashMap<String, String>,
 ) -> String {
     let custom_keys = collect_export_custom_field_keys(cards);
     let mut lines: Vec<String> = Vec::with_capacity(cards.len() + 1);
-    let mut header_fields: Vec<String> = vec![
-        "Title",
-        "URL",
-        "Email",
-        "Recovery email",
-        "Username",
-        "Password",
-        "Mobile phone",
-        "Note",
-        "Tags",
-        "Folder",
-    ]
-    .into_iter()
-    .map(|value| value.to_string())
-    .collect();
+    let mut header_fields: Vec<String> = CSV_PREFIX_COLUMNS
+        .iter()
+        .map(|spec| spec.name.to_string())
+        .collect();
     header_fields.extend(custom_keys.iter().map(|key| format!("Custom field:{key}")));
+    header_fields.extend(CSV_SUFFIX_COLUMNS.iter().map(|spec| spec.name.to_string()));
     lines.push(serialize_csv_line(&header_fields));
 
     for card in cards {
-        let tags = stringify_tags(&card.tags);
-        let folder_name = card
-            .folder_id
-            .as_ref()
-            .and_then(|folder_id| folder_names_by_id.get(folder_id))
-            .cloned()
-            .unwrap_or_default();
         let custom_values = build_export_custom_field_value_lookup(&card.custom_fields);
 
-        let mut row_fields = vec![
-            card.title.clone(),
-            card.url.clone().unwrap_or_default(),
-            card.email.clone().unwrap_or_default(),
-            card.recovery_email.clone().unwrap_or_default(),
-            card.username.clone().unwrap_or_default(),
-            card.password.clone().unwrap_or_default(),
-            card.mobile_phone.clone().unwrap_or_default(),
-            card.note.clone().unwrap_or_default(),
-            tags,
-            folder_name,
-        ];
+        let mut row_fields: Vec<String> = CSV_PREFIX_COLUMNS
+            .iter()
+            .map(|spec| csv_column_value(*spec, card, folder_names_by_id))
+            .collect();
+        row_fields.extend(custom_keys.iter().map(|key| {
+            protect_formula_text(custom_values.get(key).cloned().unwrap_or_default())
+        }));
         row_fields.extend(
-            custom_keys
+            CSV_SUFFIX_COLUMNS
                 .iter()
-                .map(|key| custom_values.get(key).cloned().unwrap_or_default()),
+                .map(|spec| csv_column_value(*spec, card, folder_names_by_id)),
         );
 
         lines.push(serialize_csv_line(&row_fields));
@@ -509,10 +730,24 @@ pub fn export_csv_file(path: &Path, state: &Arc<AppState>) -> Result<String> {
     let cards = datacards_service::list_datacards(state)?;
     let profile_id = security_service::require_unlocked_active_profile(state)?.profile_id;
     let folder_names_by_id = build_folder_name_lookup(state, &profile_id)?;
-    let content = build_export_content(&cards, &folder_names_by_id);
+    let content = build_data_cards_csv_content(&cards, &folder_names_by_id);
 
     fs::write(path, content)
         .map_err(|_| ErrorCodeString::new("LEGACY_EXPORT_FILE_WRITE_FAILED"))?;
+
+    Ok(path.to_string_lossy().to_string())
+}
+
+pub fn export_selected_datacards_csv_file(
+    path: &Path,
+    cards: &[DataCard],
+    state: &Arc<AppState>,
+) -> Result<String> {
+    let profile_id = security_service::require_unlocked_active_profile(state)?.profile_id;
+    let folder_names_by_id = build_folder_name_lookup(state, &profile_id)?;
+    let content = build_data_cards_csv_content(cards, &folder_names_by_id);
+
+    fs::write(path, content).map_err(|_| ErrorCodeString::new("SELECTED_CSV_EXPORT_FAILED"))?;
 
     Ok(path.to_string_lossy().to_string())
 }
@@ -584,12 +819,20 @@ pub fn import_csv_file(path: &Path, state: &Arc<AppState>) -> Result<LegacyImpor
             note: (!row.note.trim().is_empty()).then(|| row.note.trim().to_string()),
             tags: split_tags(&row.tags),
             password: (!row.password.trim().is_empty()).then(|| row.password.trim().to_string()),
-            totp_uri: None,
-            seed_phrase: None,
+            totp_uri: (!row.totp_uri.trim().is_empty()).then(|| row.totp_uri.trim().to_string()),
+            seed_phrase: (!row.seed_phrase.trim().is_empty())
+                .then(|| row.seed_phrase.trim().to_string()),
             seed_phrase_word_count: None,
             custom_fields: row.custom_fields.clone(),
             folder_id,
         };
+        let _official_csv_metadata_fields = (
+            &row.attachments,
+            &row.favorite,
+            &row.archived,
+            &row.created_at,
+            &row.updated_at,
+        );
 
         match datacards_service::create_datacard(input, state) {
             Ok(_) => imported_count += 1,
@@ -695,6 +938,13 @@ mod tests {
             note: String::new(),
             tags: String::new(),
             folder: String::new(),
+            totp_uri: String::new(),
+            seed_phrase: String::new(),
+            attachments: String::new(),
+            favorite: String::new(),
+            archived: String::new(),
+            created_at: String::new(),
+            updated_at: String::new(),
             custom_fields: Vec::new(),
         };
         assert_eq!(normalized_title(&row), "");
@@ -880,7 +1130,7 @@ mod tests {
         let temp = tempdir().unwrap();
         let csv_path = temp.path().join("legacy-export.csv");
 
-        let _card = repo_impl::create_datacard(
+        let card = repo_impl::create_datacard(
             &harness.state,
             &harness.profile_id,
             &CreateDataCardInput {
@@ -917,6 +1167,7 @@ mod tests {
             },
         )
         .unwrap();
+        harness.create_attachment(&card.id, "export-attachment");
 
         let exported_path = export_csv_file(&csv_path, &harness.state).unwrap();
         assert_eq!(exported_path, csv_path.to_string_lossy().to_string());
@@ -931,10 +1182,20 @@ mod tests {
         assert_eq!(rows[0].recovery_email, "recovery@example.com");
         assert_eq!(rows[0].username, "user1");
         assert_eq!(rows[0].password, "p@ss,word");
-        assert_eq!(rows[0].mobile_phone, "+123");
+        assert_eq!(rows[0].mobile_phone, "'+123");
         assert_eq!(rows[0].note, "Line 1\nLine \"2\"");
         assert_eq!(rows[0].tags, "work, personal");
         assert_eq!(rows[0].folder, "Work");
+        assert_eq!(rows[0].totp_uri, "otpauth://totp/test");
+        assert_eq!(
+            rows[0].seed_phrase,
+            "alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu"
+        );
+        assert_eq!(rows[0].attachments, "export-attachment.bin");
+        assert_eq!(rows[0].favorite, "false");
+        assert_eq!(rows[0].archived, "false");
+        assert!(!rows[0].created_at.is_empty());
+        assert!(!rows[0].updated_at.is_empty());
         assert_eq!(rows[0].custom_fields.len(), 2);
         assert_eq!(rows[0].custom_fields[0].key, "API Key");
         assert_eq!(rows[0].custom_fields[0].value, "secret, value");
@@ -1016,22 +1277,91 @@ mod tests {
 
         assert_eq!(records.len(), 3);
         assert_eq!(records[0][0].trim_start_matches('\u{feff}'), "Title");
-        assert_eq!(records[0][10], "Custom field:API Key");
-        assert_eq!(records[0][11], "Custom field:Server");
+        assert_eq!(records[0][7], "Custom field:API Key");
+        assert_eq!(records[0][8], "Custom field:Server");
+        assert_eq!(records[0][9], "Note");
+        assert!(!records[0].iter().any(|header| header == "Seed phrase word count"));
 
         let mail_row = records
             .iter()
             .find(|row| row.first().map(|v| v.as_str()) == Some("Mail"))
             .unwrap();
-        assert_eq!(mail_row[10], "alpha");
-        assert_eq!(mail_row[11], "");
+        assert_eq!(mail_row[7], "alpha");
+        assert_eq!(mail_row[8], "");
 
         let infra_row = records
             .iter()
             .find(|row| row.first().map(|v| v.as_str()) == Some("Infra"))
             .unwrap();
-        assert_eq!(infra_row[10], "");
-        assert_eq!(infra_row[11], "prod");
+        assert_eq!(infra_row[7], "");
+        assert_eq!(infra_row[8], "prod");
+    }
+
+    #[test]
+    fn export_csv_file_uses_official_order_and_formula_protection() {
+        let harness = ServiceTestHarness::new();
+        let temp = tempdir().unwrap();
+        let csv_path = temp.path().join("legacy-export-official-order.csv");
+
+        repo_impl::create_datacard(
+            &harness.state,
+            &harness.profile_id,
+            &CreateDataCardInput {
+                title: "=1+1".to_string(),
+                url: Some("+https://example.com".to_string()),
+                email: None,
+                recovery_email: None,
+                username: Some("@user".to_string()),
+                mobile_phone: None,
+                note: Some("-note".to_string()),
+                tags: vec!["work".to_string()],
+                password: Some("secret".to_string()),
+                totp_uri: None,
+                seed_phrase: None,
+                seed_phrase_word_count: Some(12),
+                custom_fields: vec![CustomField {
+                    id: new_custom_field_id(),
+                    key: "API Key".to_string(),
+                    value: "=secret".to_string(),
+                    field_type: CustomFieldType::Secret,
+                }],
+                folder_id: None,
+            },
+        )
+        .unwrap();
+
+        export_csv_file(&csv_path, &harness.state).unwrap();
+
+        let records = parse_csv_records(&fs::read_to_string(&csv_path).unwrap());
+        let header = &records[0];
+        assert_eq!(header[0].trim_start_matches('\u{feff}'), "Title");
+        assert_eq!(header[1], "URL");
+        assert_eq!(header[2], "Email");
+        assert_eq!(header[3], "Recovery email");
+        assert_eq!(header[4], "Username");
+        assert_eq!(header[5], "Password");
+        assert_eq!(header[6], "Mobile phone");
+        assert_eq!(header[7], "Custom field:API Key");
+        assert_eq!(header[8], "Note");
+        assert_eq!(header[9], "Tags");
+        assert_eq!(header[10], "Folder");
+        assert_eq!(header[11], "TOTP URI");
+        assert_eq!(header[12], "Seed phrase");
+        assert_eq!(header[13], "Attachments");
+        assert_eq!(header[14], "Favorite");
+        assert_eq!(header[15], "Archived");
+        assert_eq!(header[16], "Created at");
+        assert_eq!(header[17], "Updated at");
+        assert!(!header.iter().any(|value| value == "Seed phrase word count"));
+
+        let row = &records[1];
+        assert_eq!(row[0], "'=1+1");
+        assert_eq!(row[1], "'+https://example.com");
+        assert_eq!(row[4], "'@user");
+        assert_eq!(row[7], "'=secret");
+        assert_eq!(row[8], "'-note");
+        assert_eq!(row[14], "false");
+        assert_eq!(row[15], "false");
     }
 
     #[test]

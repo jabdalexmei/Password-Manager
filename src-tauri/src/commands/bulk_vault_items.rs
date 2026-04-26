@@ -16,11 +16,11 @@ fn file_path_to_pathbuf(fp: FilePath) -> Result<PathBuf> {
     }
 }
 
-fn ensure_json_extension(path: PathBuf) -> PathBuf {
+fn ensure_csv_extension(path: PathBuf) -> PathBuf {
     if path.extension().is_some() {
         path
     } else {
-        path.with_extension("json")
+        path.with_extension("csv")
     }
 }
 
@@ -38,7 +38,7 @@ pub async fn bulk_apply_vault_items(
 }
 
 #[tauri::command]
-pub async fn export_selected_vault_items_json_via_dialog(
+pub async fn export_selected_datacards_csv_via_dialog(
     app: AppHandle,
     input: BulkVaultItemsInput,
     suggested_file_name: Option<String>,
@@ -46,7 +46,11 @@ pub async fn export_selected_vault_items_json_via_dialog(
 ) -> Result<Option<String>> {
     let st = state.inner().clone();
     tauri::async_runtime::spawn_blocking(move || {
-        let mut dialog = app.dialog().file().set_title("Export selected items as JSON");
+        let mut dialog = app
+            .dialog()
+            .file()
+            .set_title("Export selected data cards as CSV")
+            .add_filter("CSV files", &["csv"]);
         if let Some(name) = suggested_file_name {
             dialog = dialog.set_file_name(name);
         }
@@ -59,9 +63,9 @@ pub async fn export_selected_vault_items_json_via_dialog(
         let Some(fp) = dialog.blocking_save_file() else {
             return Ok(None);
         };
-        let path = ensure_json_extension(file_path_to_pathbuf(fp)?);
+        let path = ensure_csv_extension(file_path_to_pathbuf(fp)?);
         let exported_path =
-            bulk_vault_items_service::export_selected_vault_items_json(&path, input, &st)?;
+            bulk_vault_items_service::export_selected_datacards_csv(&path, input, &st)?;
         Ok(Some(exported_path))
     })
     .await

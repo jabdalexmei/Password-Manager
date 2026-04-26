@@ -20,6 +20,7 @@ type BulkActionBarProps = {
   isSelectionMode: boolean;
   isTrashMode: boolean;
   visibleCount: number;
+  exportableCount?: number;
   disabled?: boolean;
   onEnterSelectionMode: () => void;
   onSelectAllVisible: () => void;
@@ -33,6 +34,7 @@ export function BulkActionBar({
   isSelectionMode,
   isTrashMode,
   visibleCount,
+  exportableCount = selectedCount,
   disabled = false,
   onEnterSelectionMode,
   onSelectAllVisible,
@@ -93,7 +95,7 @@ export function BulkActionBar({
                     <button className="vault-actionmenu-item" type="button" disabled={selectedCount === 0} onClick={() => run('move')}>
                       {t('bulk.action.move')}
                     </button>
-                    <button className="vault-actionmenu-item" type="button" disabled={selectedCount === 0} onClick={() => run('export')}>
+                    <button className="vault-actionmenu-item" type="button" disabled={exportableCount === 0} onClick={() => run('export')}>
                       {t('bulk.action.export')}
                     </button>
                     <button className="vault-actionmenu-item" type="button" disabled={selectedCount === 0} onClick={() => run('favorite_on')}>

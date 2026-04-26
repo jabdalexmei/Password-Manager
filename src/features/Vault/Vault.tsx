@@ -11,7 +11,7 @@ import type { ProfileMeta } from '../../shared/lib/tauri';
 import { useToaster } from '../../shared/components/Toaster';
 import {
   bulkApplyVaultItems,
-  exportSelectedVaultItemsJsonViaDialog,
+  exportSelectedDataCardsCsvViaDialog,
   runTrashAutoCleanupIfEnabled,
   type BulkVaultAction,
 } from './api/vaultApi';
@@ -326,6 +326,10 @@ export default function Vault({
     () => new Set(bulkSelection.selectedItems.filter((item) => item.item_type === 'data_card').map((item) => item.id)),
     [bulkSelection.selectedItems]
   );
+  const selectedDataCardItems = useMemo(
+    () => bulkSelection.selectedItems.filter((item) => item.item_type === 'data_card'),
+    [bulkSelection.selectedItems]
+  );
   const selectedBankIds = useMemo(
     () => new Set(bulkSelection.selectedItems.filter((item) => item.item_type === 'bank_card').map((item) => item.id)),
     [bulkSelection.selectedItems]
@@ -382,27 +386,27 @@ export default function Vault({
   );
 
   const handleBulkExport = useCallback(async () => {
-    if (bulkSelection.selectedItems.length === 0 || bulkSubmitting) return;
+    if (selectedDataCardItems.length === 0 || bulkSubmitting) return;
     setBulkSubmitting(true);
     try {
-      const path = await exportSelectedVaultItemsJsonViaDialog(
-        { items: bulkSelection.selectedItems },
-        `vault-selected-${new Date().toISOString().slice(0, 10)}.json`
+      const path = await exportSelectedDataCardsCsvViaDialog(
+        { items: selectedDataCardItems },
+        `vault-selected-${new Date().toISOString().slice(0, 10)}.csv`
       );
       if (path) {
-        await finishBulkSuccess('bulk.toast.exported', bulkSelection.selectedItems.length, false);
+        await finishBulkSuccess('bulk.toast.exported', selectedDataCardItems.length, false);
       }
     } catch (err) {
-      const code = (err as any)?.code ?? (err as any)?.error ?? 'UNKNOWN';
-      showToast(`${tCommon('error.operationFailed')} (${code})`, 'error');
+      console.error(err);
+      showToast(tVault('bulk.toast.exportError'), 'error');
     } finally {
       setBulkSubmitting(false);
     }
-  }, [bulkSelection.selectedItems, bulkSubmitting, finishBulkSuccess, showToast, tCommon]);
+  }, [bulkSubmitting, finishBulkSuccess, selectedDataCardItems, showToast, tCommon]);
 
   const openBulkConfirm = useCallback(
     (action: 'delete' | 'purge' | 'restore' | 'export') => {
-      const count = bulkSelection.selectedCount;
+      const count = action === 'export' ? selectedDataCardItems.length : bulkSelection.selectedCount;
       if (action === 'delete') {
         const hardDelete = vault.settings?.soft_delete_enabled === false;
         setBulkConfirm({
@@ -438,7 +442,7 @@ export default function Vault({
         confirmLabel: tVault('bulk.action.export'),
       });
     },
-    [bulkSelection.selectedCount, tVault, vault.settings?.soft_delete_enabled]
+    [bulkSelection.selectedCount, selectedDataCardItems.length, tVault, vault.settings?.soft_delete_enabled]
   );
 
   const confirmBulkAction = useCallback(async () => {
@@ -477,6 +481,7 @@ export default function Vault({
       isSelectionMode={bulkSelection.isSelectionMode}
       isTrashMode={isBulkTrashMode}
       visibleCount={visibleBulkItems.length}
+      exportableCount={selectedDataCardItems.length}
       disabled={bulkSubmitting || vault.loading || bankCards.loading}
       onEnterSelectionMode={bulkSelection.enterSelectionMode}
       onSelectAllVisible={() => bulkSelection.selectVisible(visibleBulkItems)}

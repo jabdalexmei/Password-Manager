@@ -36,7 +36,7 @@
   "backup.import.restore": "Restore backup",
   "backup.import.success": "Backup restored. Please log in again.",
   "legacyExport.confirmTitle": "Export CSV",
-  "legacyExport.confirmBody": "All non-deleted data cards from the current vault will be exported into a CSV format compatible with CSV import. Custom fields are included as Custom field:<Field Name> columns. Bank cards, attachments, 2FA, seed phrases, and favorite/archive states are not included in this file.",
+  "legacyExport.confirmBody": "All non-deleted data cards from the current vault will be exported into a CSV format compatible with CSV import. Custom fields are included as Custom field:<Field Name> columns. The file also includes 2FA, seed phrases, attachment file names, and favorite/archive states. Bank cards are not included.",
   "legacyExport.fileName": "File name: {{name}}",
   "legacyExport.confirmAction": "Export data",
   "legacyExport.success": "CSV export finished",
@@ -138,8 +138,8 @@
   "bulk.confirm.purgeTitle": "Delete {{count}} items forever?",
   "bulk.confirm.purgeBody": "This action cannot be undone.",
   "bulk.confirm.restoreTitle": "Restore {{count}} items?",
-  "bulk.confirm.exportTitle": "Export {{count}} items?",
-  "bulk.confirm.exportBody": "The file may contain sensitive data: logins, passwords, bank card data, and notes. Save it only in a safe place.",
+  "bulk.confirm.exportTitle": "Export {{count}} cards?",
+  "bulk.confirm.exportBody": "The file may contain sensitive data: logins, passwords, 2FA, seed phrases, notes, and custom fields. Save it only in a safe place.",
   "bulk.toast.moved": "Moved: {{count}} items",
   "bulk.toast.deleted": "Deleted: {{count}} items",
   "bulk.toast.purged": "Deleted forever: {{count}} items",
@@ -148,5 +148,6 @@
   "bulk.toast.favoriteOn": "Added to favorites: {{count}} items",
   "bulk.toast.favoriteOff": "Removed from favorites: {{count}} items",
   "bulk.toast.restored": "Restored: {{count}} items",
-  "bulk.toast.exported": "Exported: {{count}} items"
+  "bulk.toast.exported": "Exported: {{count}} cards",
+  "bulk.toast.exportError": "Failed to export CSV"
 }

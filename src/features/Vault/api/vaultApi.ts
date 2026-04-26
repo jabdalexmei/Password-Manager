@@ -241,7 +241,7 @@ export async function bulkApplyVaultItems(input: BulkVaultItemsInput): Promise<B
   return invoke('bulk_apply_vault_items', { input });
 }
 
-export async function exportSelectedVaultItemsJsonViaDialog(
+export async function exportSelectedDataCardsCsvViaDialog(
   input: { items: BulkVaultItemRef[] },
   suggestedFileName?: string
 ): Promise<string | null> {
@@ -249,7 +249,7 @@ export async function exportSelectedVaultItemsJsonViaDialog(
     items: input.items,
     action: { kind: 'delete' },
   };
-  return invoke('export_selected_vault_items_json_via_dialog', {
+  return invoke('export_selected_datacards_csv_via_dialog', {
     input: exportInput,
     suggestedFileName: suggestedFileName ?? null,
   });

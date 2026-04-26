@@ -124,7 +124,11 @@ pub async fn legacy_export_csv_via_dialog(
 ) -> Result<Option<String>> {
     let st = state.inner().clone();
     tauri::async_runtime::spawn_blocking(move || {
-        let mut dialog = app.dialog().file().set_title("Export Data Cards as CSV");
+        let mut dialog = app
+            .dialog()
+            .file()
+            .set_title("Export Data Cards as CSV")
+            .add_filter("CSV files", &["csv"]);
 
         if let Some(name) = suggested_file_name {
             dialog = dialog.set_file_name(name);

@@ -234,7 +234,7 @@ fn main() {
             restore_all_deleted_datacards,
             purge_all_deleted_datacards,
             bulk_apply_vault_items,
-            export_selected_vault_items_json_via_dialog,
+            export_selected_datacards_csv_via_dialog,
             get_datacard_password_history,
             delete_datacard_password_history_entry,
             clear_datacard_password_history,
