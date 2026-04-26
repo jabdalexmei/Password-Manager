@@ -423,7 +423,6 @@ fn stringify_attachments(card: &DataCard) -> String {
 enum CsvValueType {
     Text,
     Boolean,
-    DateTime,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -443,8 +442,6 @@ enum CsvColumnSource {
     Attachments,
     Favorite,
     Archived,
-    CreatedAt,
-    UpdatedAt,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -452,7 +449,6 @@ struct CsvColumnSpec {
     name: &'static str,
     source: CsvColumnSource,
     value_type: CsvValueType,
-    empty_value: &'static str,
 }
 
 const CSV_PREFIX_COLUMNS: &[CsvColumnSpec] = &[
@@ -460,43 +456,36 @@ const CSV_PREFIX_COLUMNS: &[CsvColumnSpec] = &[
         name: "Title",
         source: CsvColumnSource::Title,
         value_type: CsvValueType::Text,
-        empty_value: "",
     },
     CsvColumnSpec {
         name: "URL",
         source: CsvColumnSource::Url,
         value_type: CsvValueType::Text,
-        empty_value: "",
     },
     CsvColumnSpec {
         name: "Email",
         source: CsvColumnSource::Email,
         value_type: CsvValueType::Text,
-        empty_value: "",
     },
     CsvColumnSpec {
         name: "Recovery email",
         source: CsvColumnSource::RecoveryEmail,
         value_type: CsvValueType::Text,
-        empty_value: "",
     },
     CsvColumnSpec {
         name: "Username",
         source: CsvColumnSource::Username,
         value_type: CsvValueType::Text,
-        empty_value: "",
     },
     CsvColumnSpec {
         name: "Password",
         source: CsvColumnSource::Password,
         value_type: CsvValueType::Text,
-        empty_value: "",
     },
     CsvColumnSpec {
         name: "Mobile phone",
         source: CsvColumnSource::MobilePhone,
         value_type: CsvValueType::Text,
-        empty_value: "",
     },
 ];
 
@@ -505,61 +494,41 @@ const CSV_SUFFIX_COLUMNS: &[CsvColumnSpec] = &[
         name: "Note",
         source: CsvColumnSource::Note,
         value_type: CsvValueType::Text,
-        empty_value: "",
     },
     CsvColumnSpec {
         name: "Tags",
         source: CsvColumnSource::Tags,
         value_type: CsvValueType::Text,
-        empty_value: "",
     },
     CsvColumnSpec {
         name: "Folder",
         source: CsvColumnSource::Folder,
         value_type: CsvValueType::Text,
-        empty_value: "",
     },
     CsvColumnSpec {
         name: "TOTP URI",
         source: CsvColumnSource::TotpUri,
         value_type: CsvValueType::Text,
-        empty_value: "",
     },
     CsvColumnSpec {
         name: "Seed phrase",
         source: CsvColumnSource::SeedPhrase,
         value_type: CsvValueType::Text,
-        empty_value: "",
     },
     CsvColumnSpec {
         name: "Attachments",
         source: CsvColumnSource::Attachments,
         value_type: CsvValueType::Text,
-        empty_value: "",
     },
     CsvColumnSpec {
         name: "Favorite",
         source: CsvColumnSource::Favorite,
         value_type: CsvValueType::Boolean,
-        empty_value: "false",
     },
     CsvColumnSpec {
         name: "Archived",
         source: CsvColumnSource::Archived,
         value_type: CsvValueType::Boolean,
-        empty_value: "false",
-    },
-    CsvColumnSpec {
-        name: "Created at",
-        source: CsvColumnSource::CreatedAt,
-        value_type: CsvValueType::DateTime,
-        empty_value: "",
-    },
-    CsvColumnSpec {
-        name: "Updated at",
-        source: CsvColumnSource::UpdatedAt,
-        value_type: CsvValueType::DateTime,
-        empty_value: "",
     },
 ];
 
@@ -668,25 +637,11 @@ fn csv_column_value(
                 "false".to_string()
             }
         }
-        CsvColumnSource::CreatedAt => {
-            if card.created_at.is_empty() {
-                spec.empty_value.to_string()
-            } else {
-                card.created_at.clone()
-            }
-        }
-        CsvColumnSource::UpdatedAt => {
-            if card.updated_at.is_empty() {
-                spec.empty_value.to_string()
-            } else {
-                card.updated_at.clone()
-            }
-        }
     };
 
     match spec.value_type {
         CsvValueType::Text => protect_formula_text(raw),
-        CsvValueType::Boolean | CsvValueType::DateTime => raw,
+        CsvValueType::Boolean => raw,
     }
 }
 
@@ -1194,8 +1149,6 @@ mod tests {
         assert_eq!(rows[0].attachments, "export-attachment.bin");
         assert_eq!(rows[0].favorite, "false");
         assert_eq!(rows[0].archived, "false");
-        assert!(!rows[0].created_at.is_empty());
-        assert!(!rows[0].updated_at.is_empty());
         assert_eq!(rows[0].custom_fields.len(), 2);
         assert_eq!(rows[0].custom_fields[0].key, "API Key");
         assert_eq!(rows[0].custom_fields[0].value, "secret, value");
@@ -1350,9 +1303,10 @@ mod tests {
         assert_eq!(header[13], "Attachments");
         assert_eq!(header[14], "Favorite");
         assert_eq!(header[15], "Archived");
-        assert_eq!(header[16], "Created at");
-        assert_eq!(header[17], "Updated at");
+        assert_eq!(header.len(), 16);
         assert!(!header.iter().any(|value| value == "Seed phrase word count"));
+        assert!(!header.iter().any(|value| value == "Created at"));
+        assert!(!header.iter().any(|value| value == "Updated at"));
 
         let row = &records[1];
         assert_eq!(row[0], "'=1+1");
