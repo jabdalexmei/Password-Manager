@@ -1,0 +1,32 @@
+﻿/* Bank card details: compact layout (match screenshot) */
+.bankcard-detail-card {
+  padding: 12px 14px;
+  gap: 10px;
+}
+
+.bankcard-detail-card .detail-field-list {
+  gap: 10px;
+}
+
+.bankcard-detail-card .detail-value-box {
+  min-height: 40px;
+  padding: 8px 10px;
+}
+
+/* Bank card details: Expiry and CVC must be same compact width */
+.bankcard-detail-card .bankcard-compact-expiry .detail-value-box,
+.bankcard-detail-card .bankcard-compact-cvc .detail-value-box {
+  max-width: 360px;
+}
+
+.icon-button-danger {
+  color: var(--cmp-button-danger-bg);
+  border-color: var(--cmp-button-danger-border-weak);
+}
+
+.icon-button-danger:hover {
+  border-color: var(--cmp-button-danger-border);
+  background: var(--cmp-button-danger-hover-soft-bg);
+}
+
+
