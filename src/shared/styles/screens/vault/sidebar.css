@@ -104,6 +104,10 @@
   outline-offset: var(--cmp-nav-focus-ring-offset);
 }
 
+.vault-filter-btn.is-active {
+  border-color: var(--sem-accent-primary);
+}
+
 .vault-filter-backdrop {
   position: fixed;
   inset: 0;

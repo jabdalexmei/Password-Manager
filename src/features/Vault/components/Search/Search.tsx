@@ -25,6 +25,7 @@ export function Search({ query, onChange, filters, onChangeFilters }: Props) {
   const [isOpen, setIsOpen] = useState(false);
 
   const hasFiltersUi = Boolean(filters && onChangeFilters);
+  const hasActiveFilters = hasFiltersUi && FILTER_ORDER.some(({ key }) => Boolean(filters?.[key]));
 
   const close = useCallback(() => setIsOpen(false), []);
 
@@ -50,10 +51,11 @@ export function Search({ query, onChange, filters, onChangeFilters }: Props) {
         {hasFiltersUi && (
           <button
             type="button"
-            className="vault-filter-btn"
+            className={`vault-filter-btn${hasActiveFilters ? ' is-active' : ''}`}
             aria-label={t('filters.title')}
             title={tTip('action.filters')}
             aria-expanded={isOpen}
+            aria-pressed={hasActiveFilters}
             onClick={() => setIsOpen((v) => !v)}
           >
             <IconFilter size={18} />
