@@ -634,9 +634,8 @@ export function BankCards({
 
             const visiblePreviewLines = previewLines;
 
-            return (
+            const cardButton = (
               <button
-                key={card.id}
                 className={`vault-datacard ${isActive ? 'active' : ''} ${selectionMode ? 'vault-datacard--selectable' : ''} ${isBulkSelected ? 'vault-datacard--selected' : ''}`.trim()}
                 type="button"
                 disabled={isRefreshing}
@@ -662,7 +661,6 @@ export function BankCards({
                 }}
               >
                 <div className="datacard-top">
-                  {selectionMode && <span className="vault-card-check" aria-hidden="true" />}
                   <div className="datacard-title">{displayTitleText}</div>
                   {isFavorite && (
                     <div className="datacard-badges">
@@ -683,6 +681,24 @@ export function BankCards({
                   </div>
                 )}
               </button>
+            );
+
+            if (!selectionMode) {
+              return <React.Fragment key={card.id}>{cardButton}</React.Fragment>;
+            }
+
+            return (
+              <div key={card.id} className={`vault-select-row ${isBulkSelected ? 'vault-select-row--selected' : ''}`.trim()}>
+                <button
+                  type="button"
+                  className="vault-card-check"
+                  aria-label={displayTitleText}
+                  aria-pressed={isBulkSelected}
+                  disabled={isRefreshing}
+                  onClick={() => onToggleSelection?.(card.id)}
+                />
+                {cardButton}
+              </div>
             );
           })}
         </div>

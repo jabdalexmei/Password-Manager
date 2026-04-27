@@ -59,9 +59,8 @@ export function DataCardListItem({
     t,
   });
 
-  return (
+  const cardButton = (
     <button
-      key={card.id}
       className={`vault-datacard ${isActive ? 'active' : ''} ${isSelectionMode ? 'vault-datacard--selectable' : ''} ${isBulkSelected ? 'vault-datacard--selected' : ''}`.trim()}
       type="button"
       disabled={disabled}
@@ -88,9 +87,6 @@ export function DataCardListItem({
       }}
     >
       <div className="datacard-top">
-        {isSelectionMode && (
-          <span className="vault-card-check" aria-hidden="true" />
-        )}
         <div className="datacard-title">{displayTitleText}</div>
         <DataCardBadges
           isFavorite={Boolean(card.isFavorite)}
@@ -111,5 +107,21 @@ export function DataCardListItem({
         </div>
       )}
     </button>
+  );
+
+  if (!isSelectionMode) return cardButton;
+
+  return (
+    <div className={`vault-select-row ${isBulkSelected ? 'vault-select-row--selected' : ''}`.trim()}>
+      <button
+        type="button"
+        className="vault-card-check"
+        aria-label={displayTitleText}
+        aria-pressed={isBulkSelected}
+        disabled={disabled}
+        onClick={() => onToggleSelection?.(card.id)}
+      />
+      {cardButton}
+    </div>
   );
 }

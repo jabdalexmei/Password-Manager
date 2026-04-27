@@ -20,6 +20,7 @@
   font-weight: 700;
   letter-spacing: 0.2px;
   color: var(--sem-text-primary);
+  min-width: 0;
 }
 
 .vault-folder-title {
@@ -45,8 +46,9 @@
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
-  min-width: 32px;
-  flex: 0 0 auto;
+  min-width: 0;
+  flex: 1 1 auto;
+  max-width: 100%;
 }
 
 .datacards-header__spacer {
@@ -63,13 +65,24 @@
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
+  flex: 0 1 auto;
+  margin-right: calc(var(--sem-scrollbar-size, 10px) + 4px);
   min-width: 0;
+  max-width: 100%;
 }
 
 .vault-bulkbar__count {
   color: var(--sem-text-secondary);
   font-size: 13px;
   line-height: 18px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vault-bulkbar .btn {
+  flex: 0 0 auto;
   white-space: nowrap;
 }
 
@@ -179,13 +192,18 @@
   background: var(--cmp-card-active-bg);
 }
 
-.vault-datacard--selectable .datacard-top {
-  grid-template-columns: 20px minmax(0, 1fr) minmax(0, auto);
-}
-
 .vault-datacard--selected {
   border-color: var(--cmp-card-active-border);
   background: color-mix(in srgb, var(--cmp-card-active-bg) 72%, var(--cmp-card-bg));
+}
+
+.vault-select-row {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
 }
 
 .vault-card-check {
@@ -198,14 +216,27 @@
   align-items: center;
   justify-content: center;
   position: relative;
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
 }
 
-.vault-datacard--selected .vault-card-check {
+.vault-card-check:hover {
+  border-color: var(--cmp-card-hover-border);
+  background: var(--cmp-card-hover-bg);
+}
+
+.vault-card-check:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.vault-select-row--selected .vault-card-check {
   border-color: var(--cmp-card-active-border);
   background: var(--cmp-card-active-border);
 }
 
-.vault-datacard--selected .vault-card-check::after {
+.vault-select-row--selected .vault-card-check::after {
   content: "";
   width: 8px;
   height: 4px;
