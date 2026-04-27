@@ -7,6 +7,7 @@ use tauri_plugin_dialog::{DialogExt, FilePath};
 use crate::app_state::AppState;
 use crate::error::{ErrorCodeString, Result};
 use crate::services::bulk_vault_items_service;
+use crate::services::legacy_import_service;
 use crate::types::{BulkVaultItemsInput, BulkVaultItemsResult};
 
 fn file_path_to_pathbuf(fp: FilePath) -> Result<PathBuf> {
@@ -51,9 +52,11 @@ pub async fn export_selected_datacards_csv_via_dialog(
             .file()
             .set_title("Export selected data cards as CSV")
             .add_filter("CSV files", &["csv"]);
-        if let Some(name) = suggested_file_name {
-            dialog = dialog.set_file_name(name);
-        }
+        let file_name = match suggested_file_name {
+            Some(name) => name,
+            None => legacy_import_service::build_active_csv_export_file_name(&st, true)?,
+        };
+        dialog = dialog.set_file_name(file_name);
         if let Ok(sp) = st.get_storage_paths() {
             if let Ok(workspace_root) = sp.workspace_root() {
                 dialog = dialog.set_directory(workspace_root);

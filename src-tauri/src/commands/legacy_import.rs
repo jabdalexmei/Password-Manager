@@ -130,9 +130,11 @@ pub async fn legacy_export_csv_via_dialog(
             .set_title("Export Data Cards as CSV")
             .add_filter("CSV files", &["csv"]);
 
-        if let Some(name) = suggested_file_name {
-            dialog = dialog.set_file_name(name);
-        }
+        let file_name = match suggested_file_name {
+            Some(name) => name,
+            None => legacy_import_service::build_active_csv_export_file_name(&st, false)?,
+        };
+        dialog = dialog.set_file_name(file_name);
 
         if let Ok(sp) = st.get_storage_paths() {
             if let Ok(workspace_root) = sp.workspace_root() {

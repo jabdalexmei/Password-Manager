@@ -3,7 +3,7 @@ use std::fs;
 use std::path::Path;
 use std::sync::Arc;
 
-use chrono::Utc;
+use chrono::{Local, Utc};
 use serde::Serialize;
 
 use crate::app_state::AppState;
@@ -345,6 +345,93 @@ fn build_folder_name_lookup(
         out.insert(folder.id, folder.name.trim().to_string());
     }
     Ok(out)
+}
+
+fn normalize_export_file_name_part(value: &str) -> String {
+    let mut normalized = String::new();
+    let mut last_was_underscore = false;
+
+    for ch in value.trim().chars() {
+        let next = if ch.is_ascii_control() || matches!(ch, '<' | '>' | ':' | '"' | '/' | '\\' | '|' | '?' | '*') {
+            '_'
+        } else if ch.is_whitespace() {
+            '_'
+        } else {
+            ch
+        };
+
+        if next == '_' {
+            if !last_was_underscore {
+                normalized.push('_');
+            }
+            last_was_underscore = true;
+        } else {
+            normalized.push(next);
+            last_was_underscore = false;
+        }
+    }
+
+    let normalized = normalized.trim_matches('_').to_string();
+    if normalized.is_empty() {
+        "vault".to_string()
+    } else {
+        normalized
+    }
+}
+
+fn current_csv_export_date_prefix() -> String {
+    Local::now().format("%d.%m.%y").to_string()
+}
+
+fn build_csv_export_file_name_with_date(
+    vault_name: &str,
+    profile_id: &str,
+    selected: bool,
+    date_prefix: &str,
+) -> String {
+    let selected_prefix = if selected { "selected_" } else { "" };
+    format!(
+        "{}_{}vault-name_{}_data-cards_profile-id_{}.csv",
+        date_prefix,
+        selected_prefix,
+        normalize_export_file_name_part(vault_name),
+        profile_id
+    )
+}
+
+pub fn build_csv_export_file_name(vault_name: &str, profile_id: &str) -> String {
+    build_csv_export_file_name_with_date(
+        vault_name,
+        profile_id,
+        false,
+        &current_csv_export_date_prefix(),
+    )
+}
+
+pub fn build_selected_csv_export_file_name(vault_name: &str, profile_id: &str) -> String {
+    build_csv_export_file_name_with_date(
+        vault_name,
+        profile_id,
+        true,
+        &current_csv_export_date_prefix(),
+    )
+}
+
+pub fn build_active_csv_export_file_name(state: &Arc<AppState>, selected: bool) -> Result<String> {
+    let profile_id = security_service::require_unlocked_active_profile(state)?.profile_id;
+    let active_vault_id = state
+        .active_vault_id
+        .lock()
+        .map_err(|_| ErrorCodeString::new("STATE_UNAVAILABLE"))?
+        .clone()
+        .ok_or_else(|| ErrorCodeString::new("VAULT_NOT_OPEN"))?;
+    let vault = repo_impl::get_vault(state, &profile_id, &active_vault_id)?;
+
+    Ok(if selected {
+        build_selected_csv_export_file_name(&vault.name, &profile_id)
+    } else {
+        build_csv_export_file_name(&vault.name, &profile_id)
+    })
 }
 
 pub fn inspect_csv_file(path: &Path, state: &Arc<AppState>) -> Result<LegacyImportInspectResult> {
@@ -820,12 +907,44 @@ mod tests {
     use tempfile::tempdir;
 
     use super::{
-        export_csv_file, import_csv_file, inspect_csv_file, normalized_title, parse_csv_records,
-        parse_csv_rows, split_tags, LegacyCsvRow,
+        build_csv_export_file_name, build_csv_export_file_name_with_date,
+        build_selected_csv_export_file_name, export_csv_file, import_csv_file, inspect_csv_file,
+        normalized_title, parse_csv_records, parse_csv_rows, split_tags, LegacyCsvRow,
     };
     use crate::data::sqlite::repo_impl;
     use crate::services::test_support::ServiceTestHarness;
     use crate::types::{new_custom_field_id, CreateDataCardInput, CustomField, CustomFieldType};
+
+    #[test]
+    fn csv_export_file_name_builder_adds_date_and_selected_prefix() {
+        let regular = build_csv_export_file_name_with_date(
+            "Default vault",
+            "7a42c919-e33d-4f13-98f8-cec5ba61c14a",
+            false,
+            "28.04.26",
+        );
+        assert_eq!(
+            regular,
+            "28.04.26_vault-name_Default_vault_data-cards_profile-id_7a42c919-e33d-4f13-98f8-cec5ba61c14a.csv"
+        );
+        assert_eq!(
+            build_csv_export_file_name_with_date(
+                "Default vault",
+                "7a42c919-e33d-4f13-98f8-cec5ba61c14a",
+                true,
+                "28.04.26",
+            ),
+            "28.04.26_selected_vault-name_Default_vault_data-cards_profile-id_7a42c919-e33d-4f13-98f8-cec5ba61c14a.csv"
+        );
+    }
+
+    #[test]
+    fn csv_export_file_name_builder_uses_current_date_for_public_helpers() {
+        let today = chrono::Local::now().format("%d.%m.%y").to_string();
+        assert!(build_csv_export_file_name("Default vault", "profile").starts_with(&format!("{today}_vault-name_")));
+        assert!(build_selected_csv_export_file_name("Default vault", "profile")
+            .starts_with(&format!("{today}_selected_vault-name_")));
+    }
 
     #[test]
     fn parse_csv_rows_handles_quotes_and_headers() {

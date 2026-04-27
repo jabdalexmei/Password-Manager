@@ -12,6 +12,7 @@ export type ConfirmDialogProps = {
   confirmDisabled?: boolean;
   cancelDisabled?: boolean;
   confirmOnLeft?: boolean;
+  confirmVariant?: 'danger' | 'primary';
 };
 
 const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
@@ -25,13 +26,14 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   confirmDisabled,
   cancelDisabled,
   confirmOnLeft,
+  confirmVariant = 'danger',
 }) => {
   const titleId = 'confirm-dialog-title';
   const descId = 'confirm-dialog-desc';
   const confirmButton = (
     <button
       type="button"
-      className="btn btn-danger"
+      className={`btn ${confirmVariant === 'primary' ? 'btn-primary' : 'btn-danger'}`}
       onClick={onConfirm}
       disabled={!!confirmDisabled}
     >

@@ -390,8 +390,7 @@ export default function Vault({
     setBulkSubmitting(true);
     try {
       const path = await exportSelectedDataCardsCsvViaDialog(
-        { items: selectedDataCardItems },
-        `vault-selected-${new Date().toISOString().slice(0, 10)}.csv`
+        { items: selectedDataCardItems }
       );
       if (path) {
         await finishBulkSuccess('bulk.toast.exported', selectedDataCardItems.length, false);
@@ -609,6 +608,7 @@ export default function Vault({
             description={bulkConfirm?.description ?? ''}
             confirmLabel={bulkConfirm?.confirmLabel ?? ''}
             cancelLabel={tCommon('action.cancel')}
+            confirmVariant={bulkConfirm?.action === 'export' ? 'primary' : undefined}
             confirmDisabled={bulkSubmitting}
             cancelDisabled={bulkSubmitting}
             onCancel={() => setBulkConfirm(null)}

@@ -21,6 +21,14 @@ const normalizeFileNamePart = (value: string) => {
   return normalized || 'vault';
 };
 
+const formatCsvExportDatePrefix = () => {
+  const now = new Date();
+  const day = String(now.getDate()).padStart(2, '0');
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const year = String(now.getFullYear() % 100).padStart(2, '0');
+  return `${day}.${month}.${year}`;
+};
+
 export function ExportLegacyDataModal({ open, vaultName, profileId, onClose }: ExportLegacyDataModalProps) {
   const { t } = useTranslation('Vault');
   const { t: tCommon } = useTranslation('Common');
@@ -32,7 +40,7 @@ export function ExportLegacyDataModal({ open, vaultName, profileId, onClose }: E
     if (!open) return;
     setIsSaving(false);
     const safeVaultName = normalizeFileNamePart(vaultName);
-    setSuggestedFileName(`vault-name_${safeVaultName}_data-cards_profile-id_${profileId}.csv`);
+    setSuggestedFileName(`${formatCsvExportDatePrefix()}_vault-name_${safeVaultName}_data-cards_profile-id_${profileId}.csv`);
   }, [open, profileId, vaultName]);
 
   if (!open) return null;
@@ -42,7 +50,7 @@ export function ExportLegacyDataModal({ open, vaultName, profileId, onClose }: E
     setIsSaving(true);
 
     try {
-      const path = await legacyExportCsvViaDialog(suggestedFileName);
+      const path = await legacyExportCsvViaDialog();
       shouldClose = true;
       if (!path) return;
       showToast(t('legacyExport.success'), 'success');
