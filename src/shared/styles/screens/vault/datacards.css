@@ -46,6 +46,7 @@
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
+  margin-right: calc(var(--sem-scrollbar-size, 10px) + 4px);
   min-width: 0;
   flex: 1 1 auto;
   max-width: 100%;
@@ -66,7 +67,6 @@
   justify-content: flex-end;
   gap: 8px;
   flex: 0 1 auto;
-  margin-right: calc(var(--sem-scrollbar-size, 10px) + 4px);
   min-width: 0;
   max-width: 100%;
 }
