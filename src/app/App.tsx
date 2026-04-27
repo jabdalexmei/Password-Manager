@@ -99,9 +99,11 @@ const App: React.FC = () => {
 
   return (
     <ToasterProvider>
-      <Suspense fallback={<p className="muted centered" aria-busy="true">{t('label.loading')}</p>}>
-        {content}
-      </Suspense>
+      <div className="app-viewport">
+        <Suspense fallback={<p className="muted centered" aria-busy="true">{t('label.loading')}</p>}>
+          {content}
+        </Suspense>
+      </div>
     </ToasterProvider>
   );
 };
