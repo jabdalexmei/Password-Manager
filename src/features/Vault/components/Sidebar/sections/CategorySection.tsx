@@ -1,0 +1,86 @@
+import React from 'react';
+import { useTranslation } from '../../../../../shared/lib/i18n';
+import type { SidebarCounts, SidebarMenu, VaultCategory } from '../sidebarTypes';
+
+type CategorySectionProps = {
+  selectedCategory: VaultCategory;
+  onSelectCategory: (category: VaultCategory) => void;
+  counts: SidebarCounts;
+  categoryCounts?: { dataCards: number; bankCards: number };
+  onAddBankCard: () => void;
+  openMenu: SidebarMenu;
+  setOpenMenu: (menu: SidebarMenu) => void;
+};
+
+export function CategorySection({
+  selectedCategory,
+  onSelectCategory,
+  counts,
+  categoryCounts,
+  onAddBankCard,
+  openMenu,
+  setOpenMenu,
+}: CategorySectionProps) {
+  const { t } = useTranslation('Folders');
+
+  return (
+    <>
+      <div className="vault-sidebar-title">{t('category.title')}</div>
+      <ul className="vault-folder-list">
+        {categoryCounts && (
+          <li className={selectedCategory === 'data_cards' ? 'active' : ''}>
+            <button className="vault-folder vault-folder--with-count" type="button" onClick={() => onSelectCategory('data_cards')}>
+              <span className="folder-name">{t('category.dataCard')}</span>
+              <span className="folder-count">{categoryCounts.dataCards}</span>
+            </button>
+          </li>
+        )}
+        <li className={selectedCategory === 'bank_cards' ? 'active' : ''}>
+          <button
+            className="vault-folder vault-folder--with-count"
+            type="button"
+            onClick={() => onSelectCategory('bank_cards')}
+            onContextMenu={(event) => {
+              event.preventDefault();
+              setOpenMenu({ type: 'category', x: event.clientX, y: event.clientY });
+            }}
+          >
+            <span className="folder-name">{t('category.bankCard')}</span>
+            <span className="folder-count">{categoryCounts?.bankCards ?? counts.all}</span>
+          </button>
+        </li>
+      </ul>
+
+      {openMenu && openMenu.type === 'category' && (
+        <div
+          className="vault-actionmenu-backdrop"
+          onClick={() => setOpenMenu(null)}
+          onContextMenu={(event) => event.preventDefault()}
+        >
+          <div
+            className="vault-actionmenu-panel vault-contextmenu-panel"
+            role="menu"
+            style={
+              {
+                '--menu-x': `${openMenu.x}px`,
+                '--menu-y': `${openMenu.y}px`,
+              } as React.CSSProperties
+            }
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="vault-actionmenu-item"
+              onClick={() => {
+                onAddBankCard();
+                setOpenMenu(null);
+              }}
+            >
+              {t('action.createBankCard')}
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

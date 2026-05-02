@@ -1,0 +1,355 @@
+﻿/* =======================================================================
+   CENTER (CARDS) + RIGHT (DETAILS)
+   ======================================================================= */
+
+.vault-allcards,
+.vault-details {
+  background: var(--cmp-vault-columns-bg); /* match .vault-sidebar */
+  padding: 16px 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.vault-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  color: var(--sem-text-primary);
+  min-width: 0;
+}
+
+.vault-folder-title {
+  padding-bottom: 4px;
+}
+
+.vault-folder-title .vault-section-header {
+  font-size: 18px;
+  line-height: 24px;
+}
+
+.datacards-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  /* Keep consistent header height across All/Archive/Deleted (prevents "Empty" Y shift) */
+  min-height: 32px;
+}
+
+.datacards-header__right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-right: calc(var(--sem-scrollbar-size, 10px) + 4px);
+  min-width: 0;
+  flex: 1 1 auto;
+  max-width: 100%;
+}
+
+.datacards-header__spacer {
+  width: 24px;
+  height: 24px;
+}
+
+.datacards-actions {
+  position: relative;
+}
+
+.vault-bulkbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.vault-bulkbar__count {
+  color: var(--sem-text-secondary);
+  font-size: 13px;
+  line-height: 18px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vault-bulkbar .btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.vault-bulk-folder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 240px;
+  overflow: auto;
+}
+
+.vault-bulk-folder-option {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  background: var(--cmp-card-bg);
+  border: 1px solid var(--cmp-card-border);
+  border-radius: var(--sem-radius-sm);
+  color: var(--cmp-card-text);
+  cursor: pointer;
+}
+
+.vault-bulk-folder-option:hover,
+.vault-bulk-folder-option.selected {
+  border-color: var(--cmp-card-active-border);
+  background: var(--cmp-card-hover-bg);
+}
+
+.vault-bulk-folder-create {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+
+/* Cards list */
+.vault-datacard-list {
+  background: transparent; /* remove panel fill */
+  border: none; /* remove stroke */
+  border-radius: 0; /* avoid "panel shape" */
+
+  /* prevent clipping of hover transform + focus-visible outline */
+  padding: 4px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 180ms ease;
+  will-change: opacity;
+}
+
+.vault-datacard-list--empty {
+  /* Empty should be shown under the section header, not vertically centered */
+  justify-content: flex-start;
+}
+
+.vault-datacard-list--refreshing {
+  opacity: 0.58;
+}
+
+.vault-datacard-list--refreshing .vault-datacard {
+  pointer-events: none;
+}
+
+.vault-datacard {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  text-align: left;
+  padding: 10px 12px;
+  background: var(--cmp-card-bg);
+  border: 1px solid var(--cmp-card-border);
+  border-radius: var(--sem-radius-sm);
+  color: var(--cmp-card-text);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease, opacity 0.14s ease;
+}
+
+.vault-datacard:hover {
+  border-color: var(--cmp-card-hover-border);
+  background: var(--cmp-card-hover-bg);
+  transform: translateY(-1px);
+}
+
+.vault-datacard:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.vault-datacard:not(.active):focus-visible {
+  outline: var(--cmp-card-focus-ring);
+  outline-offset: var(--cmp-card-focus-ring-offset);
+}
+
+.vault-datacard.active {
+  border-color: var(--cmp-card-active-border);
+  background: var(--cmp-card-active-bg);
+}
+
+.vault-datacard--selected {
+  border-color: var(--cmp-card-active-border);
+  background: color-mix(in srgb, var(--cmp-card-active-bg) 72%, var(--cmp-card-bg));
+}
+
+.vault-select-row {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.vault-card-check {
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--cmp-card-border);
+  border-radius: 4px;
+  background: var(--cmp-card-bg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+}
+
+.vault-card-check:hover {
+  border-color: var(--cmp-card-hover-border);
+  background: var(--cmp-card-hover-bg);
+}
+
+.vault-card-check:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.vault-select-row--selected .vault-card-check {
+  border-color: var(--cmp-card-active-border);
+  background: var(--cmp-card-active-border);
+}
+
+.vault-select-row--selected .vault-card-check::after {
+  content: "";
+  width: 8px;
+  height: 4px;
+  border-left: 2px solid var(--cmp-card-bg);
+  border-bottom: 2px solid var(--cmp-card-bg);
+  transform: rotate(-45deg) translateY(-1px);
+}
+
+.datacard-title {
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 700;
+  color: var(--cmp-card-text);
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.datacard-title--placeholder {
+  color: var(--cmp-card-muted);
+  font-style: italic;
+}
+
+.datacard-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto);
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 26px; /* Reserve badge row height to avoid card jump when pills appear */
+}
+
+.datacard-badges {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  align-content: flex-start;
+  align-items: center;
+  gap: 8px;
+  flex: 0 1 auto;
+  overflow: hidden;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.datacard-badges .pill {
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.datacard-favorite {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.datacard-meta {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 10px;
+  align-items: center;
+  color: var(--cmp-card-muted);
+  font-size: 12px;
+  line-height: 16px;
+  min-width: 0;
+}
+
+.datacard-meta > span {
+  display: block;
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.datacard-meta-empty {
+  opacity: 0;
+}
+
+.datacard-meta-lines {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.datacard-meta {
+  max-width: 100%;
+}
+
+.vault-datacard.active .datacard-title {
+  color: var(--cmp-card-text);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: var(--sem-radius-pill);
+  background: var(--cmp-card-pill-bg);
+  border: 1px solid var(--cmp-card-pill-border);
+  color: var(--cmp-card-pill-text);
+  font-size: 12px;
+}
+
+.muted {
+  color: var(--cmp-card-muted);
+}

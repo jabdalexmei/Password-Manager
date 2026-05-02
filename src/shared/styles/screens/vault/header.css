@@ -1,0 +1,89 @@
+﻿.vault-shell {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--sem-surface-page);
+  color: var(--sem-text-primary);
+}
+
+.vault-appbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--sem-surface-elevated);
+  border-bottom: 1px solid var(--sem-border-default);
+  gap: 12px;
+}
+
+.vault-profile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vault-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--sem-text-primary);
+}
+
+.vault-subtitle {
+  color: var(--sem-text-muted);
+  font-size: 14px;
+}
+
+/* ===== Top actions ===== */
+
+.vault-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vault-action-button,
+.vault-header__icon-button {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--sem-radius-sm);
+  border: 1px solid var(--sem-border-default);
+  background: var(--sem-vault-action-button-bg);
+  color: var(--sem-text-primary);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.vault-action-button:hover,
+.vault-header__icon-button:hover {
+  background: var(--sem-vault-action-button-hover-bg);
+  border-color: var(--sem-accent-primary);
+  transform: translateY(-1px);
+}
+
+.vault-action-button:active,
+.vault-header__icon-button:active {
+  transform: translateY(0);
+}
+
+.vault-action-button:disabled,
+.vault-header__icon-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.vault-action-button svg,
+.vault-header__icon-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.vault-action-button:focus-visible,
+.vault-header__icon-button:focus-visible {
+  outline: 2px solid var(--sem-accent-primary);
+  outline-offset: 2px;
+}

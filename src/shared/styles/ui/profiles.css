@@ -1,0 +1,54 @@
+﻿/* ==========================================================================
+   Profiles list / profile cards
+   --------------------------------------------------------------------------
+   - Styles for the profile selection/list view (cards, meta text, badges).
+   ========================================================================== */
+.profiles-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Profile card keeps its internal layout; visuals come from .tile above */
+.profile-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.profile-meta {
+  min-width: 0;
+}
+
+.profile-name {
+  font-weight: 600;
+  color: var(--sem-text-primary);
+  margin: 0;
+  word-break: break-word;
+}
+
+.profile-id {
+  color: var(--sem-text-muted);
+  font-size: 13px;
+  margin-top: 4px;
+  word-break: break-all;
+}
+
+
+/* Selected profile info block (summary panel) */
+.profile-selected {
+  border: none;
+  border-radius: var(--sem-radius-md);
+  background: var(--sem-surface-subtle);
+  padding: 12px;
+}
+
+/* Small uppercase label style (section headings inside panels) */
+.profile-label {
+  text-transform: uppercase;
+  color: var(--sem-text-muted);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
